@@ -1,0 +1,11 @@
+--- buggy/shortest_path_length.py	2024-02-06 22:50:36
++++ fixed/shortest_path_length.py	2024-02-06 22:53:37
+@@ -19,7 +19,7 @@
+             insert_or_update(unvisited_nodes,
+                 (min(
+                     get(unvisited_nodes, nextnode) or float('inf'),
+-                    get(unvisited_nodes, nextnode) + length_by_edge[node, nextnode]
++                    distance + length_by_edge[node, nextnode]
+                 ),
+                 nextnode)
+             )
