@@ -1,0 +1,142 @@
+diff --git a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLAssertTest.java b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLAssertTest.java
+index de54fc34a59..49248eb21e8 100644
+--- a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLAssertTest.java
++++ b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLAssertTest.java
+@@ -102,9 +102,13 @@ public abstract class AbstractSQLAssertTest extends AbstractSQLTest {
+                 continue;
+             }
+             for (SqlAssertData each : sqlShardingRule.getData()) {
++                String strategyName = getShardingStrategy().name();
++                if (ShardingTestStrategy.hint.name().equals(strategyName)) {
++                    strategyName = ShardingTestStrategy.db.name();
++                }
+                 // TODO DML和DQL保持一直，去掉DML中XML名称里面的placeholder
+                 String expected = null == each.getExpected() ? "integrate/dataset/EmptyTable.xml"
+-                        : String.format("integrate/dataset/%s/expect/" + each.getExpected(), getShardingStrategy().name(), getShardingStrategy().name());
++                        : String.format("integrate/dataset/%s/expect/" + each.getExpected(), strategyName, strategyName);
+                 URL url = AbstractSQLAssertTest.class.getClassLoader().getResource(expected);
+                 if (null == url) {
+                     throw new RuntimeException("Wrong expected file:" + expected);
+@@ -168,6 +172,8 @@ public abstract class AbstractSQLAssertTest extends AbstractSQLTest {
+         }
+         if (result.contains("masterslave")) {
+             result = result.replace("masterslave", "ms");
++        } else if (result.contains("hint")) {
++            result = result.replace("hint", "db");
+         } else {
+             result = "dataSource_" + result;
+         }
+diff --git a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLTest.java b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLTest.java
+index 7a3dc9eb472..27493f8ccfb 100644
+--- a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLTest.java
++++ b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/base/AbstractSQLTest.java
+@@ -44,7 +44,7 @@ import java.util.Map;
+ 
+ public abstract class AbstractSQLTest {
+     
+-    private static final DatabaseTestMode CURRENT_TEST_MODE = DatabaseTestMode.TEST;
++    private static final DatabaseTestMode CURRENT_TEST_MODE = DatabaseTestMode.LOCAL;
+     
+     private final Map<DatabaseType, Map<String, DataSource>> databaseTypeMap = new HashMap<>();
+     
+@@ -55,7 +55,7 @@ public abstract class AbstractSQLTest {
+     private static void createSchema() {
+         for (DatabaseType each : CURRENT_TEST_MODE.databaseTypes()) {
+             if (DatabaseType.H2 == each) {
+-                createSchema(each);
++               // createSchema(each);
+             }
+         }
+     }
+diff --git a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/strategy/HintShardingDatabaseOnlyTest.java b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/strategy/HintShardingDatabaseOnlyTest.java
+index 478af9a18a0..d3bec249072 100644
+--- a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/strategy/HintShardingDatabaseOnlyTest.java
++++ b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/common/sql/strategy/HintShardingDatabaseOnlyTest.java
+@@ -20,22 +20,17 @@ package com.dangdang.ddframe.rdb.common.sql.strategy;
+ import com.dangdang.ddframe.rdb.common.jaxb.SqlShardingRule;
+ import com.dangdang.ddframe.rdb.common.sql.common.ShardingTestStrategy;
+ import com.dangdang.ddframe.rdb.sharding.constant.DatabaseType;
+-import com.dangdang.ddframe.rdb.sharding.jdbc.core.datasource.ShardingDataSource;
+ import org.junit.Ignore;
+ import org.junit.runner.RunWith;
+ import org.junit.runners.Parameterized;
+ 
+-import java.util.HashMap;
+ import java.util.List;
+-import java.util.Map;
+ import java.util.Set;
+ 
+ @RunWith(Parameterized.class)
+ @Ignore
+ public class HintShardingDatabaseOnlyTest extends ShardingDatabaseOnlyTest {
+     
+-    private static Map<DatabaseType, ShardingDataSource> shardingDataSources = new HashMap<>();
+-    
+     public HintShardingDatabaseOnlyTest(final String testCaseName, final String sql, final Set<DatabaseType> types, final List<SqlShardingRule> sqlShardingRules) {
+         super(testCaseName, sql, types, sqlShardingRules);
+     }
+diff --git a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/integrate/AbstractDBUnitTest.java b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/integrate/AbstractDBUnitTest.java
+index 2912d35a3ac..ed63043ff64 100644
+--- a/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/integrate/AbstractDBUnitTest.java
++++ b/sharding-jdbc-core/src/test/java/com/dangdang/ddframe/rdb/integrate/AbstractDBUnitTest.java
+@@ -54,7 +54,7 @@ import static org.dbunit.Assertion.assertEquals;
+ 
+ public abstract class AbstractDBUnitTest {
+     
+-    protected static final DatabaseType CURRENT_DB_TYPE = MySQL;
++    protected static final DatabaseType CURRENT_DB_TYPE = H2;
+     
+     @Getter(AccessLevel.PROTECTED)
+     private static DatabaseTestSQL databaseTestSQL;
+@@ -84,7 +84,7 @@ public abstract class AbstractDBUnitTest {
+                     }
+                 }
+                 conn = createDataSource("tbl").getConnection();
+-//                RunScript.execute(conn, new InputStreamReader(AbstractDBUnitTest.class.getClassLoader().getResourceAsStream("integrate/schema/table/tbl.sql")));
++                RunScript.execute(conn, new InputStreamReader(AbstractDBUnitTest.class.getClassLoader().getResourceAsStream("integrate/schema/table/tbl.sql")));
+                 conn.close();
+             } catch (final SQLException ex) {
+                 ex.printStackTrace();
+diff --git a/sharding-jdbc-core/src/test/resources/integrate/assert/dml.xml b/sharding-jdbc-core/src/test/resources/integrate/assert/dml.xml
+index c49df6fd931..87ec85dda95 100644
+--- a/sharding-jdbc-core/src/test/resources/integrate/assert/dml.xml
++++ b/sharding-jdbc-core/src/test/resources/integrate/assert/dml.xml
+@@ -41,7 +41,7 @@
+             <data parameter="'update',1108,11" expected="update/%s_8.xml" />
+             <data parameter="'update',1109,11" expected="update/%s_9.xml" />
+         </sharding-rule>
+-        <sharding-rule value="db">
++        <sharding-rule value="db,hint">
+             <data parameter="'update',1000,10" expected="update/%s_0.xml" />
+             <data parameter="'update',1100,11" expected="update/%s_1.xml" />
+             <data parameter="'update',1200,12" expected="update/%s_2.xml" />
+@@ -79,7 +79,7 @@
+             <data parameter="'update',1108,11" expected="update/%s_8.xml" />
+             <data parameter="'update',1109,11" expected="update/%s_9.xml" />
+         </sharding-rule>
+-        <sharding-rule value="db">
++        <sharding-rule value="db,hint">
+             <data parameter="'update',1000,10" expected="update/%s_0.xml" />
+             <data parameter="'update',1100,11" expected="update/%s_1.xml" />
+             <data parameter="'update',1200,12" expected="update/%s_2.xml" />
+@@ -117,7 +117,7 @@
+             <data parameter="1108,11,'init'" expected="delete/%s_8.xml" />
+             <data parameter="1109,11,'init'" expected="delete/%s_9.xml" />
+         </sharding-rule>
+-        <sharding-rule value="db">
++        <sharding-rule value="db,hint">
+             <data parameter="1000,10,'init'" expected="delete/%s_0.xml" />
+             <data parameter="1100,11,'init'" expected="delete/%s_1.xml" />
+             <data parameter="1200,12,'init'" expected="delete/%s_2.xml" />
+@@ -158,8 +158,8 @@
+         <sharding-rule value="masterslave">
+             <data parameter="'init_master'" expected="delete/%s.xml" />
+         </sharding-rule>
+-        <!--<sharding-rule value="tbl,db,dbtbl">-->
+-            <!--<data parameter="'init'" expected="delete/%s.xml" />-->
+-        <!--</sharding-rule>-->
++        <sharding-rule value="tbl,db,dbtbl,hint">
++            <data parameter="'init'" expected="delete/%s.xml" />
++        </sharding-rule>
+     </sql>
+ </sqls>

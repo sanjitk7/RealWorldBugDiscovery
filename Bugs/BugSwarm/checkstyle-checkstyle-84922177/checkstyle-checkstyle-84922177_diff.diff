@@ -1,0 +1,13 @@
+diff --git a/src/test/resources/com/puppycrawl/tools/checkstyle/checks/coding/InputCovariant.java b/src/test/resources/com/puppycrawl/tools/checkstyle/checks/coding/InputCovariant.java
+index fdf7df0ac..c5df50f5f 100644
+--- a/src/test/resources/com/puppycrawl/tools/checkstyle/checks/coding/InputCovariant.java
++++ b/src/test/resources/com/puppycrawl/tools/checkstyle/checks/coding/InputCovariant.java
+@@ -67,7 +67,7 @@ class InputCovariant4
+     }
+ }
+ 
+-class Anonymous
++class AnonymousIC
+ {
+     Comparable comp = new Comparable()
+         {

@@ -1,0 +1,374 @@
+diff --git a/.gitignore b/.gitignore
+index d3679f4..b156b86 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -169,3 +169,6 @@ cython_debug/
+ # workspace
+ workspace
+ pilot-env/
++
++# Other
++brija.py
+\ No newline at end of file
+diff --git a/pilot/.env.example b/pilot/.env.example
+index 78cada5..5f90b09 100644
+--- a/pilot/.env.example
++++ b/pilot/.env.example
+@@ -12,7 +12,7 @@ OPENROUTER_API_KEY=
+ # In case of Azure/OpenRouter endpoint, change this to your deployed model name
+ MODEL_NAME=gpt-4-1106-preview
+ # MODEL_NAME=gpt-4
+-# MODEL_NAME=openai/gpt-3.5-turbo-16k
++# MODEL_NAME=gpt-3.5-turbo-16k
+ MAX_TOKENS=8192
+ 
+ # Folders which shouldn't be tracked in workspace (useful to ignore folders created by compiler)
+diff --git a/pilot/const/common.py b/pilot/const/common.py
+index 7443c0e..e04f99b 100644
+--- a/pilot/const/common.py
++++ b/pilot/const/common.py
+@@ -28,6 +28,7 @@ IGNORE_FOLDERS = [
+     '.gpt-pilot',
+     '.idea',
+     '.vscode',
++    '.DS_Store',
+     '__pycache__',
+     'node_modules',
+     'package-lock.json',
+diff --git a/pilot/database/database.py b/pilot/database/database.py
+index 35f67f5..d2620d8 100644
+--- a/pilot/database/database.py
++++ b/pilot/database/database.py
+@@ -1,6 +1,6 @@
+ from playhouse.shortcuts import model_to_dict
+ from utils.style import color_yellow, color_red
+-from peewee import DoesNotExist, IntegrityError
++from peewee import DoesNotExist, IntegrityError, fn
+ from functools import reduce
+ import operator
+ import psycopg2
+@@ -272,6 +272,12 @@ def hash_and_save_step(Model, app_id, unique_data_fields, data_fields, message):
+ 
+ 
+ def save_development_step(project, prompt_path, prompt_data, messages, llm_response, exception=None):
++    last_step_record = (DevelopmentSteps
++                        .select(fn.MAX(DevelopmentSteps.dev_step_number))
++                        .where(DevelopmentSteps.app == project.args['app_id'])
++                        .scalar() or 0)
++    dev_step_number = last_step_record + 1
++
+     data_fields = {
+         'messages': messages,
+         'llm_response': llm_response,
+@@ -279,7 +285,8 @@ def save_development_step(project, prompt_path, prompt_data, messages, llm_respo
+         'prompt_data': {} if prompt_data is None else {k: v for k, v in prompt_data.items() if
+                                                        k not in PROMPT_DATA_TO_IGNORE and not callable(v)},
+         'llm_req_num': project.llm_req_num,
+-        'token_limit_exception_raised': exception
++        'token_limit_exception_raised': exception,
++        'dev_step_number': dev_step_number
+     }
+ 
+     unique_data = {
+diff --git a/pilot/database/models/development_steps.py b/pilot/database/models/development_steps.py
+index 783c0f3..0225c46 100644
+--- a/pilot/database/models/development_steps.py
++++ b/pilot/database/models/development_steps.py
+@@ -7,6 +7,8 @@ from playhouse.postgres_ext import BinaryJSONField
+ 
+ 
+ class DevelopmentSteps(BaseModel):
++    # todo this needs refactoring. previous_step is self-referential foreign key and id is auto-incrementing primary
++    #  key for all apps because of that dev_step_number is added to keep track of dev steps for each app individually
+     id = AutoField()  # This will serve as the primary key
+     app = ForeignKeyField(App, on_delete='CASCADE')
+     prompt_path = TextField(null=True)
+@@ -23,6 +25,7 @@ class DevelopmentSteps(BaseModel):
+         prompt_data = JSONField(null=True)
+ 
+     previous_step = ForeignKeyField('self', null=True, column_name='previous_step')
++    dev_step_number = IntegerField()
+     high_level_step = CharField(null=True)
+ 
+     class Meta:
+diff --git a/pilot/helpers/AgentConvo.py b/pilot/helpers/AgentConvo.py
+index cd08db9..f785058 100644
+--- a/pilot/helpers/AgentConvo.py
++++ b/pilot/helpers/AgentConvo.py
+@@ -59,7 +59,7 @@ class AgentConvo:
+         development_step = get_saved_development_step(self.agent.project)
+         if development_step is not None and self.agent.project.skip_steps:
+             # if we do, use it
+-            print(color_yellow(f'Restoring development step with id {development_step.id}'))
++            print(color_yellow(f'Restoring development step with id {development_step.dev_step_number}'))
+             self.agent.project.checkpoints['last_development_step'] = development_step
+             self.agent.project.restore_files(development_step.id)
+             response = development_step.llm_response
+@@ -240,7 +240,7 @@ class AgentConvo:
+         print_msg = capitalize_first_word_with_underscores(self.high_level_step)
+         if self.log_to_user:
+             if self.agent.project.checkpoints['last_development_step'] is not None:
+-                dev_step_msg = f'\nDev step {str(self.agent.project.checkpoints["last_development_step"])}\n'
++                dev_step_msg = f'\nDev step {str(self.agent.project.checkpoints["last_development_step"].dev_step_number)}\n'
+                 print(color_yellow_bold(dev_step_msg), end='')
+                 logger.info(dev_step_msg)
+             print(f"\n{content}\n", type='local')
+diff --git a/pilot/helpers/agents/Developer.py b/pilot/helpers/agents/Developer.py
+index 8d18476..3cb1cfe 100644
+--- a/pilot/helpers/agents/Developer.py
++++ b/pilot/helpers/agents/Developer.py
+@@ -150,7 +150,7 @@ class Developer(Agent):
+         else:
+             data = step['command']
+         # TODO END
+-        additional_message = 'Let\'s start with the step #0:\n\n' if i == 0 else f'So far, steps { ", ".join(f"#{j}" for j in range(i+1)) } are finished so let\'s do step #{i + 1} now.\n\n'
++        additional_message = 'Let\'s start with the step #0:\n' if i == 0 else f'So far, steps { ", ".join(f"#{j}" for j in range(i+1)) } are finished so let\'s do step #{i + 1} now.\n'
+ 
+         command_id = data['command_id'] if 'command_id' in data else None
+         success_message = data['success_message'] if 'success_message' in data else None
+diff --git a/pilot/helpers/cli.py b/pilot/helpers/cli.py
+index 26ec73c..9db7ccc 100644
+--- a/pilot/helpers/cli.py
++++ b/pilot/helpers/cli.py
+@@ -109,6 +109,7 @@ def is_process_running(pid: int) -> bool:
+ 
+ 
+ def terminate_process(pid: int, name=None) -> None:
++    # todo refactor terminate_process() using psutil for all OS. Check/terminate child processes and test on all OS
+     if name is None:
+         name = ''
+ 
+@@ -126,6 +127,17 @@ def terminate_process(pid: int, name=None) -> None:
+     else:  # Unix-like systems
+         term_proc_unix_like(pid)
+ 
++    try:
++        # Wait for the process to terminate
++        process = psutil.Process(pid)
++        process.wait(timeout=10)  # Adjust the timeout as necessary
++    except psutil.NoSuchProcess:
++        logger.info("Process already terminated.")
++    except psutil.TimeoutExpired:
++        logger.warning("Timeout expired while waiting for process to terminate.")
++    except Exception as e:
++        logger.error(f"Error waiting for process termination: {e}")
++
+     for command_id in list(running_processes.keys()):
+         if running_processes[command_id][1] == pid:
+             del running_processes[command_id]
+@@ -286,10 +298,11 @@ def execute_command(project, command, timeout=None, success_message=None, comman
+             logger.info('Command finished before timeout. Handling early completion...')
+             done_or_error_response = 'DONE'
+ 
+-        # update the returncode
+-        process.poll()
+     finally:
++        done_or_error_response = 'DONE'  # Todo remove if we want to have different responses
+         terminate_process(process.pid)  # TODO: background_command - remove this is if we want to leave command running in background, look todo above
++        # update the return code
++        process.poll()
+ 
+     elapsed_time = time.time() - start_time
+     logger.info(f'`{command}` took {round(elapsed_time * 1000)}ms to execute.')
+@@ -305,6 +318,27 @@ def execute_command(project, command, timeout=None, success_message=None, comman
+     return return_value, done_or_error_response, process.returncode
+ 
+ 
++def check_if_command_successful(convo, command, cli_response, response, exit_code, additional_message=None):
++    if cli_response is not None:
++        logger.info(f'`{command}` ended with exit code: {exit_code}')
++        if exit_code is None:
++            # todo this should never happen! process is still running, see why and now we want to handle it
++            print(color_red(f'Process for command {command} still running.'))
++            response = 'DONE'
++        else:
++            response = convo.send_message('dev_ops/ran_command.prompt',
++                                          {
++                                              'cli_response': cli_response,
++                                              'error_response': response,
++                                              'command': command,
++                                              'additional_message': additional_message,
++                                              'exit_code': exit_code,
++                                          })
++            logger.debug(f'LLM response to ran_command.prompt: {response}')
++
++    return response
++
++
+ def build_directory_tree(path, prefix='', is_root=True, ignore=None):
+     """Build the directory tree structure in a simplified format.
+ 
+@@ -404,19 +438,8 @@ def execute_command_and_check_cli_response(convo, command: dict):
+                                                         command['command'],
+                                                         timeout=command['timeout'],
+                                                         command_id=command_id)
+-    if cli_response is not None:
+-        if exit_code is None:
+-            response = 'DONE'
+-        elif response != 'DONE':
+-            # "I ran the command `{{command}}` -> {{ exit_code }}, {{ error_response }}, output: {{ cli_response }
+-            # respond with 'DONE' or 'NEEDS_DEBUGGING'"
+-            response = convo.send_message('dev_ops/ran_command.prompt',
+-                                          {
+-                                              'cli_response': cli_response,
+-                                              'error_response': response,
+-                                              'command': command['command'],
+-                                              'exit_code': exit_code,
+-                                          })
++
++    response = check_if_command_successful(convo, command['command'], cli_response, response, exit_code)
+     return cli_response, response
+ 
+ 
+@@ -464,22 +487,7 @@ def run_command_until_success(convo, command,
+     if cli_response is None and response != 'DONE':
+         return {'success': False, 'user_input': response}
+ 
+-    if cli_response is not None:
+-        logger.info(f'`{command}` ("{command_id}") exit code: {exit_code}')
+-        if exit_code is None and command_id is not None:
+-            # process is still running
+-            response = 'DONE'
+-        elif response != 'DONE':
+-            # "I ran the command and the output was... respond with 'DONE' or 'NEEDS_DEBUGGING'"
+-            response = convo.send_message('dev_ops/ran_command.prompt',
+-                                          {
+-                                              'cli_response': cli_response,
+-                                              'error_response': response,
+-                                              'command': command,
+-                                              'additional_message': additional_message,
+-                                              'exit_code': exit_code,
+-                                          })
+-            logger.debug(f'LLM response: {response}')
++    response = check_if_command_successful(convo, command, cli_response, response, exit_code, additional_message)
+ 
+     if response != 'DONE':
+         # 'NEEDS_DEBUGGING'
+diff --git a/pilot/helpers/test_cli.py b/pilot/helpers/test_cli.py
+index b515cef..1c0f6e1 100644
+--- a/pilot/helpers/test_cli.py
++++ b/pilot/helpers/test_cli.py
+@@ -31,7 +31,7 @@ def test_execute_command_timeout_exit_code(mock_terminate_process, mock_run, moc
+ 
+     # Then
+     assert cli_response is not None
+-    assert llm_response == 'took longer than 100.0ms so I killed it'
++    assert llm_response == 'DONE'
+     assert exit_code is not None
+     mock_terminate_process.assert_called_once_with(1234)
+ 
+@@ -60,7 +60,7 @@ def test_execute_command_enter(mock_terminate_process, mock_run, mock_ask, mock_
+ 
+     # Then
+     assert 'hello' in cli_response
+-    assert llm_response is None
++    assert llm_response == 'DONE'
+     assert exit_code == 0
+     mock_terminate_process.assert_called_once_with(1234)
+ 
+@@ -81,7 +81,7 @@ def test_execute_command_yes(mock_terminate_process, mock_run, mock_ask, mock_ge
+ 
+     # Then
+     assert 'hello' in cli_response
+-    assert llm_response is None
++    assert llm_response == 'DONE'
+     assert exit_code == 0
+     mock_terminate_process.assert_called_once_with(1234)
+ 
+diff --git a/pilot/prompts/dev_ops/ran_command.prompt b/pilot/prompts/dev_ops/ran_command.prompt
+index 568bb45..7359697 100644
+--- a/pilot/prompts/dev_ops/ran_command.prompt
++++ b/pilot/prompts/dev_ops/ran_command.prompt
+@@ -1,6 +1,6 @@
+-{{ additional_info }}I ran the command `{{ command }}`
+-{%- if error_response %}, it {{ error_response }}{% endif %}. The output was:
+-
++{%- if additional_message %}{{ additional_message }}{% endif %}
++I ran the command `{{ command }}`. The output was:
++{#%- if error_response %}, it {{ error_response }}{% endif %#}
+ {{ cli_response }}
+ 
+ If the command was successfully executed, respond with `DONE`. If it wasn't, respond with `NEEDS_DEBUGGING`.
+diff --git a/pilot/prompts/development/define_user_review_goal.prompt b/pilot/prompts/development/define_user_review_goal.prompt
+index 2f9e940..715f077 100644
+--- a/pilot/prompts/development/define_user_review_goal.prompt
++++ b/pilot/prompts/development/define_user_review_goal.prompt
+@@ -5,4 +5,4 @@ In case the task can be tested by making an API request, do not suggest how can
+ !IMPORTANT!
+ Do not require any code writing form the user for testing this task.
+ 
+-If it is difficult to test the task, you can just write that there is nothing specific to test and that the best thing is to move on to another task. If this is the case, answer with only this sentence - `There is nothing specific to test for this task so you can write "continue" and we'll move on to the next task.`
+\ No newline at end of file
++Try your best to avoid this if possible, but if it is very difficult to test the task, you can just answer with only this sentence - `There is nothing specific to test for this task so you can write "continue" and we'll move on to the next task.`
+\ No newline at end of file
+diff --git a/pilot/prompts/test_prompts.py b/pilot/prompts/test_prompts.py
+index e698700..7faa84b 100644
+--- a/pilot/prompts/test_prompts.py
++++ b/pilot/prompts/test_prompts.py
+@@ -12,6 +12,8 @@ def test_prompt_ran_command_None_exit():
+ 
+     # Then
+     assert prompt == '''
++Some additional message
++
+ I ran the command `./scripts/run_tests`. The output was:
+ 
+ stdout:
+@@ -20,6 +22,8 @@ success
+ ```
+ 
+ If the command was successfully executed, respond with `DONE`. If it wasn't, respond with `NEEDS_DEBUGGING`.
++
++Do not respond with anything other than these two keywords.
+ '''.strip()
+ 
+ 
+@@ -34,7 +38,9 @@ def test_prompt_ran_command_0_exit():
+ 
+     # Then
+     assert prompt == '''
+-I ran the command `./scripts/run_tests`, the exit code was 0. The output was:
++Some additional message
++
++I ran the command `./scripts/run_tests`. The output was:
+ 
+ stdout:
+ ```
+@@ -42,6 +48,8 @@ success
+ ```
+ 
+ If the command was successfully executed, respond with `DONE`. If it wasn't, respond with `NEEDS_DEBUGGING`.
++
++Do not respond with anything other than these two keywords.
+ '''.strip()
+ 
+ 
+diff --git a/pilot/test/database/test_file_snapshot.py b/pilot/test/database/test_file_snapshot.py
+index 4e1e26c..3ca3b7b 100644
+--- a/pilot/test/database/test_file_snapshot.py
++++ b/pilot/test/database/test_file_snapshot.py
+@@ -103,7 +103,7 @@ def test_create_tables(database):
+ def test_file_snapshot(content, expected_content):
+     user = User.create(email="", password="")
+     app = App.create(user=user)
+-    step = DevelopmentSteps.create(app=app, llm_response={})
++    step = DevelopmentSteps.create(app=app, llm_response={}, dev_step_number=1)
+     file = File.create(app=app, name="test", path="test", full_path="test")
+ 
+     fs = FileSnapshot.create(
+diff --git a/pilot/utils/function_calling.py b/pilot/utils/function_calling.py
+index 3adee94..1977367 100644
+--- a/pilot/utils/function_calling.py
++++ b/pilot/utils/function_calling.py
+@@ -50,10 +50,8 @@ def add_function_calls_to_request(gpt_data, function_calls: Union[FunctionCallSe
+     else:
+         function_call = function_calls['definitions'][0]['name']
+ 
+-    role = 'user' if '/' in model else 'system'
+-
+     gpt_data['messages'].append({
+-        'role': role,
++        'role': 'user',
+         'content': prompter.prompt('', function_calls['definitions'], function_call)
+     })
+ 

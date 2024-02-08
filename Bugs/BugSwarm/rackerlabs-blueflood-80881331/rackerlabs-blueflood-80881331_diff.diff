@@ -1,0 +1,645 @@
+diff --git a/blueflood-core/src/main/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainer.java b/blueflood-core/src/main/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainer.java
+index c632cfad..faf54cd1 100644
+--- a/blueflood-core/src/main/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainer.java
++++ b/blueflood-core/src/main/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainer.java
+@@ -16,10 +16,13 @@
+ 
+ package com.rackspacecloud.blueflood.inputs.formats;
+ 
++import com.rackspacecloud.blueflood.service.Configuration;
++import com.rackspacecloud.blueflood.service.CoreConfig;
+ import com.rackspacecloud.blueflood.types.Locator;
+ import com.rackspacecloud.blueflood.types.Metric;
+ import com.rackspacecloud.blueflood.utils.TimeValue;
+ import org.codehaus.jackson.annotate.JsonIgnore;
++import org.joda.time.DateTime;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+@@ -28,6 +31,8 @@ import java.util.concurrent.TimeUnit;
+ public class JSONMetricsContainer {
+     private final String tenantId;
+     private final List<JSONMetric> jsonMetrics;
++    private List<Metric> delayedMetrics;
++    private static final long delayedMetricsMillis = Configuration.getInstance().getLongProperty(CoreConfig.DELAYED_METRICS_MILLIS);
+ 
+     public JSONMetricsContainer(String tenantId, List<JSONMetric> metrics) {
+         this.tenantId = tenantId;
+@@ -50,6 +55,7 @@ public class JSONMetricsContainer {
+         }
+ 
+         final List<Metric> metrics = new ArrayList<Metric>();
++        delayedMetrics = new ArrayList<Metric>();
+         for (JSONMetric jsonMetric : jsonMetrics) {
+             Locator locator;
+             if (jsonMetric instanceof ScopedJSONMetric) {
+@@ -62,6 +68,10 @@ public class JSONMetricsContainer {
+             if (jsonMetric.getMetricValue() != null) {
+                 final Metric metric = new Metric(locator, jsonMetric.getMetricValue(), jsonMetric.getCollectionTime(),
+                         new TimeValue(jsonMetric.getTtlInSeconds(), TimeUnit.SECONDS), jsonMetric.getUnit());
++                long nowMillis = new DateTime().getMillis();
++                if (nowMillis - metric.getCollectionTime() > delayedMetricsMillis) {
++                    delayedMetrics.add(metric);
++                }
+                 metrics.add(metric);
+             }
+         }
+@@ -69,6 +79,19 @@ public class JSONMetricsContainer {
+         return metrics;
+     }
+ 
++    public boolean areDelayedMetricsPresent() {
++        return delayedMetrics.size() > 0;
++    }
++
++    public List<String> getDelayedMetricNames() {
++        List<String> delayedMetricNames = new ArrayList<String>();
++        for (Metric m : delayedMetrics) {
++            delayedMetricNames.add(m.getLocator().getMetricName());
++        }
++
++        return delayedMetricNames;
++    }
++
+     // Jackson compatible class. Jackson uses reflection to call these methods and so they have to match JSON keys.
+     public static class JSONMetric {
+         private String metricName;
+diff --git a/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/CoreConfig.java b/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/CoreConfig.java
+index df7c2cb4..7f4d3080 100644
+--- a/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/CoreConfig.java
++++ b/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/CoreConfig.java
+@@ -146,7 +146,9 @@ public enum CoreConfig implements ConfigDefaults {
+     // Should at least be equal to the number of the netty worker threads, if http module is getting loaded
+     ES_UNIT_THREADS("50"),
+     ROLLUP_ON_READ_THREADS("50"),
+-    TURN_OFF_RR_MPLOT("false");
++    TURN_OFF_RR_MPLOT("false"),
++
++    DELAYED_METRICS_MILLIS("300000");
+ 
+     static {
+         Configuration.getInstance().loadDefaults(CoreConfig.values());
+diff --git a/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/IngestionService.java b/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/IngestionService.java
+index c980a207..b0f9867a 100644
+--- a/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/IngestionService.java
++++ b/blueflood-core/src/main/java/com/rackspacecloud/blueflood/service/IngestionService.java
+@@ -20,5 +20,6 @@ import com.rackspacecloud.blueflood.io.IMetricsWriter;
+ 
+ public interface IngestionService {
+     public void startService(ScheduleContext context, IMetricsWriter writer);
++    public void shutdownService();
+ }
+ 
+diff --git a/blueflood-elasticsearch/pom.xml b/blueflood-elasticsearch/pom.xml
+index ada8db71..9f22212c 100644
+--- a/blueflood-elasticsearch/pom.xml
++++ b/blueflood-elasticsearch/pom.xml
+@@ -75,7 +75,7 @@
+     <dependency>
+       <groupId>com.github.tlrx</groupId>
+       <artifactId>elasticsearch-test</artifactId>
+-      <version>1.1.0</version>
++      <version>1.2.1</version>
+       <scope>test</scope>
+       <optional>true</optional>
+     </dependency>
+diff --git a/blueflood-http/pom.xml b/blueflood-http/pom.xml
+index 50e14ecc..0f07585b 100644
+--- a/blueflood-http/pom.xml
++++ b/blueflood-http/pom.xml
+@@ -193,7 +193,7 @@
+     <dependency>
+       <groupId>com.github.tlrx</groupId>
+       <artifactId>elasticsearch-test</artifactId>
+-      <version>1.1.0</version>
++      <version>1.2.1</version>
+       <scope>test</scope>
+       <optional>true</optional>
+     </dependency>
+diff --git a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpAnnotationsEndToEndTest.java b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpAnnotationsEndToEndTest.java
+index b53f965c..dea5d9fa 100644
+--- a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpAnnotationsEndToEndTest.java
++++ b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpAnnotationsEndToEndTest.java
+@@ -73,7 +73,7 @@ public class HttpAnnotationsEndToEndTest {
+         esSetup.execute(EsSetup.deleteAll());
+         esSetup.execute(EsSetup.createIndex(EventElasticSearchIO.EVENT_INDEX)
+                 .withSettings(EsSetup.fromClassPath("index_settings.json"))
+-                .withMapping("metrics", EsSetup.fromClassPath("events_mapping.json")));
++                .withMapping("graphite_event", EsSetup.fromClassPath("events_mapping.json")));
+         eventsSearchIO = new EventElasticSearchIO(esSetup.client());
+         HttpMetricsIngestionServer server = new HttpMetricsIngestionServer(context, new AstyanaxMetricsWriter());
+         server.setHttpEventsIngestionHandler(new HttpEventsIngestionHandler(eventsSearchIO));
+@@ -153,7 +153,12 @@ public class HttpAnnotationsEndToEndTest {
+     @AfterClass
+     public static void tearDownClass() throws Exception{
+         Configuration.getInstance().setProperty(CoreConfig.EVENTS_MODULES.name(), "");
+-        esSetup.terminate();
+-        httpQueryService.stopService();
++        if (esSetup != null) {
++            esSetup.terminate();
++        }
++
++        if (httpQueryService != null) {
++            httpQueryService.stopService();
++        }
+     }
+ }
+diff --git a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpHandlerIntegrationTest.java b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpHandlerIntegrationTest.java
+index 495dcdf0..42bb3197 100644
+--- a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpHandlerIntegrationTest.java
++++ b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpHandlerIntegrationTest.java
+@@ -71,7 +71,7 @@ public class HttpHandlerIntegrationTest {
+         esSetup.execute(EsSetup.deleteAll());
+         esSetup.execute(EsSetup.createIndex(EventElasticSearchIO.EVENT_INDEX)
+                 .withSettings(EsSetup.fromClassPath("index_settings.json"))
+-                .withMapping("metrics", EsSetup.fromClassPath("events_mapping.json")));
++                .withMapping("graphite_event", EsSetup.fromClassPath("events_mapping.json")));
+         eventsSearchIO = new EventElasticSearchIO(esSetup.client());
+         HttpMetricsIngestionServer server = new HttpMetricsIngestionServer(context, new AstyanaxMetricsWriter());
+         server.setHttpEventsIngestionHandler(new HttpEventsIngestionHandler(eventsSearchIO));
+@@ -410,7 +410,16 @@ public class HttpHandlerIntegrationTest {
+     
+     @AfterClass
+     public static void shutdown() {
+-        esSetup.terminate();
+-        vendor.shutdown();
++        if (esSetup != null) {
++            esSetup.terminate();
++        }
++
++        if (vendor != null) {
++            vendor.shutdown();
++        }
++
++        if (httpIngestionService != null) {
++            httpIngestionService.shutdownService();
++        }
+     }
+ }
+\ No newline at end of file
+diff --git a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionServerShutdownIntegrationTest.java b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionServerShutdownIntegrationTest.java
+new file mode 100644
+index 00000000..f93bd8ec
+--- /dev/null
++++ b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionServerShutdownIntegrationTest.java
+@@ -0,0 +1,138 @@
++/*
++ * Copyright 2015 Rackspace
++ *
++ *    Licensed under the Apache License, Version 2.0 (the "License");
++ *    you may not use this file except in compliance with the License.
++ *    You may obtain a copy of the License at
++ *
++ *        http://www.apache.org/licenses/LICENSE-2.0
++ *
++ *    Unless required by applicable law or agreed to in writing, software
++ *    distributed under the License is distributed on an "AS IS" BASIS,
++ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ *    See the License for the specific language governing permissions and
++ *    limitations under the License.
++ */
++
++package com.rackspacecloud.blueflood.inputs.handlers;
++
++
++import com.github.tlrx.elasticsearch.test.EsSetup;
++import com.rackspacecloud.blueflood.http.HttpClientVendor;
++import com.rackspacecloud.blueflood.inputs.formats.JSONMetricsContainerTest;
++import com.rackspacecloud.blueflood.io.*;
++import com.rackspacecloud.blueflood.rollup.Granularity;
++import com.rackspacecloud.blueflood.service.Configuration;
++import com.rackspacecloud.blueflood.service.CoreConfig;
++import com.rackspacecloud.blueflood.service.HttpConfig;
++import com.rackspacecloud.blueflood.service.ScheduleContext;
++import com.rackspacecloud.blueflood.types.*;
++import org.apache.http.HttpEntity;
++import org.apache.http.HttpResponse;
++import org.apache.http.client.methods.HttpPost;
++import org.apache.http.client.utils.URIBuilder;
++import org.apache.http.entity.ContentType;
++import org.apache.http.entity.StringEntity;
++import org.apache.http.impl.client.DefaultHttpClient;
++import org.apache.http.util.EntityUtils;
++import org.junit.Assert;
++import org.junit.BeforeClass;
++import org.junit.Rule;
++import org.junit.Test;
++import org.junit.rules.ExpectedException;
++
++import java.net.ConnectException;
++import java.net.URI;
++import java.net.URISyntaxException;
++import java.util.Calendar;
++import java.util.Collection;
++import java.util.HashSet;
++
++import static org.mockito.Matchers.anyInt;
++import static org.mockito.Matchers.anyLong;
++import static org.mockito.Mockito.*;
++
++public class HttpMetricsIngestionServerShutdownIntegrationTest {
++
++    private static HttpMetricsIngestionServer server;
++    private static HttpClientVendor vendor;
++    private static DefaultHttpClient client;
++    private static Collection<Integer> manageShards = new HashSet<Integer>();
++    private static int httpPort;
++    private static ScheduleContext context;
++    private static EventsIO eventsSearchIO;
++    private static EsSetup esSetup;
++    //A time stamp 2 days ago
++    private final long baseMillis = Calendar.getInstance().getTimeInMillis() - 172800000;
++
++
++    @BeforeClass
++    public static void setUp() throws Exception{
++        System.setProperty(CoreConfig.EVENTS_MODULES.name(), "com.rackspacecloud.blueflood.io.EventElasticSearchIO");
++        Configuration.getInstance().init();
++        httpPort = Configuration.getInstance().getIntegerProperty(HttpConfig.HTTP_INGESTION_PORT);
++        manageShards.add(1); manageShards.add(5); manageShards.add(6);
++        context = spy(new ScheduleContext(System.currentTimeMillis(), manageShards));
++
++        esSetup = new EsSetup();
++        esSetup.execute(EsSetup.deleteAll());
++        esSetup.execute(EsSetup.createIndex(EventElasticSearchIO.EVENT_INDEX)
++                .withSettings(EsSetup.fromClassPath("index_settings.json"))
++                .withMapping("graphite_event", EsSetup.fromClassPath("events_mapping.json")));
++        eventsSearchIO = new EventElasticSearchIO(esSetup.client());
++        server = new HttpMetricsIngestionServer(context, new AstyanaxMetricsWriter());
++        server.setHttpEventsIngestionHandler(new HttpEventsIngestionHandler(eventsSearchIO));
++
++        server.startServer();
++
++        vendor = new HttpClientVendor();
++        client = vendor.getClient();
++    }
++
++    @Test
++    public void testHttpIngestionHappyCase() throws Exception {
++
++        // given
++        HttpPost post = new HttpPost(getMetricsURI());
++        HttpEntity entity = new StringEntity(JSONMetricsContainerTest.generateJSONMetricsData(),
++                ContentType.APPLICATION_JSON);
++        post.setEntity(entity);
++        HttpResponse response = client.execute(post);
++        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
++        HttpPost post2 = new HttpPost(getMetricsURI());
++        HttpEntity entity2 = new StringEntity(JSONMetricsContainerTest.generateJSONMetricsData(),
++                ContentType.APPLICATION_JSON);
++        post2.setEntity(entity2);
++
++        // when
++        server.shutdownServer();
++
++        // then
++        try {
++            HttpResponse response2 = client.execute(post2);
++            Assert.fail("We should have received a Connect exception");
++        } catch (ConnectException ex) {
++
++            // NOTE: ideally, one would simply use jUnit's `ExpectedException`
++            // rule or `expected` param to indicate that we expected a
++            // ConnectException to be thrown. However, ConnectException can be
++            // thrown for a number of different reasons, and the only way to
++            // know for sure that the connection was refused (and, thus, that
++            // the port is no longer open) is to catch the exception object and
++            // check its message. Hence, this try/catch.
++
++            Assert.assertEquals("Connection refused", ex.getMessage());
++        }
++    }
++
++
++    private URI getMetricsURI() throws URISyntaxException {
++        return getMetricsURIBuilder().build();
++    }
++
++    private URIBuilder getMetricsURIBuilder() throws URISyntaxException {
++        return new URIBuilder().setScheme("http").setHost("127.0.0.1")
++                .setPort(httpPort).setPath("/v2.0/acTEST/ingest");
++    }
++
++}
+\ No newline at end of file
+diff --git a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpAnnotationsIntegrationTest.java b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpAnnotationsIntegrationTest.java
+index 3ada956b..881ba5d9 100644
+--- a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpAnnotationsIntegrationTest.java
++++ b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpAnnotationsIntegrationTest.java
+@@ -53,7 +53,7 @@ public class HttpAnnotationsIntegrationTest {
+         esSetup.execute(EsSetup.deleteAll());
+         esSetup.execute(EsSetup.createIndex(EventElasticSearchIO.EVENT_INDEX)
+                 .withSettings(EsSetup.fromClassPath("index_settings.json"))
+-                .withMapping("annotations", EsSetup.fromClassPath("events_mapping.json")));
++                .withMapping("graphite_event", EsSetup.fromClassPath("events_mapping.json")));
+         eventsIO = new EventElasticSearchIO(esSetup.client());
+ 
+         httpQueryService = new HttpQueryService();
+@@ -191,7 +191,13 @@ public class HttpAnnotationsIntegrationTest {
+     @AfterClass
+     public static void tearDownClass() throws Exception{
+         Configuration.getInstance().setProperty(CoreConfig.EVENTS_MODULES.name(), "");
+-        esSetup.terminate();
+-        httpQueryService.stopService();
++
++        if (esSetup != null) {
++            esSetup.terminate();
++        }
++
++        if (httpQueryService != null) {
++            httpQueryService.stopService();
++        }
+     }
+ }
+diff --git a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerIntegrationTest.java b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerIntegrationTest.java
+index 3ec15ae4..016fba32 100644
+--- a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerIntegrationTest.java
++++ b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerIntegrationTest.java
+@@ -256,7 +256,12 @@ public class HttpRollupHandlerIntegrationTest extends IntegrationTestBase {
+ 
+     @AfterClass
+     public static void shutdown() {
+-        vendor.shutdown();
+-        httpQueryService.stopService();
++        if (vendor != null) {
++            vendor.shutdown();
++        }
++
++        if (httpQueryService != null) {
++            httpQueryService.stopService();
++        }
+     }
+ }
+diff --git a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerWithESIntegrationTest.java b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerWithESIntegrationTest.java
+index d64f6e5c..f194d8b8 100644
+--- a/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerWithESIntegrationTest.java
++++ b/blueflood-http/src/integration-test/java/com/rackspacecloud/blueflood/outputs/handlers/HttpRollupHandlerWithESIntegrationTest.java
+@@ -204,7 +204,13 @@ public class HttpRollupHandlerWithESIntegrationTest extends IntegrationTestBase
+     public static void tearDownClass() throws Exception{
+         Configuration.getInstance().setProperty(CoreConfig.DISCOVERY_MODULES.name(), "");
+         Configuration.getInstance().setProperty(CoreConfig.USE_ES_FOR_UNITS.name(), "false");
+-        esSetup.terminate();
+-        httpQueryService.stopService();
++
++        if (esSetup != null) {
++            esSetup.terminate();
++        }
++
++        if (httpQueryService != null) {
++            httpQueryService.stopService();
++        }
+     }
+ }
+diff --git a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionHandler.java b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionHandler.java
+index 23a59740..28b25611 100644
+--- a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionHandler.java
++++ b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionHandler.java
+@@ -123,6 +123,10 @@ public class HttpMetricsIngestionHandler implements HttpRequestHandler {
+             try {
+                 containerMetrics = jsonMetricsContainer.toMetrics();
+                 forceTTLsIfConfigured(containerMetrics);
++
++                if (jsonMetricsContainer.areDelayedMetricsPresent()) {
++                    Tracker.trackDelayedMetricsTenant(tenantId, jsonMetricsContainer.getDelayedMetricNames());
++                }
+             } catch (InvalidDataException ex) {
+                 // todo: we should measure these. if they spike, we track down the bad client.
+                 // this is strictly a client problem. Someting wasn't right (data out of range, etc.)
+diff --git a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionServer.java b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionServer.java
+index 5f6bbb95..e8f394d4 100644
+--- a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionServer.java
++++ b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/HttpMetricsIngestionServer.java
+@@ -31,7 +31,6 @@ import com.rackspacecloud.blueflood.inputs.processors.TypeAndUnitProcessor;
+ import com.rackspacecloud.blueflood.io.EventsIO;
+ import com.rackspacecloud.blueflood.io.IMetricsWriter;
+ import com.rackspacecloud.blueflood.service.*;
+-import com.rackspacecloud.blueflood.types.Event;
+ import com.rackspacecloud.blueflood.tracker.Tracker;
+ import com.rackspacecloud.blueflood.tracker.TrackerMBean;
+ import com.rackspacecloud.blueflood.types.IMetric;
+@@ -40,11 +39,9 @@ import com.rackspacecloud.blueflood.utils.ModuleLoader;
+ import com.rackspacecloud.blueflood.utils.Metrics;
+ import com.rackspacecloud.blueflood.utils.TimeValue;
+ import org.jboss.netty.bootstrap.ServerBootstrap;
+-import org.jboss.netty.channel.ChannelFutureListener;
+-import org.jboss.netty.channel.ChannelHandlerContext;
+-import org.jboss.netty.channel.ChannelPipeline;
+-import org.jboss.netty.channel.ChannelPipelineFactory;
+-import org.jboss.netty.channel.ExceptionEvent;
++import org.jboss.netty.channel.*;
++import org.jboss.netty.channel.group.ChannelGroup;
++import org.jboss.netty.channel.group.DefaultChannelGroup;
+ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+ import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
+@@ -75,6 +72,8 @@ public class HttpMetricsIngestionServer {
+     private TimeValue timeout;
+     private static int MAX_CONTENT_LENGTH = 1048576; // 1 MB
+ 
++    private ChannelGroup allOpenChannels = new DefaultChannelGroup("allOpenChannels");
++
+     public TrackerMBean tracker;
+ 
+     public HttpMetricsIngestionServer(ScheduleContext context, IMetricsWriter writer) {
+@@ -102,13 +101,15 @@ public class HttpMetricsIngestionServer {
+         router.post("/v2.0/:tenantId/ingest/aggregated/multi", new HttpAggregatedMultiIngestionHandler(processor, timeout));
+ 
+         log.info("Starting metrics listener HTTP server on port {}", httpIngestPort);
+-        ServerBootstrap server = new ServerBootstrap(
++        ChannelFactory channelFactory =
+                 new NioServerSocketChannelFactory(
+                         Executors.newFixedThreadPool(acceptThreads),
+-                        Executors.newFixedThreadPool(workerThreads)));
++                        Executors.newFixedThreadPool(workerThreads));
++        ServerBootstrap server = new ServerBootstrap(channelFactory);
+ 
+         server.setPipelineFactory(new MetricsHttpServerPipelineFactory(router));
+-        server.bind(new InetSocketAddress(httpIngestHost, httpIngestPort));
++        Channel serverChannel = server.bind(new InetSocketAddress(httpIngestHost, httpIngestPort));
++        allOpenChannels.add(serverChannel);
+ 
+         log.info("Starting tracker service");
+         tracker = new Tracker();
+@@ -229,4 +230,13 @@ public class HttpMetricsIngestionServer {
+             return batchWriter.apply(batches);
+         }
+     }
++
++    @VisibleForTesting
++    public void shutdownServer() {
++        try {
++            allOpenChannels.close().await(5, TimeUnit.SECONDS);
++        } catch (InterruptedException e) {
++            // Pass
++        }
++    }
+ }
+diff --git a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/PreaggregateConversions.java b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/PreaggregateConversions.java
+index 9f1624b4..3acaa80f 100644
+--- a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/PreaggregateConversions.java
++++ b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/inputs/handlers/PreaggregateConversions.java
+@@ -18,8 +18,10 @@ package com.rackspacecloud.blueflood.inputs.handlers;
+ 
+ import com.google.gson.internal.LazilyParsedNumber;
+ import com.rackspacecloud.blueflood.inputs.handlers.wrappers.AggregatedPayload;
++import com.rackspacecloud.blueflood.tracker.Tracker;
+ import com.rackspacecloud.blueflood.types.*;
+ import com.rackspacecloud.blueflood.utils.TimeValue;
++import org.joda.time.DateTime;
+ 
+ import java.io.IOError;
+ import java.io.IOException;
+@@ -34,7 +36,7 @@ public class PreaggregateConversions {
+     // todo: punt on TTL
+     private static final TimeValue DEFAULT_TTL = new TimeValue(48, TimeUnit.HOURS);
+     private static final String NAME_DELIMITER = "//.";
+-    
++
+     // NOTE: when you create objects from gson-converted json, you need to make sure to resolve numbers that
+     // are not accessed via `doubleValue()` or `longValue()`, i.e., they are treated as `Number` instances.
+     // the Number supplied by gson is and instance of LazilyParsedNumber and will cause breakage in certain
+diff --git a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/service/HttpIngestionService.java b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/service/HttpIngestionService.java
+index d38eddab..e13439df 100644
+--- a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/service/HttpIngestionService.java
++++ b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/service/HttpIngestionService.java
+@@ -47,4 +47,10 @@ public class HttpIngestionService implements IngestionService {
+ 
+         return this.server;
+     }
++
++    public void shutdownService() {
++        if (this.server != null) {
++            this.server.shutdownServer();
++        }
++    }
+ }
+diff --git a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/Tracker.java b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/Tracker.java
+index c0fe8460..395b5731 100644
+--- a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/Tracker.java
++++ b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/Tracker.java
+@@ -38,6 +38,7 @@ public class Tracker implements TrackerMBean {
+     private static final String trackerName = String.format("com.rackspacecloud.blueflood.tracker:type=%s", Tracker.class.getSimpleName());
+ 
+     static Set tenantIds = new HashSet();
++    static boolean isTrackingDelayedMetrics = false;
+ 
+     public Tracker() {
+         registerMBean();
+@@ -48,6 +49,16 @@ public class Tracker implements TrackerMBean {
+         log.info("[TRACKER] tenantId " + tenantId + " added.");
+     }
+ 
++    public void setIsTrackingDelayedMetrics() {
++        isTrackingDelayedMetrics = true;
++        log.info("[TRACKER] Tracking delayed metrics started");
++    }
++
++    public void resetIsTrackingDelayedMetrics() {
++        isTrackingDelayedMetrics = false;
++        log.info("[TRACKER] Tracking delayed metrics stopped");
++    }
++
+     public void removeTenant(String tenantId) {
+         tenantIds.remove(tenantId);
+         log.info("[TRACKER] tenantId " + tenantId + " removed.");
+@@ -112,6 +123,18 @@ public class Tracker implements TrackerMBean {
+         }
+     }
+ 
++    public static void trackDelayedMetricsTenant(String tenantid, List<String> metricNames) {
++        if (isTrackingDelayedMetrics) {
++            StringBuilder sb = new StringBuilder();
++            for(String name : metricNames) {
++                sb.append(name);
++                sb.append(",");
++            }
++            String logMessage = String.format("[TRACKER][DELAYED METRIC] Tenant sending delayed metric is %s with the delayed metrics -- %s",tenantid,sb.toString());
++            log.info(logMessage);
++        }
++    }
++
+     public static void trackResponse(HttpRequest request, HttpResponse response) {
+         // check if tenantId is being tracked by JMX TenantTrackerMBean and log the response if it is
+         // HttpRequest is needed for original request uri and tenantId
+diff --git a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/TrackerMBean.java b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/TrackerMBean.java
+index 13a56a26..a68add4d 100644
+--- a/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/TrackerMBean.java
++++ b/blueflood-http/src/main/java/com/rackspacecloud/blueflood/tracker/TrackerMBean.java
+@@ -24,5 +24,6 @@ public interface TrackerMBean {
+     public void removeTenant(String tenantId);
+     public void removeAllTenants();
+     public Set getTenants();
+-
++    public void setIsTrackingDelayedMetrics();
++    public void resetIsTrackingDelayedMetrics();
+ }
+diff --git a/blueflood-http/src/test/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainerTest.java b/blueflood-http/src/test/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainerTest.java
+index d25fd736..462618ee 100644
+--- a/blueflood-http/src/test/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainerTest.java
++++ b/blueflood-http/src/test/java/com/rackspacecloud/blueflood/inputs/formats/JSONMetricsContainerTest.java
+@@ -82,6 +82,40 @@ public class JSONMetricsContainerTest {
+         }
+     }
+ 
++    @Test
++    public void testDelayedMetric() throws Exception {
++        String jsonBody = "[{\"collectionTime\":1401302372775,\"ttlInSeconds\":172800,\"metricValue\":1844,\"metricName\":\"metricName1\",\"unit\":\"unknown\"}]";
++
++        JSONMetricsContainer container = null;
++
++        List<JSONMetricsContainer.JSONMetric> jsonMetrics =
++                mapper.readValue(
++                        jsonBody,
++                        typeFactory.constructCollectionType(List.class,
++                                JSONMetricsContainer.JSONMetric.class)
++                );
++        container = new JSONMetricsContainer("786659", jsonMetrics);
++        List<Metric> metrics = container.toMetrics();
++        Assert.assertTrue(container.areDelayedMetricsPresent());
++    }
++
++    @Test
++    public void testDelayedMetricFalseForRecentMetric() throws Exception {
++        String jsonBody = "[{\"collectionTime\":"+System.currentTimeMillis()+",\"ttlInSeconds\":172800,\"metricValue\":1844,\"metricName\":\"metricName1\",\"unit\":\"unknown\"}]";
++
++        JSONMetricsContainer container = null;
++
++        List<JSONMetricsContainer.JSONMetric> jsonMetrics =
++                mapper.readValue(
++                        jsonBody,
++                        typeFactory.constructCollectionType(List.class,
++                                JSONMetricsContainer.JSONMetric.class)
++                );
++        container = new JSONMetricsContainer("786659", jsonMetrics);
++        List<Metric> metrics = container.toMetrics();
++        Assert.assertFalse(container.areDelayedMetricsPresent());
++    }
++
+     public static List<Map<String, Object>> generateMetricsData() throws Exception {
+         List<Map<String, Object>> metricsList = new ArrayList<Map<String, Object>>();
+ 
+diff --git a/demo/ingest.py b/demo/ingest.py
+index f6d270d8..b90b5256 100755
+--- a/demo/ingest.py
++++ b/demo/ingest.py
+@@ -92,7 +92,7 @@ def main():
+         print('')
+     except Exception, ex:
+         print(ex)
+-        raise Exception('Cannot ingest metrics into bluflood')
++        raise Exception('Cannot ingest metrics into blueflood')
+ 
+ main()
+ 
+diff --git a/demo/retrieve.py b/demo/retrieve.py
+index 2fd21ab1..8285e083 100755
+--- a/demo/retrieve.py
++++ b/demo/retrieve.py
+@@ -89,6 +89,6 @@ def main():
+                 print(r.content)
+     except Exception, ex:
+         print(ex)
+-        raise Exception('Cannot retrieve metrics from bluflood')
++        raise Exception('Cannot retrieve metrics from blueflood')
+ 
+ main()

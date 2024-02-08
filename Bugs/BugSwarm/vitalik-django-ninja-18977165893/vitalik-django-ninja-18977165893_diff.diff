@@ -1,0 +1,330 @@
+diff --git a/.pre-commit-config.yaml b/.pre-commit-config.yaml
+index 3b12807..4f58cbf 100644
+--- a/.pre-commit-config.yaml
++++ b/.pre-commit-config.yaml
+@@ -6,7 +6,7 @@ repos:
+       # - id: end-of-file-fixer
+       # - id: trailing-whitespace
+   - repo: https://github.com/pre-commit/mirrors-mypy
+-    rev: v0.950
++    rev: v1.7.1
+     hooks:
+       - id: mypy
+         additional_dependencies: ["django-stubs", "pydantic"]
+diff --git a/ninja/constants.py b/ninja/constants.py
+index 52095fc..3a8930f 100644
+--- a/ninja/constants.py
++++ b/ninja/constants.py
+@@ -1,4 +1,4 @@
+-from typing import Any, Dict
++from typing import Any, Dict, Optional
+ 
+ __all__ = ["NOT_SET"]
+ 
+@@ -10,7 +10,7 @@ class NOT_SET_TYPE:
+     def __copy__(self) -> Any:
+         return NOT_SET
+ 
+-    def __deepcopy__(self, memodict: Dict = None) -> Any:
++    def __deepcopy__(self, memodict: Optional[Dict] = None) -> Any:
+         return NOT_SET
+ 
+ 
+diff --git a/ninja/filter_schema.py b/ninja/filter_schema.py
+index aa7db9e..60f4be5 100644
+--- a/ninja/filter_schema.py
++++ b/ninja/filter_schema.py
+@@ -67,14 +67,15 @@ class FilterSchema(Schema):
+         elif isinstance(q_expression, str):
+             return Q(**{q_expression: field_value})
+         elif isinstance(q_expression, list):
+-            expression_connector = field_extra.get(
++            expression_connector = field_extra.get(  # type: ignore
+                 "expression_connector", DEFAULT_FIELD_LEVEL_EXPRESSION_CONNECTOR
+-            )  # type: ignore
++            )
+             q = Q()
+             for q_expression_part in q_expression:
+-                q = q._combine(
+-                    Q(**{q_expression_part: field_value}), expression_connector
+-                )  # type: ignore[attr-defined]
++                q = q._combine(  # type: ignore
++                    Q(**{q_expression_part: field_value}),  # type: ignore
++                    expression_connector,
++                )
+             return q
+         else:
+             raise ImproperlyConfigured(
+@@ -91,9 +92,10 @@ class FilterSchema(Schema):
+         for field_name, field in self.model_fields.items():
+             filter_value = getattr(self, field_name)
+             field_extra = field.json_schema_extra or {}
+-            ignore_none = field_extra.get(
+-                "ignore_none", self.model_config["ignore_none"]
+-            )  # type: ignore
++            ignore_none = field_extra.get(  # type: ignore
++                "ignore_none",
++                self.model_config["ignore_none"],  # type: ignore
++            )
+ 
+             # Resolve q for a field even if we skip it due to None value
+             # So that improperly configured fields are easier to detect
+diff --git a/ninja/main.py b/ninja/main.py
+index b11c3fd..0db6be3 100644
+--- a/ninja/main.py
++++ b/ninja/main.py
+@@ -364,7 +364,7 @@ class NinjaAPI:
+         *,
+         auth: Any = NOT_SET,
+         tags: Optional[List[str]] = None,
+-        parent_router: Router = None,
++        parent_router: Optional[Router] = None,
+     ) -> None:
+         if isinstance(router, str):
+             router = import_string(router)
+@@ -420,8 +420,8 @@ class NinjaAPI:
+         request: HttpRequest,
+         data: Any,
+         *,
+-        status: int = None,
+-        temporal_response: HttpResponse = None,
++        status: Optional[int] = None,
++        temporal_response: Optional[HttpResponse] = None,
+     ) -> HttpResponse:
+         if temporal_response:
+             status = temporal_response.status_code
+diff --git a/ninja/openapi/schema.py b/ninja/openapi/schema.py
+index 78e5a8a..72226e7 100644
+--- a/ninja/openapi/schema.py
++++ b/ninja/openapi/schema.py
+@@ -302,7 +302,7 @@ class OpenAPISchema(dict):
+                 scopes: List[DictStrAny] = []  # TODO: scopes
+                 name = auth.__class__.__name__
+                 result.append({name: scopes})  # TODO: check if unique
+-                self.securitySchemes[name] = auth.openapi_security_schema  # type: ignore
++                self.securitySchemes[name] = auth.openapi_security_schema
+         return result
+ 
+     def get_components(self) -> DictStrAny:
+diff --git a/ninja/operation.py b/ninja/operation.py
+index d372350..bad7078 100644
+--- a/ninja/operation.py
++++ b/ninja/operation.py
+@@ -51,7 +51,7 @@ class Operation:
+         exclude_defaults: bool = False,
+         exclude_none: bool = False,
+         include_in_schema: bool = True,
+-        url_name: str = None,
++        url_name: Optional[str] = None,
+         openapi_extra: Optional[Dict[str, Any]] = None,
+     ) -> None:
+         self.is_async = False
+@@ -93,7 +93,7 @@ class Operation:
+ 
+         if hasattr(view_func, "_ninja_contribute_to_operation"):
+             # Allow 3rd party code to contribute to the operation behaviour
+-            callbacks: List[Callable] = view_func._ninja_contribute_to_operation  # type: ignore
++            callbacks: List[Callable] = view_func._ninja_contribute_to_operation
+             for callback in callbacks:
+                 callback(self)
+ 
+diff --git a/ninja/orm/metaclass.py b/ninja/orm/metaclass.py
+index f58f606..84605aa 100644
+--- a/ninja/orm/metaclass.py
++++ b/ninja/orm/metaclass.py
+@@ -62,7 +62,7 @@ class MetaConf:
+             fields=fields,
+             exclude=exclude,
+             fields_optional=optional_fields,
+-        )  # type: ignore
++        )
+ 
+ 
+ class ModelSchemaMetaclass(ResolverMetaclass):
+diff --git a/ninja/pagination.py b/ninja/pagination.py
+index a677a66..684250a 100644
+--- a/ninja/pagination.py
++++ b/ninja/pagination.py
+@@ -6,7 +6,7 @@ from typing import Any, Callable, List, Optional, Tuple, Type
+ from django.db.models import QuerySet
+ from django.http import HttpRequest
+ from django.utils.module_loading import import_string
+-from typing_extensions import get_args as get_collection_args  # type: ignore
++from typing_extensions import get_args as get_collection_args
+ 
+ from ninja import Field, Query, Router, Schema
+ from ninja.conf import settings
+@@ -48,7 +48,7 @@ class PaginationBase(ABC):
+         """
+         try:
+             # forcing to find queryset.count instead of list.count:
+-            return queryset.all().count()  # type: ignore
++            return queryset.all().count()
+         except AttributeError:
+             return len(queryset)
+ 
+@@ -144,7 +144,7 @@ def _inject_pagination(
+         result = paginator.paginate_queryset(
+             items, pagination=pagination_params, request=request, **kwargs
+         )
+-        if paginator.Output:
++        if paginator.Output:  # type: ignore
+             result[paginator.items_attribute] = list(result[paginator.items_attribute])
+             # ^ forcing queryset evaluation #TODO: check why pydantic did not do it here
+         return result
+@@ -156,7 +156,7 @@ def _inject_pagination(
+         paginator.InputSource,
+     )
+ 
+-    if paginator.Output:
++    if paginator.Output:  # type: ignore
+         contribute_operation_callback(
+             view_with_pagination,
+             partial(make_response_paginated, paginator),
+diff --git a/ninja/params/models.py b/ninja/params/models.py
+index 2b53e44..aa56964 100644
+--- a/ninja/params/models.py
++++ b/ninja/params/models.py
+@@ -191,20 +191,19 @@ class Param(FieldInfo):
+         self,
+         default: Any,
+         *,
+-        alias: str = None,
+-        title: str = None,
+-        description: str = None,
+-        gt: float = None,
+-        ge: float = None,
+-        lt: float = None,
+-        le: float = None,
+-        min_length: int = None,
+-        max_length: int = None,
+-        regex: str = None,
+-        example: Any = None,
++        alias: Optional[str] = None,
++        title: Optional[str] = None,
++        description: Optional[str] = None,
++        gt: Optional[float] = None,
++        ge: Optional[float] = None,
++        lt: Optional[float] = None,
++        le: Optional[float] = None,
++        min_length: Optional[int] = None,
++        max_length: Optional[int] = None,
++        example: Optional[Any] = None,
+         examples: Optional[Dict[str, Any]] = None,
+-        deprecated: bool = None,
+-        include_in_schema: bool = True,
++        deprecated: Optional[bool] = None,
++        include_in_schema: Optional[bool] = True,
+         # param_name: str = None,
+         # param_type: Any = None,
+         **extra: Any,
+@@ -226,6 +225,7 @@ class Param(FieldInfo):
+             extra["validation_alias"] = alias
+         if alias and not extra.get("serialization_alias"):
+             extra["serialization_alias"] = alias
++
+         super().__init__(
+             default=default,
+             alias=alias,
+@@ -237,7 +237,6 @@ class Param(FieldInfo):
+             le=le,
+             min_length=min_length,
+             max_length=max_length,
+-            regex=regex,
+             json_schema_extra=json_schema_extra,
+             **extra,
+         )
+diff --git a/ninja/schema.py b/ninja/schema.py
+index 482a7fd..c6b3538 100644
+--- a/ninja/schema.py
++++ b/ninja/schema.py
+@@ -222,7 +222,7 @@ class Schema(BaseModel, metaclass=ResolverMetaclass):
+         return cls.model_json_schema(schema_generator=NinjaGenerateJsonSchema)
+ 
+     @classmethod
+-    def schema(cls) -> DictStrAny:
++    def schema(cls) -> DictStrAny:  # type: ignore
+         warnings.warn(
+             ".schema() is deprecated, use .json_schema() instead",
+             DeprecationWarning,
+diff --git a/ninja/security/base.py b/ninja/security/base.py
+index afc9d0e..92fc73c 100644
+--- a/ninja/security/base.py
++++ b/ninja/security/base.py
+@@ -28,7 +28,7 @@ class AuthBase(ABC):
+ 
+         self.is_async = False
+         if hasattr(self, "authenticate"):  # pragma: no branch
+-            self.is_async = is_async_callable(self.authenticate)  # type: ignore
++            self.is_async = is_async_callable(self.authenticate)
+ 
+     @abstractmethod
+     def __call__(self, request: HttpRequest) -> Optional[Any]:
+diff --git a/ninja/signature/details.py b/ninja/signature/details.py
+index 067614c..0117d2f 100644
+--- a/ninja/signature/details.py
++++ b/ninja/signature/details.py
+@@ -7,7 +7,7 @@ import pydantic
+ from django.http import HttpResponse
+ from pydantic.fields import FieldInfo
+ from pydantic_core import PydanticUndefined
+-from typing_extensions import Annotated, get_args, get_origin  # type: ignore
++from typing_extensions import Annotated, get_args, get_origin
+ 
+ from ninja import UploadedFile
+ from ninja.compatibility.util import UNION_TYPES
+@@ -79,7 +79,7 @@ class ViewSignature:
+             # _ninja_contribute_args is a special attribute
+             # which allows developers to create custom function params
+             # inside decorators or other functions
+-            for p_name, p_type, p_source in view_func._ninja_contribute_args:  # type: ignore
++            for p_name, p_type, p_source in view_func._ninja_contribute_args:
+                 self.params.append(
+                     FuncParam(p_name, p_source.alias or p_name, p_source, p_type, False)
+                 )
+diff --git a/ninja/signature/utils.py b/ninja/signature/utils.py
+index 652c4a6..4ff4042 100644
+--- a/ninja/signature/utils.py
++++ b/ninja/signature/utils.py
+@@ -2,14 +2,11 @@ import asyncio
+ import inspect
+ import re
+ import sys
+-from typing import Any, Callable, ForwardRef, List, Set, cast  # type: ignore
++from typing import Any, Callable, ForwardRef, List, Set, cast
+ 
+ from django.urls import register_converter
+ from django.urls.converters import UUIDConverter
+ 
+-# from pydantic.typing import ForwardRef, evaluate_forwardref  # type: ignore
+-
+-
+ if sys.version_info < (3, 9):  # pragma: nocover
+ 
+     def evaluate_forwardref(type_: ForwardRef, globalns: Any, localns: Any) -> Any:
+diff --git a/ninja/testing/client.py b/ninja/testing/client.py
+index ebf4f02..c0b81f1 100644
+--- a/ninja/testing/client.py
++++ b/ninja/testing/client.py
+@@ -133,7 +133,7 @@ class NinjaClientBase:
+             }
+         )
+ 
+-        request.headers = HttpHeaders(request.META)  # type: ignore
++        request.headers = HttpHeaders(request.META)
+ 
+         if isinstance(data, QueryDict):
+             request.POST = data
+diff --git a/pyproject.toml b/pyproject.toml
+index dc46d78..79c55ae 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -59,7 +59,7 @@ test = [
+     "pytest-asyncio",
+     "psycopg2-binary",
+     "black",
+-    "mypy==0.931",
++    "mypy==1.7.1",
+     "ruff==0.1.6",
+     "django-stubs",
+ ]

@@ -1,0 +1,13 @@
+diff --git a/testsuite/integration/src/test/java/org/keycloak/testsuite/account/AccountTest.java b/testsuite/integration/src/test/java/org/keycloak/testsuite/account/AccountTest.java
+index efe3fd4c50..89ed153d44 100755
+--- a/testsuite/integration/src/test/java/org/keycloak/testsuite/account/AccountTest.java
++++ b/testsuite/integration/src/test/java/org/keycloak/testsuite/account/AccountTest.java
+@@ -224,7 +224,7 @@ public class AccountTest {
+ 
+         Assert.assertEquals("Invalid username or password.", loginPage.getError());
+ 
+-        events.expectLogin().session((String) null).error("invalid_user_credentials").removeDetail(Details.CODE_ID).assertEvent();
++        events.expectLogin().session((String) null).error("invalid_user_credentials").assertEvent();
+ 
+         loginPage.open();
+         loginPage.login("test-user@localhost", "new-password");

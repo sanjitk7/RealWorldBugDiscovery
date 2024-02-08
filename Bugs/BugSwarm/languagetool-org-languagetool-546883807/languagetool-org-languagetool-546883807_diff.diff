@@ -1,0 +1,15 @@
+diff --git a/languagetool-office-extension/src/main/java/org/languagetool/openoffice/SingleDocument.java b/languagetool-office-extension/src/main/java/org/languagetool/openoffice/SingleDocument.java
+index 3518ffd1a18..2f11454eb08 100644
+--- a/languagetool-office-extension/src/main/java/org/languagetool/openoffice/SingleDocument.java
++++ b/languagetool-office-extension/src/main/java/org/languagetool/openoffice/SingleDocument.java
+@@ -108,7 +108,9 @@ class SingleDocument {
+     this.sentencesCache = new ResultCache();
+     this.paragraphsCache = new ResultCache();
+     this.singleParaCache = new ResultCache();
+-    setConfigValues(config);
++    if (config != null) {
++      setConfigValues(config);
++    }
+   }
+   
+   /**  get the result for a check of a single document 

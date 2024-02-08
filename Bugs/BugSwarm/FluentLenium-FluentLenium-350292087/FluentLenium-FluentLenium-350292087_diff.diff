@@ -1,0 +1,50 @@
+diff --git a/fluentlenium-core/src/main/java/org/fluentlenium/adapter/FluentAdapter.java b/fluentlenium-core/src/main/java/org/fluentlenium/adapter/FluentAdapter.java
+index 0ba6eeff..0f70b786 100644
+--- a/fluentlenium-core/src/main/java/org/fluentlenium/adapter/FluentAdapter.java
++++ b/fluentlenium-core/src/main/java/org/fluentlenium/adapter/FluentAdapter.java
+@@ -52,10 +52,10 @@ public class FluentAdapter implements FluentControl {
+     @Delegate(types = FluentControl.class, excludes = {SeleniumDriverControl.class, Configuration.class})
+     // We want getDriver to be final.
+     private ContainerFluentControl getFluentControl() {
+-        ContainerFluentControl containerFluentControl = (ContainerFluentControl) getControlContainer().getFluentControl();
++        FluentControlContainer fluentControlContainer = getControlContainer();
+ 
+-        if (containerFluentControl != null) {
+-            return containerFluentControl;
++        if (fluentControlContainer != null) {
++            return (ContainerFluentControl)fluentControlContainer.getFluentControl();
+         } else {
+             throw new IllegalStateException("FluentControl is not initialized, WebDriver or Configuration issue");
+         }
+diff --git a/fluentlenium-core/src/test/java/org/fluentlenium/adapter/FluentTestRunnerAdapterTest.java b/fluentlenium-core/src/test/java/org/fluentlenium/adapter/FluentTestRunnerAdapterTest.java
+index 3895986b..692512d8 100644
+--- a/fluentlenium-core/src/test/java/org/fluentlenium/adapter/FluentTestRunnerAdapterTest.java
++++ b/fluentlenium-core/src/test/java/org/fluentlenium/adapter/FluentTestRunnerAdapterTest.java
+@@ -7,6 +7,7 @@ import static org.mockito.Matchers.eq;
+ import static org.mockito.Matchers.isNull;
+ import static org.mockito.Mockito.never;
+ import static org.mockito.Mockito.spy;
++import static org.mockito.Mockito.times;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+@@ -113,16 +114,17 @@ public class FluentTestRunnerAdapterTest {
+     @Test(expected = IllegalStateException.class)
+     public void webDriverNotAvailable() {
+         FluentTestRunnerAdapter adapter = spy(new FluentTestRunnerAdapter());
+-        adapter.initFluent(driver);
+         when(adapter.getControlContainer().getFluentControl()).thenReturn(null);
+ 
+         try {
+             adapter.takeHtmlDump();
+         } catch (IllegalStateException ex) {
++            verify(adapter, times(1)).takeHtmlDump();
++            verify(adapter, times(1)).getDriver();
+             assertEquals("FluentControl is not initialized, WebDriver or Configuration issue", ex.getMessage());
+             throw ex;
+         }
+ 
+-        fail("FluentControl is not initialized did not throw!");
++        fail("FluentControl is not initialized exception, did not throw!");
+     }
+ }
