@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Quixbugs is a dataset containing 40 Java and Python applications, each containing a single bug.  These buggy programs were built as part of the Quixey Challenge, organized by a startup named Quixey in 2011. These defective programs of classic algorithms were provided to programmers to fix in a minute for a monetary prize. These programs were initially written only in Python. Researchers at MIT and Google translated them into Java to generate a dataset for Multilingual Program Repair. Each bug is accompanied by pass/fail test cases.
+Quixbugs is a dataset containing 40 Java and Python programs, each containing a single bug.  These buggy programs were built as part of the Quixey Challenge, organized by a startup named Quixey in 2011. These buggy programs of classic algorithms were provided to programmers to fix in a minute for a monetary prize. These programs were initially written only in Python. Researchers at MIT and Google translated them into Java to generate a dataset for Multilingual Program Repair. Each bug is accompanied by pass/fail test cases.
 
 ## Number of Bugs
 | Language | Bug Count                                                   |
@@ -132,7 +132,7 @@ Quixbugs is a dataset containing 40 Java and Python applications, each containin
      }
  }
 ```
-The program id supposed to find the GCD of two numbers. As per Euclid's algorithm, GCD of a number and 0 is the number itself. In the recursive function, the base condition checks if the second number (b) is zero. However, in the buggy code, the recursive call always reduces the first number instead of the second number causing an infinite recursion. It was fixed by interchanging the numbers in the fixed code.
+The program is supposed to find the GCD of two numbers. As per Euclid's algorithm, GCD of a number and 0 is the number itself. In the recursive function, the base condition checks if the second number (b) is zero. However, in the buggy code, the recursive call always reduces the first number instead of the second number causing an infinite recursion. It was fixed by interchanging the numbers in the fixed code.
 
 #### BitCount
 ```diff
@@ -166,7 +166,7 @@ The program id supposed to find the GCD of two numbers. As per Euclid's algorith
 -    1
 -"""
 ```
-This expected output of this function is to return the number of 1's in the bit representation of a number. The bitcount can be found by counting the number of times a number can be & (bitwise AND) with the previous number. The buggy code used ^ , which was replaced by & in the fixed code.
+The expected output of this function is to return the number of 1's in the bit representation of a number. The bitcount can be found by counting the number of times a number can be & (bitwise AND) with the previous number. The buggy code used ^ , which was replaced by & in the fixed code.
 
 #### Is_valid_parenthesization
 ```diff
@@ -189,7 +189,7 @@ This expected output of this function is to return the number of 1's in the bit 
      }
  }
 ```
-The buggy code always return true irrespective of the value of the depth. This was fixed to return true only when the value of depth becomes 0.
+The buggy code always returns true irrespective of the value of the depth. This was fixed to return true only when the value of depth becomes 0.
 
 
 #### Sieve
@@ -212,7 +212,7 @@ The buggy code always return true irrespective of the value of the depth. This w
              }
          }
 ```
-In this program, list_comp is a user-defined function which returns a list of the result of n%p>0 for all primes. n must only be added to primes all of the elements of the list are true. The buggy program makes use of any() which returns true if any one of ht e element is true. It was replaced by all() to give the correct implementation in the fixed code.
+In this program, list_comp is a user-defined function which returns a list of the result of n%p>0 for all primes. n must only be added to primes if all of the elements of the list are true. The buggy program makes use of any() which returns true if any one of the element is true. It was replaced by all() to give the correct implementation in the fixed code.
 
 #### QuickSort
 ```diff
@@ -234,4 +234,4 @@ In this program, list_comp is a user-defined function which returns a list of th
              }
          }
 ```
-While performing quicksort, while comparing an element to the pivot element, the element should be considered as greater even if it is equal to the pivot. The buggy code only checked if the element was greater and missed the equal check. This was corrected in the fixed code to include >= instead of >.
+For performing quicksort, while comparing an element to the pivot element, the element should be considered as greater even if it is equal to the pivot element. The buggy code only checks if the element was greater and missed the equal check. This was corrected in the fixed code to include >= instead of >.
