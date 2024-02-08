@@ -1,0 +1,193 @@
+diff --git a/.github/workflows/pr_tests.yml b/.github/workflows/pr_tests.yml
+index aaaea147..f7d9dde5 100644
+--- a/.github/workflows/pr_tests.yml
++++ b/.github/workflows/pr_tests.yml
+@@ -72,7 +72,7 @@ jobs:
+       run: |
+         apt-get update && apt-get install libsndfile1-dev libgl1 -y
+         python -m pip install -e .[quality,test]
+-        python -m pip install git+https://github.com/huggingface/accelerate.git
++        python -m pip install accelerate
+ 
+     - name: Environment
+       run: |
+@@ -115,7 +115,7 @@ jobs:
+       run: |
+         python -m pytest -n 2 --max-worker-restart=0 --dist=loadfile \
+           --make-reports=tests_${{ matrix.config.report }} \
+-          examples/test_examples.py 
++          examples/test_examples.py
+ 
+     - name: Failure short reports
+       if: ${{ failure() }}
+diff --git a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py
+index a73dc22a..a9f0de22 100644
+--- a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py
++++ b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py
+@@ -852,7 +852,9 @@ class AltDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+                         callback(step_idx, t, latents)
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
+index ea4a3128..74d5a15a 100644
+--- a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
++++ b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
+@@ -893,7 +893,9 @@ class AltDiffusionImg2ImgPipeline(
+                         callback(step_idx, t, latents)
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/controlnet/pipeline_controlnet.py b/src/diffusers/pipelines/controlnet/pipeline_controlnet.py
+index 6944d933..04ca51b1 100644
+--- a/src/diffusers/pipelines/controlnet/pipeline_controlnet.py
++++ b/src/diffusers/pipelines/controlnet/pipeline_controlnet.py
+@@ -1058,7 +1058,9 @@ class StableDiffusionControlNetPipeline(
+             torch.cuda.empty_cache()
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/controlnet/pipeline_controlnet_img2img.py b/src/diffusers/pipelines/controlnet/pipeline_controlnet_img2img.py
+index b692d936..8683d09e 100644
+--- a/src/diffusers/pipelines/controlnet/pipeline_controlnet_img2img.py
++++ b/src/diffusers/pipelines/controlnet/pipeline_controlnet_img2img.py
+@@ -1138,7 +1138,9 @@ class StableDiffusionControlNetImg2ImgPipeline(
+             torch.cuda.empty_cache()
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/controlnet/pipeline_controlnet_inpaint.py b/src/diffusers/pipelines/controlnet/pipeline_controlnet_inpaint.py
+index 3e0b07bf..399cfdcf 100644
+--- a/src/diffusers/pipelines/controlnet/pipeline_controlnet_inpaint.py
++++ b/src/diffusers/pipelines/controlnet/pipeline_controlnet_inpaint.py
+@@ -1405,7 +1405,9 @@ class StableDiffusionControlNetInpaintPipeline(
+             torch.cuda.empty_cache()
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
+index 583e6046..a01ace26 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
+@@ -885,7 +885,9 @@ class StableDiffusionImg2ImgPipeline(
+                         callback(step_idx, t, latents)
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
+index ca7d62fd..bd3ccce7 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
+@@ -1159,7 +1159,9 @@ class StableDiffusionInpaintPipeline(
+                 init_image = self._encode_vae_image(init_image, generator=generator)
+                 mask_condition = mask_condition.to(device=device, dtype=masked_image_latents.dtype)
+                 condition_kwargs = {"image": init_image_condition, "mask": mask_condition}
+-            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, **condition_kwargs)[0]
++            image = self.vae.decode(
++                latents / self.vae.config.scaling_factor, return_dict=False, generator=generator, **condition_kwargs
++            )[0]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/utils/dummy_pt_objects.py b/src/diffusers/utils/dummy_pt_objects.py
+index d2e3104c..090b1081 100644
+--- a/src/diffusers/utils/dummy_pt_objects.py
++++ b/src/diffusers/utils/dummy_pt_objects.py
+@@ -615,21 +615,6 @@ class CMStochasticIterativeScheduler(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class ConsistencyDecoderScheduler(metaclass=DummyObject):
+-    _backends = ["torch"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-
+ class DDIMInverseScheduler(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+diff --git a/tests/models/test_models_vae.py b/tests/models/test_models_vae.py
+index 6034b83a..1f5b847d 100644
+--- a/tests/models/test_models_vae.py
++++ b/tests/models/test_models_vae.py
+@@ -814,7 +814,7 @@ class ConsistencyDecoderVAEIntegrationTests(unittest.TestCase):
+         torch.cuda.empty_cache()
+ 
+     def test_encode_decode(self):
+-        vae = ConsistencyDecoderVAE.from_pretrained("williamberman/consistency-decoder")  # TODO - update
++        vae = ConsistencyDecoderVAE.from_pretrained("openai/consistency-decoder")  # TODO - update
+         vae.to(torch_device)
+ 
+         image = load_image(
+@@ -835,7 +835,7 @@ class ConsistencyDecoderVAEIntegrationTests(unittest.TestCase):
+         assert torch_all_close(actual_output, expected_output, atol=5e-3)
+ 
+     def test_sd(self):
+-        vae = ConsistencyDecoderVAE.from_pretrained("williamberman/consistency-decoder")  # TODO - update
++        vae = ConsistencyDecoderVAE.from_pretrained("openai/consistency-decoder")  # TODO - update
+         pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", vae=vae, safety_checker=None)
+         pipe.to(torch_device)
+ 
+@@ -850,7 +850,7 @@ class ConsistencyDecoderVAEIntegrationTests(unittest.TestCase):
+ 
+     def test_encode_decode_f16(self):
+         vae = ConsistencyDecoderVAE.from_pretrained(
+-            "williamberman/consistency-decoder", torch_dtype=torch.float16
++            "openai/consistency-decoder", torch_dtype=torch.float16
+         )  # TODO - update
+         vae.to(torch_device)
+ 
+@@ -877,7 +877,7 @@ class ConsistencyDecoderVAEIntegrationTests(unittest.TestCase):
+ 
+     def test_sd_f16(self):
+         vae = ConsistencyDecoderVAE.from_pretrained(
+-            "williamberman/consistency-decoder", torch_dtype=torch.float16
++            "openai/consistency-decoder", torch_dtype=torch.float16
+         )  # TODO - update
+         pipe = StableDiffusionPipeline.from_pretrained(
+             "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, vae=vae, safety_checker=None

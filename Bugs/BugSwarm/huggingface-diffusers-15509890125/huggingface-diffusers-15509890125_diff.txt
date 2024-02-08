@@ -1,0 +1,67 @@
+diff --git a/src/diffusers/utils/dummy_pt_objects.py b/src/diffusers/utils/dummy_pt_objects.py
+index 9be409a91..f4020b9b5 100644
+--- a/src/diffusers/utils/dummy_pt_objects.py
++++ b/src/diffusers/utils/dummy_pt_objects.py
+@@ -32,7 +32,7 @@ class AutoencoderKL(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class ControlNetModel(metaclass=DummyObject):
++class AutoencoderTiny(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+     def __init__(self, *args, **kwargs):
+@@ -47,7 +47,7 @@ class ControlNetModel(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class ModelMixin(metaclass=DummyObject):
++class ControlNetModel(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+     def __init__(self, *args, **kwargs):
+@@ -62,7 +62,7 @@ class ModelMixin(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class MultiAdapter(metaclass=DummyObject):
++class ModelMixin(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+     def __init__(self, *args, **kwargs):
+@@ -77,7 +77,7 @@ class MultiAdapter(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class PriorTransformer(metaclass=DummyObject):
++class MultiAdapter(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+     def __init__(self, *args, **kwargs):
+@@ -92,7 +92,7 @@ class PriorTransformer(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class T2IAdapter(metaclass=DummyObject):
++class PriorTransformer(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+     def __init__(self, *args, **kwargs):
+@@ -107,7 +107,7 @@ class T2IAdapter(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class T5FilmDecoder(metaclass=DummyObject):
++class T2IAdapter(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+     def __init__(self, *args, **kwargs):
+@@ -122,7 +122,7 @@ class T5FilmDecoder(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
+-class AutoencoderTiny(metaclass=DummyObject):
++class T5FilmDecoder(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+     def __init__(self, *args, **kwargs):

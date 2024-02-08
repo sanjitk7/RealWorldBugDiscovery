@@ -1,0 +1,484 @@
+diff --git a/requirements.txt b/requirements.txt
+index 89053574a..c228538ba 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -3,5 +3,5 @@ pycryptodomex
+ websockets
+ brotli; platform_python_implementation=='CPython'
+ brotlicffi; platform_python_implementation!='CPython'
+-curl-cffi >= 0.5.7 ; platform_python_implementation=='CPython'
++curl-cffi >= 0.5.9b2 ; platform_python_implementation=='CPython'
+ certifi
+\ No newline at end of file
+diff --git a/yt_dlp/__init__.py b/yt_dlp/__init__.py
+index ffc507838..114ace0d5 100644
+--- a/yt_dlp/__init__.py
++++ b/yt_dlp/__init__.py
+@@ -20,7 +20,6 @@
+ from .downloader.external import get_external_downloader
+ from .extractor import list_extractor_classes
+ from .extractor.adobepass import MSO_INFO
+-from .networking.utils import std_headers
+ from .options import parseOpts
+ from .postprocessor import (
+     FFmpegExtractAudioPP,
+diff --git a/yt_dlp/dependencies/__init__.py b/yt_dlp/dependencies/__init__.py
+index 5d5aced77..22c2e93fa 100644
+--- a/yt_dlp/dependencies/__init__.py
++++ b/yt_dlp/dependencies/__init__.py
+@@ -56,11 +56,6 @@
+     # See https://github.com/yt-dlp/yt-dlp/issues/2633
+     websockets = None
+ 
+-try:
+-    import curl_cffi
+-except ImportError:
+-    curl_cffi = None
+-
+ try:
+     import xattr  # xattr or pyxattr
+ except ImportError:
+diff --git a/yt_dlp/downloader/youtube_live_chat.py b/yt_dlp/downloader/youtube_live_chat.py
+index bdeca0170..c7a86374a 100644
+--- a/yt_dlp/downloader/youtube_live_chat.py
++++ b/yt_dlp/downloader/youtube_live_chat.py
+@@ -4,7 +4,6 @@
+ from .fragment import FragmentFD
+ from ..networking.exceptions import HTTPError
+ from ..utils import (
+-    HTTPHeaderDict,
+     RegexNotFoundError,
+     RetryManager,
+     dict_get,
+diff --git a/yt_dlp/extractor/pornhub.py b/yt_dlp/extractor/pornhub.py
+index 75a07ec42..67cc73b74 100644
+--- a/yt_dlp/extractor/pornhub.py
++++ b/yt_dlp/extractor/pornhub.py
+@@ -748,7 +748,7 @@ class PornHubPagedVideoListIE(PornHubPagedPlaylistBaseIE):
+     def suitable(cls, url):
+         return (False
+                 if PornHubIE.suitable(url) or PornHubUserIE.suitable(url) or PornHubUserVideosUploadIE.suitable(url)
+-                else super().suitable(url))
++                else super(PornHubPagedVideoListIE, cls).suitable(url))
+ 
+ 
+ class PornHubUserVideosUploadIE(PornHubPagedPlaylistBaseIE):
+@@ -797,8 +797,8 @@ def _entries(self, url, host, item_id):
+         page_entries = self._extract_entries(webpage, host)
+ 
+         def download_page(page_num):
+-            note = f'Downloading page {page_num}'
+-            page_url = f'https://www.{host}/playlist/viewChunked'
++            note = 'Downloading page {}'.format(page_num)
++            page_url = 'https://www.{}/playlist/viewChunked'.format(host)
+             return self._download_webpage(page_url, item_id, note, query={
+                 'id': playlist_id,
+                 'page': page_num,
+@@ -809,8 +809,8 @@ def download_page(page_num):
+             if page_num > 1:
+                 webpage = download_page(page_num)
+                 page_entries = self._extract_entries(webpage, host)
+-            if not page_entries:
+-                break
++            for e in page_entries:
++                yield e
+             yield from page_entries
+ 
+     def _real_extract(self, url):
+diff --git a/yt_dlp/extractor/youtube.py b/yt_dlp/extractor/youtube.py
+index 34d2fb174..023d8fd8c 100644
+--- a/yt_dlp/extractor/youtube.py
++++ b/yt_dlp/extractor/youtube.py
+@@ -6481,7 +6481,7 @@ def _real_extract(self, url, smuggled_data):
+ 
+         # Handle both video/playlist URLs
+         qs = parse_qs(url)
+-        video_id, playlist_id = (traverse_obj(qs, (key, 0)) for key in ('v', 'list'))
++        video_id, playlist_id = [traverse_obj(qs, (key, 0)) for key in ('v', 'list')]
+         if not video_id and mobj['not_channel'].startswith('watch'):
+             if not playlist_id:
+                 # If there is neither video or playlist ids, youtube redirects to home page, which is undesirable
+diff --git a/yt_dlp/networking/director.py b/yt_dlp/networking/director.py
+deleted file mode 100644
+index 52779c3cb..000000000
+--- a/yt_dlp/networking/director.py
++++ /dev/null
+@@ -1,128 +0,0 @@
+-from __future__ import annotations
+-
+-from .common import Request, RequestHandler, Response
+-from .exceptions import NoSupportingHandlers, RequestError, UnsupportedRequest
+-from ..utils import bug_reports_message, error_to_str
+-
+-_PREFERENCES = []
+-
+-
+-def register_preference(preference: type[Preference]):
+-    """Register a RequestHandler class"""
+-    assert issubclass(preference, Preference), f'{preference} must be a subclass of Preference'
+-    assert preference not in _PREFERENCES, f'{preference} is already registered'
+-    _PREFERENCES.append(preference)
+-    return preference
+-
+-
+-class Preference:
+-    """Preference class
+-
+-    Used by RequestDirector to determine the order in which RequestHandlers should be tried for a given request.
+-    The higher the preference, the higher the priority of the handler.
+-
+-    _RH_KEY: optional, to restrict the preference to a specific RequestHandler
+-    _PREFERENCE: optional, to add a fixed relative preference for a handler. Takes precedence over _get_preference.
+-
+-    If subclasses do not set _PREFERENCE, they should implement _get_preference
+-     to dynamically generate a preference based off the request and handler.
+-
+-    The returned preference should be an integer. The default preference is 0.
+-    """
+-    _RH_KEY: str = None
+-    _PREFERENCE: int = None
+-
+-    def get_preference(self, request: Request, handler: RequestHandler) -> int:
+-        if self._RH_KEY is not None and handler.RH_KEY != self._RH_KEY:
+-            return 0
+-        elif self._PREFERENCE is not None:
+-            return self._PREFERENCE
+-        return self._get_preference(request, handler)
+-
+-    def _get_preference(self, request: Request, handler: RequestHandler) -> int:
+-        """Generate a preference for the given request and handler. Implement this method in subclasses"""
+-        return 0
+-
+-
+-class RequestDirector:
+-    """RequestDirector class
+-
+-    Helper class that, when given a request, forward it to a RequestHandler that supports it.
+-
+-    @param logger: Logger instance.
+-    @param verbose: Print debug request information to stdout.
+-    """
+-
+-    def __init__(self, logger, verbose=False):
+-        self.handlers: dict[str, RequestHandler] = {}
+-        self.preferences: set[Preference] = set()
+-        self.logger = logger  # TODO(Grub4k): default logger
+-        self.verbose = verbose
+-
+-    def close(self):
+-        for handler in self.handlers.values():
+-            handler.close()
+-
+-    def add_handler(self, handler: RequestHandler):
+-        """Add a handler. If a handler of the same RH_KEY exists, it will overwrite it"""
+-        assert isinstance(handler, RequestHandler), 'handler must be a RequestHandler'
+-        self.handlers[handler.RH_KEY] = handler
+-
+-    def add_preference(self, preference: "Preference"):
+-        assert isinstance(preference, Preference), 'preference must be a Preference'
+-        self.preferences.add(preference)
+-
+-    def _print_verbose(self, msg):
+-        if self.verbose:
+-            self.logger.stdout(f'director: {msg}')
+-
+-    def _sort_handlers(self, request: Request) -> list[RequestHandler]:
+-        """
+-        Sorts handlers by preference, given a request
+-        """
+-        handler_preferences = {}
+-        for rh_key, handler in self.handlers.items():
+-            handler_preferences.setdefault(rh_key, 0)
+-            for preference in self.preferences:
+-                handler_preferences[rh_key] += preference.get_preference(request, handler)
+-        self._print_verbose(f'Handler preferences for this request: {handler_preferences}')
+-        return sorted(self.handlers.values(), key=lambda h: handler_preferences[h.RH_KEY], reverse=True)
+-
+-    def send(self, request: Request) -> Response:
+-        """
+-        Passes a request onto a suitable RequestHandler
+-        """
+-        if not self.handlers:
+-            raise RequestError('No request handlers configured')
+-
+-        assert isinstance(request, Request)
+-
+-        unexpected_errors = []
+-        unsupported_errors = []
+-        # TODO (future): add a per-request preference system
+-        for handler in self._sort_handlers(request):
+-            self._print_verbose(f'Checking if "{handler.RH_NAME}" supports this request.')
+-            try:
+-                handler.validate(request)
+-            except UnsupportedRequest as e:
+-                self._print_verbose(
+-                    f'"{handler.RH_NAME}" cannot handle this request (reason: {error_to_str(e)})')
+-                unsupported_errors.append(e)
+-                continue
+-
+-            self._print_verbose(f'Sending request via "{handler.RH_NAME}"')
+-            try:
+-                response = handler.send(request)
+-            except RequestError:
+-                raise
+-            except Exception as e:
+-                self.logger.error(
+-                    f'[{handler.RH_NAME}] Unexpected error: {error_to_str(e)}{bug_reports_message()}',
+-                    is_error=False)
+-                unexpected_errors.append(e)
+-                continue
+-
+-            assert isinstance(response, Response)
+-            return response
+-
+-        raise NoSupportingHandlers(unsupported_errors, unexpected_errors)
+diff --git a/yt_dlp/networking/utils.py b/yt_dlp/networking/utils.py
+deleted file mode 100644
+index 7de2e4136..000000000
+--- a/yt_dlp/networking/utils.py
++++ /dev/null
+@@ -1,244 +0,0 @@
+-from __future__ import annotations
+-
+-import contextlib
+-import random
+-import ssl
+-import sys
+-import urllib.parse
+-import urllib.request
+-from collections.abc import Iterable
+-
+-from .exceptions import RequestError
+-from ..dependencies import certifi
+-from ..socks import ProxyType
+-from ..utils import HTTPHeaderDict, format_field, traverse_obj
+-
+-
+-def random_user_agent():
+-    _USER_AGENT_TPL = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/%s Safari/537.36'
+-    _CHROME_VERSIONS = (
+-        '90.0.4430.212',
+-        '90.0.4430.24',
+-        '90.0.4430.70',
+-        '90.0.4430.72',
+-        '90.0.4430.85',
+-        '90.0.4430.93',
+-        '91.0.4472.101',
+-        '91.0.4472.106',
+-        '91.0.4472.114',
+-        '91.0.4472.124',
+-        '91.0.4472.164',
+-        '91.0.4472.19',
+-        '91.0.4472.77',
+-        '92.0.4515.107',
+-        '92.0.4515.115',
+-        '92.0.4515.131',
+-        '92.0.4515.159',
+-        '92.0.4515.43',
+-        '93.0.4556.0',
+-        '93.0.4577.15',
+-        '93.0.4577.63',
+-        '93.0.4577.82',
+-        '94.0.4606.41',
+-        '94.0.4606.54',
+-        '94.0.4606.61',
+-        '94.0.4606.71',
+-        '94.0.4606.81',
+-        '94.0.4606.85',
+-        '95.0.4638.17',
+-        '95.0.4638.50',
+-        '95.0.4638.54',
+-        '95.0.4638.69',
+-        '95.0.4638.74',
+-        '96.0.4664.18',
+-        '96.0.4664.45',
+-        '96.0.4664.55',
+-        '96.0.4664.93',
+-        '97.0.4692.20',
+-    )
+-    return _USER_AGENT_TPL % random.choice(_CHROME_VERSIONS)
+-
+-
+-std_headers = HTTPHeaderDict({
+-    'User-Agent': random_user_agent(),
+-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+-    'Accept-Language': 'en-us,en;q=0.5',
+-    'Sec-Fetch-Mode': 'navigate',
+-})
+-
+-
+-def ssl_load_certs(context: ssl.SSLContext, use_certifi=True):
+-    if certifi and use_certifi:
+-        context.load_verify_locations(cafile=certifi.where())
+-    else:
+-        try:
+-            context.load_default_certs()
+-        # Work around the issue in load_default_certs when there are bad certificates. See:
+-        # https://github.com/yt-dlp/yt-dlp/issues/1060,
+-        # https://bugs.python.org/issue35665, https://bugs.python.org/issue45312
+-        except ssl.SSLError:
+-            # enum_certificates is not present in mingw python. See https://github.com/yt-dlp/yt-dlp/issues/1151
+-            if sys.platform == 'win32' and hasattr(ssl, 'enum_certificates'):
+-                for storename in ('CA', 'ROOT'):
+-                    _ssl_load_windows_store_certs(context, storename)
+-            context.set_default_verify_paths()
+-
+-
+-def _ssl_load_windows_store_certs(ssl_context, storename):
+-    # Code adapted from _load_windows_store_certs in https://github.com/python/cpython/blob/main/Lib/ssl.py
+-    try:
+-        certs = [cert for cert, encoding, trust in ssl.enum_certificates(storename)
+-                 if encoding == 'x509_asn' and (
+-                     trust is True or ssl.Purpose.SERVER_AUTH.oid in trust)]
+-    except PermissionError:
+-        return
+-    for cert in certs:
+-        with contextlib.suppress(ssl.SSLError):
+-            ssl_context.load_verify_locations(cadata=cert)
+-
+-
+-def make_socks_proxy_opts(socks_proxy):
+-    url_components = urllib.parse.urlparse(socks_proxy)
+-    if url_components.scheme.lower() == 'socks5':
+-        socks_type = ProxyType.SOCKS5
+-        rdns = False
+-    elif url_components.scheme.lower() == 'socks5h':
+-        socks_type = ProxyType.SOCKS5
+-        rdns = True
+-    elif url_components.scheme.lower() == 'socks4':
+-        socks_type = ProxyType.SOCKS4
+-        rdns = False
+-    elif url_components.scheme.lower() == 'socks4a':
+-        socks_type = ProxyType.SOCKS4A
+-        rdns = True
+-    else:
+-        raise ValueError(f'Unknown SOCKS proxy version: {url_components.scheme.lower()}')
+-
+-    def unquote_if_non_empty(s):
+-        if not s:
+-            return s
+-        return urllib.parse.unquote_plus(s)
+-    return {
+-        'proxytype': socks_type,
+-        'addr': url_components.hostname,
+-        'port': url_components.port or 1080,
+-        'rdns': rdns,
+-        'username': unquote_if_non_empty(url_components.username),
+-        'password': unquote_if_non_empty(url_components.password),
+-    }
+-
+-
+-def select_proxy(url, proxies):
+-    """Unified proxy selector for all backends"""
+-    url_components = urllib.parse.urlparse(url)
+-    if 'no' in proxies:
+-        hostport = url_components.hostname + format_field(url_components.port, None, ':%s')
+-        if urllib.request.proxy_bypass_environment(hostport, {'no': proxies['no']}):
+-            return
+-        elif urllib.request.proxy_bypass(hostport):  # check system settings
+-            return
+-
+-    return traverse_obj(proxies, url_components.scheme or 'http', 'all')
+-
+-
+-def get_redirect_method(method, status):
+-    """Unified redirect method handling"""
+-
+-    # A 303 must either use GET or HEAD for subsequent request
+-    # https://datatracker.ietf.org/doc/html/rfc7231#section-6.4.4
+-    if status == 303 and method != 'HEAD':
+-        method = 'GET'
+-    # 301 and 302 redirects are commonly turned into a GET from a POST
+-    # for subsequent requests by browsers, so we'll do the same.
+-    # https://datatracker.ietf.org/doc/html/rfc7231#section-6.4.2
+-    # https://datatracker.ietf.org/doc/html/rfc7231#section-6.4.3
+-    if status in (301, 302) and method == 'POST':
+-        method = 'GET'
+-    return method
+-
+-
+-def make_ssl_context(
+-    verify=True,
+-    client_certificate=None,
+-    client_certificate_key=None,
+-    client_certificate_password=None,
+-    legacy_support=False,
+-    use_certifi=True,
+-):
+-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+-    context.check_hostname = verify
+-    context.verify_mode = ssl.CERT_REQUIRED if verify else ssl.CERT_NONE
+-
+-    # Some servers may reject requests if ALPN extension is not sent. See:
+-    # https://github.com/python/cpython/issues/85140
+-    # https://github.com/yt-dlp/yt-dlp/issues/3878
+-    with contextlib.suppress(NotImplementedError):
+-        context.set_alpn_protocols(['http/1.1'])
+-    if verify:
+-        ssl_load_certs(context, use_certifi)
+-
+-    if legacy_support:
+-        context.options |= 4  # SSL_OP_LEGACY_SERVER_CONNECT
+-        context.set_ciphers('DEFAULT')  # compat
+-
+-    elif ssl.OPENSSL_VERSION_INFO >= (1, 1, 1) and not ssl.OPENSSL_VERSION.startswith('LibreSSL'):
+-        # Use the default SSL ciphers and minimum TLS version settings from Python 3.10 [1].
+-        # This is to ensure consistent behavior across Python versions and libraries, and help avoid fingerprinting
+-        # in some situations [2][3].
+-        # Python 3.10 only supports OpenSSL 1.1.1+ [4]. Because this change is likely
+-        # untested on older versions, we only apply this to OpenSSL 1.1.1+ to be safe.
+-        # LibreSSL is excluded until further investigation due to cipher support issues [5][6].
+-        # 1. https://github.com/python/cpython/commit/e983252b516edb15d4338b0a47631b59ef1e2536
+-        # 2. https://github.com/yt-dlp/yt-dlp/issues/4627
+-        # 3. https://github.com/yt-dlp/yt-dlp/pull/5294
+-        # 4. https://peps.python.org/pep-0644/
+-        # 5. https://peps.python.org/pep-0644/#libressl-support
+-        # 6. https://github.com/yt-dlp/yt-dlp/commit/5b9f253fa0aee996cf1ed30185d4b502e00609c4#commitcomment-89054368
+-        context.set_ciphers(
+-            '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM')
+-        context.minimum_version = ssl.TLSVersion.TLSv1_2
+-
+-    if client_certificate:
+-        try:
+-            context.load_cert_chain(
+-                client_certificate, keyfile=client_certificate_key,
+-                password=client_certificate_password)
+-        except ssl.SSLError:
+-            raise RequestError('Unable to load client certificate')
+-
+-        if getattr(context, 'post_handshake_auth', None) is not None:
+-            context.post_handshake_auth = True
+-    return context
+-
+-
+-class InstanceStoreMixin:
+-    def __init__(self, **kwargs):
+-        self.__instances = []
+-        super().__init__(**kwargs)  # So that both MRO works
+-
+-    @staticmethod
+-    def _create_instance(**kwargs):
+-        raise NotImplementedError
+-
+-    def _get_instance(self, **kwargs):
+-        for key, instance in self.__instances:
+-            if key == kwargs:
+-                return instance
+-
+-        instance = self._create_instance(**kwargs)
+-        self.__instances.append((kwargs, instance))
+-        return instance
+-
+-    def _close_instance(self, instance):
+-        if callable(getattr(instance, 'close', None)):
+-            instance.close()
+-
+-    def _clear_instances(self):
+-        for _, instance in self.__instances:
+-            self._close_instance(instance)
+-        self.__instances.clear()
+-
+-
+-def add_accept_encoding_header(headers: HTTPHeaderDict, supported_encodings: Iterable[str]):
+-    if 'Accept-Encoding' not in headers:
+-        headers['Accept-Encoding'] = ', '.join(supported_encodings) or 'identity'

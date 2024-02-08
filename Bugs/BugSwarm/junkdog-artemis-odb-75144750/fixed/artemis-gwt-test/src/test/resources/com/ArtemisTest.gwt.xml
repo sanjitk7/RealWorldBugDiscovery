@@ -1,0 +1,33 @@
+<module>
+
+	<inherits name="com.google.gwt.user.User"/>
+	<inherits name='com.badlogic.gdx.backends.gdx_backends_gwt' />
+	<inherits name='com.artemis.backends.artemis_backends_gwt'/>
+
+	<inherits name="com.artemis-json-libgdx" />
+
+	<source path='artemis'/>
+
+	<extend-configuration-property name="artemis.reflect.include" value="com.artemis"/>
+	<extend-configuration-property name="artemis.reflect.include" value="com.artemis.factory"/>
+
+	<extend-configuration-property name="gdx.reflect.include" value="com.artemis"/>
+	<extend-configuration-property name="gdx.reflect.include" value="com.artemis.factory"/>
+
+	<extend-configuration-property name="artemis.reflect.include"
+								   value="java.util.Collection" />
+	<extend-configuration-property name="artemis.reflect.include"
+								   value="java.util.List" />
+	<extend-configuration-property name="artemis.reflect.include"
+								   value="java.util.ArrayList" />
+	<extend-configuration-property name="artemis.reflect.include"
+								   value="java.util.Map" />
+	<extend-configuration-property name="artemis.reflect.include"
+								   value="java.util.HashMap" />
+
+	<extend-configuration-property name="gdx.reflect.include"
+								   value="java.util.IdentityHashMap" />
+	<extend-configuration-property name="artemis.reflect.include"
+								   value="java.util.IdentityHashMap" />
+
+</module>

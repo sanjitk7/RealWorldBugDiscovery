@@ -1,0 +1,1655 @@
+diff --git a/docs/appendices/release-notes/5.4.6.rst b/docs/appendices/release-notes/5.4.6.rst
+index 736773a4a8..00edc3352c 100644
+--- a/docs/appendices/release-notes/5.4.6.rst
++++ b/docs/appendices/release-notes/5.4.6.rst
+@@ -46,6 +46,9 @@ See the :ref:`version_5.4.0` release notes for a full list of changes in the
+ Fixes
+ =====
+ 
++- Fixed an issue that caused queries with a ``NOT`` expression in the
++  ``WHERE`` clause to fail evaluating ``NULL`` correctly.
++
+ - Fixed an issue that caused the value for generated primary key columns to
+   evaluate to ``NULL`` in ``INSERT INTO .. ON CONFLICT`` statements if the
+   column wasn't part of the target column list.
+@@ -59,7 +62,7 @@ Fixes
+   combination is not supported instead of running into a ``ClassCastException``.
+ 
+ - Fixed an issue that caused queries with a ``NOT (a AND b)`` expression
+-  in the where-clause to not evaluate correctly with null values.
++  in the ``WHERE`` clause to not evaluate correctly with ``NULL`` values.
+ 
+ - Fixed an issue that caused queries with a ``NOT`` or ``!=`` on a ``CASE``
+   expression containing a nullable column to exclude ``NULL`` entries.
+diff --git a/docs/appendices/release-notes/5.5.1.rst b/docs/appendices/release-notes/5.5.1.rst
+index 12d66f0efd..0be47e93ae 100644
+--- a/docs/appendices/release-notes/5.5.1.rst
++++ b/docs/appendices/release-notes/5.5.1.rst
+@@ -49,6 +49,9 @@ See the :ref:`version_5.5.0` release notes for a full list of changes in the
+ Fixes
+ =====
+ 
++- Fixed an issue that caused queries with a ``NOT`` expression in the
++  ``WHERE`` clause to fail evaluating ``NULL`` correctly.
++
+ - Fixed an issue that caused the value for generated primary key columns to
+   evaluate to ``NULL`` in ``INSERT INTO .. ON CONFLICT`` statements if the
+   column wasn't part of the target column list.
+@@ -62,7 +65,7 @@ Fixes
+   combination is not supported instead of running into a ``ClassCastException``.
+ 
+ - Fixed an issue that caused queries with a ``NOT (a AND b)`` expression
+-  in the where-clause to not evaluate correctly with null values.
++  in the ``WHERE`` clause to not evaluate correctly with ``NULL`` values.
+ 
+ - Fixed an issue that caused queries with a ``NOT`` or ``!=`` on a ``CASE``
+   expression containing a nullable column to exclude ``NULL`` entries.
+diff --git a/server/src/main/java/io/crate/expression/predicate/NotPredicate.java b/server/src/main/java/io/crate/expression/predicate/NotPredicate.java
+index b00e7dfbe4..4af392583c 100644
+--- a/server/src/main/java/io/crate/expression/predicate/NotPredicate.java
++++ b/server/src/main/java/io/crate/expression/predicate/NotPredicate.java
+@@ -36,9 +36,20 @@ import io.crate.expression.operator.LikeOperators;
+ import io.crate.expression.operator.any.AnyEqOperator;
+ import io.crate.expression.operator.any.AnyNeqOperator;
+ import io.crate.expression.operator.any.AnyRangeOperator;
++import io.crate.expression.scalar.ArrayAppendFunction;
++import io.crate.expression.scalar.ArrayCatFunction;
++import io.crate.expression.scalar.ArrayUniqueFunction;
++import io.crate.expression.scalar.ConcatFunction;
++import io.crate.expression.scalar.ConcatWsFunction;
++import io.crate.expression.scalar.FormatFunction;
+ import io.crate.expression.scalar.Ignore3vlFunction;
++import io.crate.expression.scalar.SubscriptObjectFunction;
++import io.crate.expression.scalar.arithmetic.ArrayFunction;
++import io.crate.expression.scalar.arithmetic.MapFunction;
++import io.crate.expression.scalar.cast.TryCastFunction;
+ import io.crate.expression.scalar.conditional.CaseFunction;
+ import io.crate.expression.scalar.conditional.CoalesceFunction;
++import io.crate.expression.scalar.conditional.IfFunction;
+ import io.crate.expression.symbol.Function;
+ import io.crate.expression.symbol.Literal;
+ import io.crate.expression.symbol.Symbol;
+@@ -135,7 +146,19 @@ public class NotPredicate extends Scalar<Boolean, Boolean> {
+                 LikeOperators.ANY_LIKE,
+                 LikeOperators.ANY_NOT_LIKE,
+                 CoalesceFunction.NAME,
+-                CaseFunction.NAME
++                CaseFunction.NAME,
++                ConcatFunction.NAME,
++                ConcatWsFunction.NAME,
++                ArrayCatFunction.NAME,
++                ArrayAppendFunction.NAME,
++                ArrayFunction.NAME,
++                ArrayUniqueFunction.NAME,
++                FormatFunction.NAME,
++                IfFunction.NAME,
++                IsNullPredicate.NAME,
++                MapFunction.NAME,
++                TryCastFunction.NAME,
++                SubscriptObjectFunction.NAME
+             );
+ 
+         @Override
+diff --git a/server/src/main/java/io/crate/expression/scalar/ArrayAppendFunction.java b/server/src/main/java/io/crate/expression/scalar/ArrayAppendFunction.java
+index 8fc5caf950..8a528f2cbc 100644
+--- a/server/src/main/java/io/crate/expression/scalar/ArrayAppendFunction.java
++++ b/server/src/main/java/io/crate/expression/scalar/ArrayAppendFunction.java
+@@ -36,7 +36,7 @@ import io.crate.types.ArrayType;
+ import io.crate.types.DataType;
+ import io.crate.types.TypeSignature;
+ 
+-class ArrayAppendFunction extends Scalar<List<Object>, Object> {
++public class ArrayAppendFunction extends Scalar<List<Object>, Object> {
+ 
+     public static final String NAME = "array_append";
+ 
+diff --git a/server/src/main/java/io/crate/expression/scalar/ArrayCatFunction.java b/server/src/main/java/io/crate/expression/scalar/ArrayCatFunction.java
+index cb7730b9a5..0d8e6f4cd5 100644
+--- a/server/src/main/java/io/crate/expression/scalar/ArrayCatFunction.java
++++ b/server/src/main/java/io/crate/expression/scalar/ArrayCatFunction.java
+@@ -37,7 +37,7 @@ import io.crate.types.ArrayType;
+ import io.crate.types.DataType;
+ import io.crate.types.TypeSignature;
+ 
+-class ArrayCatFunction extends Scalar<List<Object>, List<Object>> {
++public class ArrayCatFunction extends Scalar<List<Object>, List<Object>> {
+ 
+     public static final String NAME = "array_cat";
+ 
+diff --git a/server/src/main/java/io/crate/expression/scalar/ArrayUniqueFunction.java b/server/src/main/java/io/crate/expression/scalar/ArrayUniqueFunction.java
+index 138049a0c4..49d5fd4cff 100644
+--- a/server/src/main/java/io/crate/expression/scalar/ArrayUniqueFunction.java
++++ b/server/src/main/java/io/crate/expression/scalar/ArrayUniqueFunction.java
+@@ -40,7 +40,7 @@ import io.crate.types.ArrayType;
+ import io.crate.types.DataType;
+ import io.crate.types.TypeSignature;
+ 
+-class ArrayUniqueFunction extends Scalar<List<Object>, List<Object>> {
++public class ArrayUniqueFunction extends Scalar<List<Object>, List<Object>> {
+ 
+     public static final String NAME = "array_unique";
+ 
+diff --git a/server/src/main/java/io/crate/replication/logical/metadata/Publication.java b/server/src/main/java/io/crate/replication/logical/metadata/Publication.java
+index 2bff9bef54..6d63e96f57 100644
+--- a/server/src/main/java/io/crate/replication/logical/metadata/Publication.java
++++ b/server/src/main/java/io/crate/replication/logical/metadata/Publication.java
+@@ -23,10 +23,11 @@ package io.crate.replication.logical.metadata;
+ 
+ import java.io.IOException;
+ import java.util.ArrayList;
+-import java.util.HashMap;
++import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Objects;
++import java.util.function.Predicate;
+ import java.util.stream.Collectors;
+ 
+ import org.apache.logging.log4j.LogManager;
+@@ -113,48 +114,60 @@ public class Publication implements Writeable {
+ 
+ 
+     public Map<RelationName, RelationMetadata> resolveCurrentRelations(ClusterState state, User publicationOwner, User subscriber, String publicationName) {
++        // skip indices where not all shards are active yet, restore will fail if primaries are not (yet) assigned
++        Predicate<String> indexFilter = indexName -> {
++            var indexMetadata = state.metadata().index(indexName);
++            if (indexMetadata != null) {
++                boolean softDeletes = IndexSettings.INDEX_SOFT_DELETES_SETTING.get(indexMetadata.getSettings());
++                if (softDeletes == false) {
++                    LOGGER.warn(
++                        "Table '{}' won't be replicated as the required table setting " +
++                            "'soft_deletes.enabled' is set to: {}",
++                        RelationName.fromIndexName(indexName),
++                        softDeletes
++                    );
++                    return false;
++                }
++                var routingTable = state.routingTable().index(indexName);
++                assert routingTable != null : "routingTable must not be null";
++                return routingTable.allPrimaryShardsActive();
++
++            }
++            // Partitioned table case (template, no index).
++            return true;
++        };
++
++        var relations = new HashSet<RelationName>();
++
+         if (isForAllTables()) {
+-            Map<RelationName, RelationMetadata> relations = new HashMap<>();
+             Metadata metadata = state.metadata();
+             for (var cursor : metadata.templates().keys()) {
+                 String templateName = cursor.value;
+                 IndexParts indexParts = new IndexParts(templateName);
+                 RelationName relationName = indexParts.toRelationName();
+-                if (indexParts.isPartitioned()
+-                        && userCanPublish(relationName, publicationOwner, publicationName)
+-                        && subscriberCanRead(relationName, subscriber, publicationName)) {
+-                    relations.put(relationName, RelationMetadata.fromMetadata(relationName, metadata));
++                if (indexParts.isPartitioned()) {
++                    relations.add(relationName);
+                 }
+             }
+             for (var cursor : metadata.indices().values()) {
+                 var indexMetadata = cursor.value;
+-                var indexParts = new IndexParts(indexMetadata.getIndex().getName());
+-                if (indexParts.isPartitioned()) {
+-                    continue;
+-                }
+-                RelationName relationName = indexParts.toRelationName();
+-                boolean softDeletes = IndexSettings.INDEX_SOFT_DELETES_SETTING.get(indexMetadata.getSettings());
+-                if (softDeletes == false) {
+-                    LOGGER.warn(
+-                        "Table '{}' won't be replicated as the required table setting " +
+-                            "'soft_deletes.enabled' is set to: {}",
+-                        relationName,
+-                        softDeletes
+-                    );
+-                    continue;
+-                }
+-                if (userCanPublish(relationName, publicationOwner, publicationName) && subscriberCanRead(relationName, subscriber, publicationName)) {
+-                    relations.put(relationName, RelationMetadata.fromMetadata(relationName, metadata));
++                var indexName = indexMetadata.getIndex().getName();
++                var indexParts = new IndexParts(indexName);
++                if (indexParts.isPartitioned() == false) {
++                    relations.add(indexParts.toRelationName());
+                 }
+             }
+-            return relations;
+         } else {
+-            return tables.stream()
+-                .filter(relationName -> userCanPublish(relationName, publicationOwner, publicationName))
+-                .filter(relationName -> subscriberCanRead(relationName, subscriber, publicationName))
+-                .map(relationName -> RelationMetadata.fromMetadata(relationName, state.metadata()))
+-                .collect(Collectors.toMap(x -> x.name(), x -> x));
++            relations.addAll(tables);
+         }
++
++        return relations.stream()
++            .filter(relationName -> indexFilter.test(relationName.indexNameOrAlias()))
++            .filter(relationName -> userCanPublish(relationName, publicationOwner, publicationName))
++            .filter(relationName -> subscriberCanRead(relationName, subscriber, publicationName))
++            .map(relationName -> RelationMetadata.fromMetadata(relationName, state.metadata(), indexFilter))
++            .collect(Collectors.toMap(RelationMetadata::name, x -> x));
++
+     }
+ 
+     private static boolean subscriberCanRead(RelationName relationName, User subscriber, String publicationName) {
+diff --git a/server/src/main/java/io/crate/replication/logical/metadata/RelationMetadata.java b/server/src/main/java/io/crate/replication/logical/metadata/RelationMetadata.java
+index c46621f3bb..46e1fda2b1 100644
+--- a/server/src/main/java/io/crate/replication/logical/metadata/RelationMetadata.java
++++ b/server/src/main/java/io/crate/replication/logical/metadata/RelationMetadata.java
+@@ -24,8 +24,7 @@ package io.crate.replication.logical.metadata;
+ import java.io.IOException;
+ import java.util.ArrayList;
+ import java.util.List;
+-
+-import org.jetbrains.annotations.Nullable;
++import java.util.function.Predicate;
+ 
+ import org.elasticsearch.action.support.IndicesOptions;
+ import org.elasticsearch.cluster.metadata.IndexMetadata;
+@@ -35,6 +34,7 @@ import org.elasticsearch.cluster.metadata.Metadata;
+ import org.elasticsearch.common.io.stream.StreamInput;
+ import org.elasticsearch.common.io.stream.StreamOutput;
+ import org.elasticsearch.common.io.stream.Writeable;
++import org.jetbrains.annotations.Nullable;
+ 
+ import io.crate.metadata.PartitionName;
+ import io.crate.metadata.RelationName;
+@@ -58,7 +58,7 @@ public record RelationMetadata(RelationName name,
+         out.writeOptionalWriteable(template);
+     }
+ 
+-    public static RelationMetadata fromMetadata(RelationName table, Metadata metadata) {
++    public static RelationMetadata fromMetadata(RelationName table, Metadata metadata, Predicate<String> filter) {
+         String indexNameOrAlias = table.indexNameOrAlias();
+         var indexMetadata = metadata.index(indexNameOrAlias);
+         if (indexMetadata == null) {
+@@ -71,7 +71,9 @@ public record RelationMetadata(RelationName name,
+             );
+             ArrayList<IndexMetadata> indicesMetadata = new ArrayList<>(concreteIndices.length);
+             for (String concreteIndex : concreteIndices) {
+-                indicesMetadata.add(metadata.index(concreteIndex));
++                if (filter.test(concreteIndex)) {
++                    indicesMetadata.add(metadata.index(concreteIndex));
++                }
+             }
+             return new RelationMetadata(table, indicesMetadata, templateMetadata);
+         }
+diff --git a/server/src/main/java/io/crate/user/SecureHash.java b/server/src/main/java/io/crate/user/SecureHash.java
+index 7ee933176b..01cad56491 100644
+--- a/server/src/main/java/io/crate/user/SecureHash.java
++++ b/server/src/main/java/io/crate/user/SecureHash.java
+@@ -163,38 +163,38 @@ public final class SecureHash implements Writeable, ToXContent {
+         while ((currentToken = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+             while (currentToken == XContentParser.Token.FIELD_NAME) {
+                 hasPassword = true;
+-                //if (currentToken == XContentParser.Token.FIELD_NAME) {
+-                    String currentFieldName = parser.currentName();
+-                    currentToken = parser.nextToken();
+-                    switch (currentFieldName) {
+-                        case X_CONTENT_KEY_ITERATIONS:
+-                            if (currentToken != XContentParser.Token.VALUE_NUMBER) {
+-                                throw new ElasticsearchParseException(
+-                                    "failed to parse SecureHash, 'iterations' value is not a number [{}]", currentToken);
+-                            }
+-                            iterations = parser.intValue();
+-                            break;
+-                        case X_CONTENT_KEY_HASH:
+-                            if (currentToken.isValue() == false) {
+-                                throw new ElasticsearchParseException(
+-                                    "failed to parse SecureHash, 'hash' does not contain any value [{}]", currentToken);
+-                            }
+-                            hash = parser.binaryValue();
+-                            break;
+-                        case X_CONTENT_KEY_SALT:
+-                            if (currentToken.isValue() == false) {
+-                                throw new ElasticsearchParseException(
+-                                    "failed to parse SecureHash, 'salt' does not contain any value [{}]", currentToken);
+-                            }
+-                            salt = parser.binaryValue();
+-                            break;
+-                        default:
+-                            throw new ElasticsearchParseException("failed to parse secure_hash");
+-                    }
+-                //}
++                String currentFieldName = parser.currentName();
++                currentToken = parser.nextToken();
++                switch (currentFieldName) {
++                    case X_CONTENT_KEY_ITERATIONS:
++                        if (currentToken != XContentParser.Token.VALUE_NUMBER) {
++                            throw new ElasticsearchParseException(
++                                "failed to parse SecureHash, 'iterations' value is not a number [{}]", currentToken);
++                        }
++                        iterations = parser.intValue();
++                        break;
++                    case X_CONTENT_KEY_HASH:
++                        if (currentToken.isValue() == false) {
++                            throw new ElasticsearchParseException(
++                                "failed to parse SecureHash, 'hash' does not contain any value [{}]", currentToken);
++                        }
++                        hash = parser.binaryValue();
++                        break;
++                    case X_CONTENT_KEY_SALT:
++                        if (currentToken.isValue() == false) {
++                            throw new ElasticsearchParseException(
++                                "failed to parse SecureHash, 'salt' does not contain any value [{}]", currentToken);
++                        }
++                        salt = parser.binaryValue();
++                        break;
++                    default:
++                        throw new ElasticsearchParseException("failed to parse secure_hash");
++                }
+             }
+         }
+-        parser.nextToken();
++        if (parser.nextToken() != XContentParser.Token.END_OBJECT) {
++            throw new ElasticsearchParseException("failed to parse secure_hash, expected an object token at the end");
++        }
+ 
+         if (hasPassword) {
+             return SecureHash.of(iterations, salt, hash);
+diff --git a/server/src/main/java/io/crate/user/metadata/RolesMetadata.java b/server/src/main/java/io/crate/user/metadata/RolesMetadata.java
+index ad9cdee2c2..c2d9fff154 100644
+--- a/server/src/main/java/io/crate/user/metadata/RolesMetadata.java
++++ b/server/src/main/java/io/crate/user/metadata/RolesMetadata.java
+@@ -23,7 +23,6 @@ package io.crate.user.metadata;
+ 
+ import java.io.IOException;
+ import java.util.ArrayList;
+-import java.util.Collections;
+ import java.util.EnumSet;
+ import java.util.HashMap;
+ import java.util.List;
+@@ -55,7 +54,7 @@ public class RolesMetadata extends AbstractNamedDiffable<Metadata.Custom> implem
+     }
+ 
+     public RolesMetadata(Map<String, Role> roles) {
+-        this.roles = Collections.unmodifiableMap(roles);
++        this.roles = roles;
+     }
+ 
+     public static RolesMetadata newInstance(@Nullable RolesMetadata instance) {
+@@ -178,11 +177,6 @@ public class RolesMetadata extends AbstractNamedDiffable<Metadata.Custom> implem
+                         // each custom metadata is packed inside an object.
+                         throw new ElasticsearchParseException("failed to parse roles, expected an object token at start");
+                     }
+-//                    if (parser.currentToken() != XContentParser.Token.END_OBJECT) {
+-//                        // each custom metadata is packed inside an object.
+-//                        // each custom must move the parser to the end otherwise possible following customs won't be read
+-//                        throw new ElasticsearchParseException("failed to parse roles, expected an object token at the end");
+-//                    }
+                 }
+             } else {
+                 // each custom metadata is packed inside an object.
+diff --git a/server/src/main/java/io/crate/user/metadata/UsersMetadata.java b/server/src/main/java/io/crate/user/metadata/UsersMetadata.java
+index f4c2180ca0..2cbdc7cf82 100644
+--- a/server/src/main/java/io/crate/user/metadata/UsersMetadata.java
++++ b/server/src/main/java/io/crate/user/metadata/UsersMetadata.java
+@@ -139,17 +139,20 @@ public class UsersMetadata extends AbstractNamedDiffable<Metadata.Custom> implem
+         if (token == XContentParser.Token.FIELD_NAME && parser.currentName().equals("users")) {
+             token = parser.nextToken();
+             if (token == XContentParser.Token.START_OBJECT) {
+-                while (parser.nextToken() == XContentParser.Token.FIELD_NAME) {
++                token = parser.nextToken();
++                while (token == XContentParser.Token.FIELD_NAME) {
+                     String userName = parser.currentName();
+                     if (parser.nextToken() == XContentParser.Token.START_OBJECT) {
++                        parser.nextToken();
+                         users.put(userName, SecureHash.fromXContent(parser));
++                        token = parser.nextToken();
+                     }
+                 }
+             } else {
+                 // each custom metadata is packed inside an object.
+                 throw new ElasticsearchParseException("failed to parse users, expected an object token at start");
+             }
+-            if (parser.nextToken() != XContentParser.Token.END_OBJECT) {
++            if (token != null && parser.nextToken() != XContentParser.Token.END_OBJECT) {
+                 // each custom metadata is packed inside an object.
+                 // each custom must move the parser to the end otherwise possible following customs won't be read
+                 throw new ElasticsearchParseException("failed to parse users, expected an object token at the end");
+diff --git a/server/src/test/java/io/crate/execution/ddl/tables/AddColumnTaskTest.java b/server/src/test/java/io/crate/execution/ddl/tables/AddColumnTaskTest.java
+index 10d54604fc..440964a607 100644
+--- a/server/src/test/java/io/crate/execution/ddl/tables/AddColumnTaskTest.java
++++ b/server/src/test/java/io/crate/execution/ddl/tables/AddColumnTaskTest.java
+@@ -22,6 +22,7 @@
+ package io.crate.execution.ddl.tables;
+ 
+ import static io.crate.testing.Asserts.assertThat;
++import static org.assertj.core.api.Assertions.assertThat;
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.elasticsearch.cluster.metadata.Metadata.COLUMN_OID_UNASSIGNED;
+ 
+@@ -64,8 +65,7 @@ public class AddColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             clusterService.state(),
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var addColumnTask = new AddColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent = new ReferenceIdent(tbl.ident(), "o", List.of("x"));
+@@ -121,8 +121,7 @@ public class AddColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             clusterService.state(),
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var addColumnTask = new AddColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent shapesIdent = new ReferenceIdent(tbl.ident(), "shapes");
+@@ -225,8 +224,7 @@ public class AddColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var addColumnTask = new AddColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent = new ReferenceIdent(tbl.ident(), "x");
+@@ -260,8 +258,7 @@ public class AddColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var addColumnTask = new AddColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent1 = new ReferenceIdent(tbl.ident(), "y");
+@@ -304,8 +301,7 @@ public class AddColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var addColumnTask = new AddColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             SimpleReference newColumn1 = new SimpleReference(
+@@ -342,8 +338,7 @@ public class AddColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             clusterService.state(),
+-            Version.V_5_4_0,
+-            createTempDir()
++            Version.V_5_4_0
+         )) {
+             var addColumnTask = new AddColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+ 
+diff --git a/server/src/test/java/io/crate/execution/ddl/tables/DropColumnTaskTest.java b/server/src/test/java/io/crate/execution/ddl/tables/DropColumnTaskTest.java
+index 797ae0847f..228316dd97 100644
+--- a/server/src/test/java/io/crate/execution/ddl/tables/DropColumnTaskTest.java
++++ b/server/src/test/java/io/crate/execution/ddl/tables/DropColumnTaskTest.java
+@@ -66,8 +66,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             initialState,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             Reference colToDrop = tbl.getReference(new ColumnIdent("y"));
+@@ -107,8 +106,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             clusterService.state(),
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             Reference colToDrop = tbl.getReference(new ColumnIdent("o", "oo"));
+@@ -140,8 +138,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent = new ReferenceIdent(tbl.ident(), "z");
+@@ -169,8 +166,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent = new ReferenceIdent(tbl.ident(), "y");
+@@ -202,8 +198,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             Reference ref = tbl.getReference(new ColumnIdent("y"));
+@@ -227,8 +222,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             clusterService.state(),
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent = new ReferenceIdent(tbl.ident(), "o", List.of("oo", "a"));
+@@ -259,8 +253,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent = new ReferenceIdent(tbl.ident(), "y");
+@@ -324,8 +317,7 @@ public class DropColumnTaskTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             clusterService.state(),
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         )) {
+             var dropColumnTask = new DropColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             ReferenceIdent refIdent = new ReferenceIdent(tbl.ident(), "o", List.of("oo"));
+diff --git a/server/src/test/java/io/crate/execution/dml/IndexerTest.java b/server/src/test/java/io/crate/execution/dml/IndexerTest.java
+index fb509a66f5..c743fdb1fd 100644
+--- a/server/src/test/java/io/crate/execution/dml/IndexerTest.java
++++ b/server/src/test/java/io/crate/execution/dml/IndexerTest.java
+@@ -23,6 +23,7 @@ package io.crate.execution.dml;
+ 
+ import static io.crate.metadata.doc.mappers.array.ArrayMapperTest.mapper;
+ import static io.crate.testing.Asserts.assertThat;
++import static org.assertj.core.api.Assertions.assertThat;
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.elasticsearch.cluster.metadata.Metadata.COLUMN_OID_UNASSIGNED;
+ import static org.elasticsearch.index.mapper.GeoShapeFieldMapper.Names.TREE_BKD;
+@@ -128,8 +129,7 @@ public class IndexerTest extends CrateDummyClusterServiceUnitTest {
+                 THREAD_POOL,
+                 table,
+                 clusterService.state(),
+-                Version.CURRENT,
+-                createTempDir()
++                Version.CURRENT
+         )) {
+             var addColumnTask = new AddColumnTask(e.nodeCtx, imd -> indexEnv.mapperService());
+             AddColumnRequest request = new AddColumnRequest(
+@@ -739,8 +739,7 @@ public class IndexerTest extends CrateDummyClusterServiceUnitTest {
+                 THREAD_POOL,
+                 table,
+                 clusterService.state(),
+-                Version.CURRENT,
+-                createTempDir())) {
++                Version.CURRENT)) {
+ 
+             MapperService mapperService = indexEnv.mapperService();
+             Indexer indexer = new Indexer(
+@@ -1394,8 +1393,7 @@ public class IndexerTest extends CrateDummyClusterServiceUnitTest {
+                 THREAD_POOL,
+                 table,
+                 clusterService.state(),
+-                Version.CURRENT,
+-                createTempDir())) {
++                Version.CURRENT)) {
+ 
+                 Map<String, Object> value = dataGenerator.get();
+                 MapperService mapperService = indexEnv.mapperService();
+diff --git a/server/src/test/java/io/crate/expression/operator/EqOperatorTest.java b/server/src/test/java/io/crate/expression/operator/EqOperatorTest.java
+index 334f51cbab..f8ff985dbc 100644
+--- a/server/src/test/java/io/crate/expression/operator/EqOperatorTest.java
++++ b/server/src/test/java/io/crate/expression/operator/EqOperatorTest.java
+@@ -125,7 +125,6 @@ public class EqOperatorTest extends ScalarTestCase {
+             resetClusterService();
+ 
+             try (QueryTester tester = new QueryTester.Builder(
+-                createTempDir(),
+                 THREAD_POOL,
+                 clusterService,
+                 Version.CURRENT,
+@@ -155,7 +154,6 @@ public class EqOperatorTest extends ScalarTestCase {
+     @Test
+     public void test_terms_query_on_empty_object() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/expression/operator/any/AnyEqOperatorTest.java b/server/src/test/java/io/crate/expression/operator/any/AnyEqOperatorTest.java
+index e9d640653f..2d1764ac39 100644
+--- a/server/src/test/java/io/crate/expression/operator/any/AnyEqOperatorTest.java
++++ b/server/src/test/java/io/crate/expression/operator/any/AnyEqOperatorTest.java
+@@ -80,7 +80,6 @@ public class AnyEqOperatorTest extends ScalarTestCase {
+     @Test
+     public void test_uses_terms_query_for_unnested_array_refs() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/expression/predicate/FieldExistsQueryTest.java b/server/src/test/java/io/crate/expression/predicate/FieldExistsQueryTest.java
+index 557e2fa1e1..d43727feae 100644
+--- a/server/src/test/java/io/crate/expression/predicate/FieldExistsQueryTest.java
++++ b/server/src/test/java/io/crate/expression/predicate/FieldExistsQueryTest.java
+@@ -52,7 +52,6 @@ public class FieldExistsQueryTest extends CrateDummyClusterServiceUnitTest {
+ 
+     private QueryTester.Builder getBuilder(String createStatement) throws IOException {
+         return new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+@@ -235,7 +234,6 @@ public class FieldExistsQueryTest extends CrateDummyClusterServiceUnitTest {
+             String typeDefinition = SqlFormatter.formatSql(extendedType.toColumnType(ColumnPolicy.STRICT, null));
+             String stmt = "create table tbl (id int primary key, x " + typeDefinition + " storage with (columnstore = false))";
+             QueryTester.Builder builder = new QueryTester.Builder(
+-                createTempDir(),
+                 THREAD_POOL,
+                 clusterService,
+                 Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/expression/predicate/IsNullPredicateTest.java b/server/src/test/java/io/crate/expression/predicate/IsNullPredicateTest.java
+index 139b51e5d9..8ffb02e242 100644
+--- a/server/src/test/java/io/crate/expression/predicate/IsNullPredicateTest.java
++++ b/server/src/test/java/io/crate/expression/predicate/IsNullPredicateTest.java
+@@ -60,8 +60,7 @@ public class IsNullPredicateTest extends ScalarTestCase {
+                 THREAD_POOL,
+                 table,
+                 clusterService.state(),
+-                Version.CURRENT,
+-                createTempDir())) {
++                Version.CURRENT)) {
+             Context context = luceneQueryBuilder.convert(
+                 query,
+                 txnCtx,
+@@ -92,8 +91,7 @@ public class IsNullPredicateTest extends ScalarTestCase {
+             THREAD_POOL,
+             table,
+             clusterService.state(),
+-            Version.CURRENT,
+-            createTempDir())) {
++            Version.CURRENT)) {
+             Query query = luceneQueryBuilder.convert(
+                 sqlExpressions.asSymbol("obj_ignored['x'] is NULL"),
+                 txnCtx,
+diff --git a/server/src/test/java/io/crate/expression/predicate/NotPredicateTest.java b/server/src/test/java/io/crate/expression/predicate/NotPredicateTest.java
+index 98c7eab39d..e4a94ba78d 100644
+--- a/server/src/test/java/io/crate/expression/predicate/NotPredicateTest.java
++++ b/server/src/test/java/io/crate/expression/predicate/NotPredicateTest.java
+@@ -60,7 +60,6 @@ public class NotPredicateTest extends ScalarTestCase {
+     @Test
+     public void test_not_on_case_uses_strict_3vl() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/expression/reference/doc/ByteColumnReferenceTest.java b/server/src/test/java/io/crate/expression/reference/doc/ByteColumnReferenceTest.java
+index 18529abe4a..0dc2dce2d9 100644
+--- a/server/src/test/java/io/crate/expression/reference/doc/ByteColumnReferenceTest.java
++++ b/server/src/test/java/io/crate/expression/reference/doc/ByteColumnReferenceTest.java
+@@ -21,7 +21,7 @@
+ 
+ package io.crate.expression.reference.doc;
+ 
+-import static io.crate.testing.Asserts.assertThat;
++import static org.assertj.core.api.Assertions.assertThat;
+ 
+ import java.util.List;
+ import java.util.stream.IntStream;
+@@ -37,7 +37,6 @@ public class ByteColumnReferenceTest extends CrateDummyClusterServiceUnitTest {
+     @Test
+     public void testByteExpression() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/expression/reference/doc/DocLevelExpressionsTest.java b/server/src/test/java/io/crate/expression/reference/doc/DocLevelExpressionsTest.java
+index 3d295c86c8..b6dc9cb5ff 100644
+--- a/server/src/test/java/io/crate/expression/reference/doc/DocLevelExpressionsTest.java
++++ b/server/src/test/java/io/crate/expression/reference/doc/DocLevelExpressionsTest.java
+@@ -66,8 +66,7 @@ public abstract class DocLevelExpressionsTest extends CrateDummyClusterServiceUn
+                 .iterator()
+                 .next(),
+             clusterService.state(),
+-            Version.CURRENT,
+-            createTempDir()
++            Version.CURRENT
+         );
+         IndexWriter writer = indexEnv.writer();
+         insertValues(writer);
+diff --git a/server/src/test/java/io/crate/expression/reference/doc/IntegerColumnReferenceTest.java b/server/src/test/java/io/crate/expression/reference/doc/IntegerColumnReferenceTest.java
+index 6a27489bc0..33d84fa2f0 100644
+--- a/server/src/test/java/io/crate/expression/reference/doc/IntegerColumnReferenceTest.java
++++ b/server/src/test/java/io/crate/expression/reference/doc/IntegerColumnReferenceTest.java
+@@ -21,7 +21,7 @@
+ 
+ package io.crate.expression.reference.doc;
+ 
+-import static io.crate.testing.Asserts.assertThat;
++import static org.assertj.core.api.Assertions.assertThat;
+ 
+ import java.util.List;
+ import java.util.stream.IntStream;
+@@ -37,7 +37,6 @@ public class IntegerColumnReferenceTest extends CrateDummyClusterServiceUnitTest
+     @Test
+     public void testIntegerExpression() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/expression/scalar/KnnMatchTest.java b/server/src/test/java/io/crate/expression/scalar/KnnMatchTest.java
+index 32888df841..1930116c11 100644
+--- a/server/src/test/java/io/crate/expression/scalar/KnnMatchTest.java
++++ b/server/src/test/java/io/crate/expression/scalar/KnnMatchTest.java
+@@ -47,7 +47,6 @@ public class KnnMatchTest extends ScalarTestCase {
+     public void test_knn_query_builder() throws Exception {
+         String createTable = "create table tbl (x float_vector(4))";
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/expression/scalar/NullOrEmptyFunctionTest.java b/server/src/test/java/io/crate/expression/scalar/NullOrEmptyFunctionTest.java
+index b1adca8361..aa85af0aec 100644
+--- a/server/src/test/java/io/crate/expression/scalar/NullOrEmptyFunctionTest.java
++++ b/server/src/test/java/io/crate/expression/scalar/NullOrEmptyFunctionTest.java
+@@ -40,7 +40,6 @@ public class NullOrEmptyFunctionTest extends ScalarTestCase {
+         assertEvaluate("null_or_empty({})", true);
+ 
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+@@ -65,7 +64,6 @@ public class NullOrEmptyFunctionTest extends ScalarTestCase {
+         assertEvaluate("null_or_empty([])", true);
+ 
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/lucene/ArrayLengthQueryBuilderTest.java b/server/src/test/java/io/crate/lucene/ArrayLengthQueryBuilderTest.java
+index 87527f6694..b08d232b61 100644
+--- a/server/src/test/java/io/crate/lucene/ArrayLengthQueryBuilderTest.java
++++ b/server/src/test/java/io/crate/lucene/ArrayLengthQueryBuilderTest.java
+@@ -21,7 +21,7 @@
+ 
+ package io.crate.lucene;
+ 
+-import static io.crate.testing.Asserts.assertThat;
++import static org.assertj.core.api.Assertions.assertThat;
+ 
+ import java.util.List;
+ 
+@@ -82,7 +82,6 @@ public class ArrayLengthQueryBuilderTest extends LuceneQueryBuilderTest {
+     public void test_NumTermsPerDocQuery_maps_column_idents_to_oids() throws Exception {
+         final long oid = 123;
+         try (QueryTester tester = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/lucene/ArrayLengthQueryTest.java b/server/src/test/java/io/crate/lucene/ArrayLengthQueryTest.java
+index 35acee1d17..5351b474ce 100644
+--- a/server/src/test/java/io/crate/lucene/ArrayLengthQueryTest.java
++++ b/server/src/test/java/io/crate/lucene/ArrayLengthQueryTest.java
+@@ -49,7 +49,6 @@ public class ArrayLengthQueryTest extends CrateDummyClusterServiceUnitTest {
+     @Before
+     public void setUpTester() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+@@ -264,7 +263,6 @@ public class ArrayLengthQueryTest extends CrateDummyClusterServiceUnitTest {
+             );
+ 
+             try (QueryTester tester = new QueryTester.Builder(
+-                createTempDir(),
+                 THREAD_POOL,
+                 clusterService,
+                 Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/lucene/BitStringQueryTest.java b/server/src/test/java/io/crate/lucene/BitStringQueryTest.java
+index 3da4e2e0ed..dcb9e291ac 100644
+--- a/server/src/test/java/io/crate/lucene/BitStringQueryTest.java
++++ b/server/src/test/java/io/crate/lucene/BitStringQueryTest.java
+@@ -48,7 +48,6 @@ public class BitStringQueryTest extends CrateDummyClusterServiceUnitTest {
+ 
+     private QueryTester.Builder builder(String createTable) throws IOException {
+         return new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/lucene/CIDRRangeQueryTest.java b/server/src/test/java/io/crate/lucene/CIDRRangeQueryTest.java
+index f45876f5a4..a460e4a5f8 100644
+--- a/server/src/test/java/io/crate/lucene/CIDRRangeQueryTest.java
++++ b/server/src/test/java/io/crate/lucene/CIDRRangeQueryTest.java
+@@ -62,7 +62,6 @@ public class CIDRRangeQueryTest extends CrateDummyClusterServiceUnitTest {
+ 
+     private void test(Object[] valuesToIndex, String queryStr, Object... expectedResults) throws Throwable {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/lucene/CommonQueryBuilderTest.java b/server/src/test/java/io/crate/lucene/CommonQueryBuilderTest.java
+index c32a44be94..e24f80005e 100644
+--- a/server/src/test/java/io/crate/lucene/CommonQueryBuilderTest.java
++++ b/server/src/test/java/io/crate/lucene/CommonQueryBuilderTest.java
+@@ -700,7 +700,6 @@ public class CommonQueryBuilderTest extends LuceneQueryBuilderTest {
+     public void test_any_neq_operator_maps_column_names_to_oids() throws Exception {
+         final long oid = 123;
+         try (QueryTester tester = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/lucene/GenericFunctionQueryTest.java b/server/src/test/java/io/crate/lucene/GenericFunctionQueryTest.java
+index 8ab4349577..b3b57ac237 100644
+--- a/server/src/test/java/io/crate/lucene/GenericFunctionQueryTest.java
++++ b/server/src/test/java/io/crate/lucene/GenericFunctionQueryTest.java
+@@ -38,7 +38,6 @@ public class GenericFunctionQueryTest extends CrateDummyClusterServiceUnitTest {
+     @Test
+     public void test_generic_function_query_cannot_be_cached_with_un_deterministic_functions_present() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+@@ -56,7 +55,6 @@ public class GenericFunctionQueryTest extends CrateDummyClusterServiceUnitTest {
+     @Test
+     public void test_generic_function_query_can_be_cached_if_deterministic() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             Version.CURRENT,
+diff --git a/server/src/test/java/io/crate/lucene/LuceneQueryBuilderTest.java b/server/src/test/java/io/crate/lucene/LuceneQueryBuilderTest.java
+index f23b7cc1f4..df30f15878 100644
+--- a/server/src/test/java/io/crate/lucene/LuceneQueryBuilderTest.java
++++ b/server/src/test/java/io/crate/lucene/LuceneQueryBuilderTest.java
+@@ -45,7 +45,6 @@ public abstract class LuceneQueryBuilderTest extends CrateDummyClusterServiceUni
+     @Before
+     public void prepare() throws Exception {
+         QueryTester.Builder builder = new QueryTester.Builder(
+-            createTempDir(),
+             THREAD_POOL,
+             clusterService,
+             indexVersion(),
+diff --git a/server/src/test/java/io/crate/lucene/ThreeValuedLogicQueryBuilderTest.java b/server/src/test/java/io/crate/lucene/ThreeValuedLogicQueryBuilderTest.java
+index 01b8c51d17..c8e05ce405 100644
+--- a/server/src/test/java/io/crate/lucene/ThreeValuedLogicQueryBuilderTest.java
++++ b/server/src/test/java/io/crate/lucene/ThreeValuedLogicQueryBuilderTest.java
+@@ -66,4 +66,10 @@ public class ThreeValuedLogicQueryBuilderTest extends LuceneQueryBuilderTest {
+         assertThat(convert("NOT (x AND f)")).hasToString(
+             "+(+*:* -(+x +f)) #(NOT (x AND f))");
+     }
++
++    @Test
++    public void test_negated_concat_with_three_valued_logic() {
++        assertThat(convert("NOT (x || 1) < -1")).hasToString(
++            "+(+*:* -(concat(x, '1') < -1)) #(NOT (concat(x, '1') < -1))");
++    }
+ }
+diff --git a/server/src/test/java/io/crate/metadata/doc/DocTableInfoTest.java b/server/src/test/java/io/crate/metadata/doc/DocTableInfoTest.java
+index 0a8c271dd1..ec3babfd7a 100644
+--- a/server/src/test/java/io/crate/metadata/doc/DocTableInfoTest.java
++++ b/server/src/test/java/io/crate/metadata/doc/DocTableInfoTest.java
+@@ -365,8 +365,7 @@ public class DocTableInfoTest extends CrateDummyClusterServiceUnitTest {
+             THREAD_POOL,
+             tbl,
+             state,
+-            Version.V_5_4_0,
+-            createTempDir()
++            Version.V_5_4_0
+         )) {
+ 
+             Metadata metadata = state.metadata();
+diff --git a/server/src/test/java/io/crate/replication/logical/MetadataTrackerTest.java b/server/src/test/java/io/crate/replication/logical/MetadataTrackerTest.java
+index 04ad419f9a..9da79c617b 100644
+--- a/server/src/test/java/io/crate/replication/logical/MetadataTrackerTest.java
++++ b/server/src/test/java/io/crate/replication/logical/MetadataTrackerTest.java
+@@ -98,7 +98,7 @@ public class MetadataTrackerTest extends ESTestCase {
+             clusterState = ClusterState.builder(clusterState)
+                 .metadata(Metadata.builder(clusterState.metadata())
+                               .put(indexMetadata, true))
+-                .routingTable(RoutingTable.builder()
++                .routingTable(RoutingTable.builder(clusterState.routingTable())
+                     .add(IndexRoutingTable.builder(indexMetadata.getIndex())
+                         .addShard(newShardRouting(name, 0, "dummy_node", true, ShardRoutingState.STARTED))
+                         .build())
+@@ -121,7 +121,7 @@ public class MetadataTrackerTest extends ESTestCase {
+             clusterState = ClusterState.builder(clusterState)
+                 .metadata(Metadata.builder(clusterState.metadata())
+                               .put(indexMetadata, true))
+-                .routingTable(RoutingTable.builder()
++                .routingTable(RoutingTable.builder(clusterState.routingTable())
+                     .add(IndexRoutingTable.builder(indexMetadata.getIndex())
+                         .addShard(newShardRouting(partition, 0, "dummy_node", true, ShardRoutingState.STARTED))
+                         .build())
+@@ -255,7 +255,7 @@ public class MetadataTrackerTest extends ESTestCase {
+         testTable = new RelationName("doc", "test");
+         publicationsStateResponse = new Response(Map.of(
+             testTable,
+-            RelationMetadata.fromMetadata(testTable, PUBLISHER_CLUSTER_STATE.metadata())), List.of());
++            RelationMetadata.fromMetadata(testTable, PUBLISHER_CLUSTER_STATE.metadata(), ignored -> true)), List.of());
+ 
+         SUBSCRIBER_CLUSTER_STATE = new Builder("subscriber")
+             .addReplicatingTable("sub1", "test", Map.of("1", "one"), Settings.EMPTY)
+@@ -280,9 +280,13 @@ public class MetadataTrackerTest extends ESTestCase {
+             .updateTableMapping("test", updatedMapping)
+             .build();
+ 
+-        var updatedResponse = new Response(Map.of(
+-            testTable,
+-            RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata())), List.of());
++        var updatedResponse = new Response(
++            Map.of(
++                testTable,
++                RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata(), ignored -> true)
++            ),
++            List.of()
++        );
+ 
+         syncedSubscriberClusterState = MetadataTracker.updateIndexMetadata(
+             "sub1",
+@@ -305,9 +309,13 @@ public class MetadataTrackerTest extends ESTestCase {
+         var updatedPublisherClusterState = new Builder(PUBLISHER_CLUSTER_STATE)
+             .updateTableSettings("test", newSettings)
+             .build();
+-        var updatedResponse = new Response(Map.of(
+-            testTable,
+-            RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata())), List.of());
++        var updatedResponse = new Response(
++            Map.of(
++                testTable,
++                RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata(), ignored -> true)
++            ),
++            List.of()
++        );
+         var syncedSubscriberClusterState = MetadataTracker.updateIndexMetadata(
+             "sub1",
+             SubscriptionsMetadata.get(SUBSCRIBER_CLUSTER_STATE.metadata()).get("sub1"),
+@@ -328,9 +336,13 @@ public class MetadataTrackerTest extends ESTestCase {
+         var updatedPublisherClusterState = new Builder(PUBLISHER_CLUSTER_STATE)
+             .updateTableSettings("test", newSettings)
+             .build();
+-        var updatedResponse = new Response(Map.of(
+-            testTable,
+-            RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata())), List.of());
++        var updatedResponse = new Response(
++            Map.of(
++                testTable,
++                RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata(), ignored -> true)
++            ),
++            List.of()
++        );
+ 
+         var syncedSubscriberClusterState = MetadataTracker.updateIndexMetadata(
+             "sub1",
+@@ -349,9 +361,13 @@ public class MetadataTrackerTest extends ESTestCase {
+         var updatedPublisherClusterState = new Builder(PUBLISHER_CLUSTER_STATE)
+             .updateTableSettings("test", newSettings)
+             .build();
+-        var updatedResponse = new Response(Map.of(
+-            testTable,
+-            RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata())), List.of());
++        var updatedResponse = new Response(
++            Map.of(
++                testTable,
++                RelationMetadata.fromMetadata(testTable, updatedPublisherClusterState.metadata(), ignored -> true)
++            ),
++            List.of()
++        );
+ 
+         var syncedSubscriberClusterState = MetadataTracker.updateIndexMetadata(
+             "sub1",
+@@ -386,9 +402,13 @@ public class MetadataTrackerTest extends ESTestCase {
+             .build();
+ 
+         RelationName table = new RelationName("doc", "t2");
+-        var updatedResponse = new Response(Map.of(
+-            table,
+-            RelationMetadata.fromMetadata(table, publisherState.metadata())), List.of());
++        var updatedResponse = new Response(
++            Map.of(
++                table,
++                RelationMetadata.fromMetadata(table, publisherState.metadata(), ignored -> true)
++            ),
++            List.of()
++        );
+ 
+         RestoreDiff restoreDiff = MetadataTracker.getRestoreDiff(
+             SubscriptionsMetadata.get(subscriberClusterState.metadata()).get("sub1"),
+@@ -414,7 +434,10 @@ public class MetadataTrackerTest extends ESTestCase {
+             .addPartitionedTable(p1, List.of())
+             .addPublication("pub1", List.of(p1.indexNameOrAlias()))
+             .build();
+-        var publisherStateResponse = new Response(Map.of(p1, RelationMetadata.fromMetadata(p1, publisherState.metadata())), List.of());
++        var publisherStateResponse = new Response(
++            Map.of(p1, RelationMetadata.fromMetadata(p1, publisherState.metadata(), ignored -> true)),
++            List.of()
++        );
+ 
+         var restoreDiff = MetadataTracker.getRestoreDiff(
+             SubscriptionsMetadata.get(subscriberClusterState.metadata()).get("sub1"),
+@@ -440,7 +463,7 @@ public class MetadataTrackerTest extends ESTestCase {
+             .addPublication("pub1", List.of(newRelation.indexNameOrAlias()))
+             .addPartitionedTable(newRelation, List.of(newPartitionName))
+             .build();
+-        RelationMetadata relationMetadata = RelationMetadata.fromMetadata(newRelation, publisherState.metadata());
++        RelationMetadata relationMetadata = RelationMetadata.fromMetadata(newRelation, publisherState.metadata(), ignored -> true);
+         var publisherStateResponse = new Response(Map.of(newRelation, relationMetadata), List.of());
+ 
+         var restoreDiff = MetadataTracker.getRestoreDiff(
+@@ -468,7 +491,7 @@ public class MetadataTrackerTest extends ESTestCase {
+             .addPublication("pub1", List.of(relationName.indexNameOrAlias()))
+             .addPartitionedTable(relationName, List.of(newPartitionName))
+             .build();
+-        RelationMetadata relationMetadata = RelationMetadata.fromMetadata(relationName, publisherState.metadata());
++        RelationMetadata relationMetadata = RelationMetadata.fromMetadata(relationName, publisherState.metadata(), ignored -> true);
+         var publisherStateResponse = new Response(Map.of(relationName, relationMetadata), List.of());
+ 
+         var restoreDiff = MetadataTracker.getRestoreDiff(
+diff --git a/server/src/test/java/io/crate/replication/logical/action/PublicationsStateActionTest.java b/server/src/test/java/io/crate/replication/logical/action/PublicationsStateActionTest.java
+index 3153e4a8b5..1650705851 100644
+--- a/server/src/test/java/io/crate/replication/logical/action/PublicationsStateActionTest.java
++++ b/server/src/test/java/io/crate/replication/logical/action/PublicationsStateActionTest.java
+@@ -21,8 +21,8 @@
+ 
+ package io.crate.replication.logical.action;
+ 
+-import static org.hamcrest.Matchers.contains;
+-import static org.junit.Assert.assertThat;
++import static io.crate.testing.Asserts.assertThat;
++import static java.util.Collections.singletonList;
+ import static org.mockito.Mockito.mock;
+ import static org.mockito.Mockito.when;
+ 
+@@ -40,6 +40,7 @@ import org.junit.After;
+ import org.junit.Before;
+ import org.junit.Test;
+ 
++import io.crate.metadata.PartitionName;
+ import io.crate.metadata.RelationName;
+ import io.crate.metadata.Schemas;
+ import io.crate.replication.logical.metadata.Publication;
+@@ -84,6 +85,7 @@ public class PublicationsStateActionTest extends CrateDummyClusterServiceUnitTes
+         SQLExecutor.builder(clusterService)
+             .addTable("CREATE TABLE doc.t1 (id int)")
+             .addTable("CREATE TABLE doc.t2 (id int) with (\"soft_deletes.enabled\" = false)")
++            .startShards("doc.t1", "doc.t2")
+             .build();
+         var publication = new Publication("some_user", true, List.of());
+ 
+@@ -97,7 +99,7 @@ public class PublicationsStateActionTest extends CrateDummyClusterServiceUnitTes
+         ));
+ 
+         Map<RelationName, RelationMetadata> resolvedRelations = publication.resolveCurrentRelations(clusterService.state(), user, user, "dummy");
+-        assertThat(resolvedRelations.keySet(), contains(new RelationName("doc", "t1")));
++        assertThat(resolvedRelations.keySet()).contains(new RelationName("doc", "t1"));
+         appender.assertAllExpectationsMatched();
+     }
+ 
+@@ -123,6 +125,7 @@ public class PublicationsStateActionTest extends CrateDummyClusterServiceUnitTes
+         SQLExecutor.builder(clusterService)
+             .addTable("CREATE TABLE doc.t1 (id int)")
+             .addTable("CREATE TABLE doc.t3 (id int)")
++            .startShards("doc.t1", "doc.t3")
+             .build();
+         var publication = new Publication("publisher", true, List.of());
+ 
+@@ -133,7 +136,7 @@ public class PublicationsStateActionTest extends CrateDummyClusterServiceUnitTes
+             "dummy"
+         );
+ 
+-        assertThat(resolvedRelations.keySet(), contains(new RelationName("doc", "t1")));
++        assertThat(resolvedRelations.keySet()).contains(new RelationName("doc", "t1"));
+     }
+ 
+     @Test
+@@ -159,11 +162,12 @@ public class PublicationsStateActionTest extends CrateDummyClusterServiceUnitTes
+         SQLExecutor.builder(clusterService)
+             .addTable("CREATE TABLE doc.t1 (id int)")
+             .addTable("CREATE TABLE doc.t3 (id int)")
++            .startShards("doc.t1", "doc.t2")
+             .build();
+         var publication = new Publication("publisher", true, List.of());
+ 
+         var resolvedRelations = publication.resolveCurrentRelations(clusterService.state(), publicationOwner, subscriber, "dummy");
+-        assertThat(resolvedRelations.keySet(), contains(new RelationName("doc", "t1")));
++        assertThat(resolvedRelations.keySet()).contains(new RelationName("doc", "t1"));
+     }
+ 
+     @Test
+@@ -189,6 +193,7 @@ public class PublicationsStateActionTest extends CrateDummyClusterServiceUnitTes
+         SQLExecutor.builder(clusterService)
+             .addTable("CREATE TABLE doc.t1 (id int)")
+             .addTable("CREATE TABLE doc.t2 (id int)")
++            .startShards("doc.t1", "doc.t2")
+             .build();
+         var publication = new Publication("publisher", false,
+             List.of(
+@@ -203,6 +208,120 @@ public class PublicationsStateActionTest extends CrateDummyClusterServiceUnitTes
+             subscriber,
+             "dummy"
+         );
+-        assertThat(resolvedRelations.keySet(), contains(new RelationName("doc", "t1")));
++        assertThat(resolvedRelations.keySet()).contains(new RelationName("doc", "t1"));
++    }
++
++    @Test
++    public void test_resolve_relation_names_for_all_tables_ignores_table_with_non_active_primary_shards() throws Exception {
++        var user = new User("dummy", Set.of(), Set.of(), null) {
++            @Override
++            public boolean hasPrivilege(Privilege.Type type, Privilege.Clazz clazz, String ident) {
++                return true; // This test case doesn't check privileges.
++            }
++        };
++
++        SQLExecutor.builder(clusterService)
++            .addTable("CREATE TABLE doc.t1 (id int)")
++            .addTable("CREATE TABLE doc.t2 (id int)")
++            .startShards("doc.t1")      // <- only t1 has active primary shards
++            .build();
++        var publication = new Publication("some_user", true, List.of());
++
++        var resolvedRelations = publication.resolveCurrentRelations(
++            clusterService.state(),
++            user,
++            user,
++            "dummy"
++        );
++
++        assertThat(resolvedRelations.keySet()).contains(new RelationName("doc", "t1"));
++    }
++
++    @Test
++    public void test_resolve_relation_names_for_concrete_tables_ignores_table_with_non_active_primary_shards() throws Exception {
++        var user = new User("dummy", Set.of(), Set.of(), null) {
++            @Override
++            public boolean hasPrivilege(Privilege.Type type, Privilege.Clazz clazz, String ident) {
++                return true; // This test case doesn't check privileges.
++            }
++        };
++
++        SQLExecutor.builder(clusterService)
++            .addTable("CREATE TABLE doc.t1 (id int)")
++            .addTable("CREATE TABLE doc.t2 (id int)")
++            .startShards("doc.t1")      // <- only t1 has active primary shards
++            .build();
++        var publication = new Publication(
++            "some_user",
++            false,
++            List.of(RelationName.fromIndexName("t1"), RelationName.fromIndexName("doc.t2"))
++        );
++
++        var resolvedRelations = publication.resolveCurrentRelations(
++            clusterService.state(),
++            user,
++            user,
++            "dummy"
++        );
++
++        assertThat(resolvedRelations.keySet()).contains(new RelationName("doc", "t1"));
++    }
++
++    @Test
++    public void test_resolve_relation_names_for_all_tables_ignores_partition_with_non_active_primary_shards() throws Exception {
++        var user = new User("dummy", Set.of(), Set.of(), null) {
++            @Override
++            public boolean hasPrivilege(Privilege.Type type, Privilege.Clazz clazz, String ident) {
++                return true; // This test case doesn't check privileges.
++            }
++        };
++
++        SQLExecutor.builder(clusterService)
++            .addPartitionedTable(
++                "CREATE TABLE doc.p1 (id int, p int) partitioned by (p)",
++                new PartitionName(new RelationName("doc", "p1"), singletonList("1")).asIndexName()
++            )
++            .build();
++        var publication = new Publication("some_user", true, List.of());
++
++        var resolvedRelations = publication.resolveCurrentRelations(
++            clusterService.state(),
++            user,
++            user,
++            "dummy"
++        );
++        RelationMetadata relationMetadata = resolvedRelations.get(new RelationName("doc", "p1"));
++        assertThat(relationMetadata.indices()).isEmpty();
++    }
++
++    @Test
++    public void test_resolve_relation_names_for_concrete_tables_ignores_partition_with_non_active_primary_shards() throws Exception {
++        var user = new User("dummy", Set.of(), Set.of(), null) {
++            @Override
++            public boolean hasPrivilege(Privilege.Type type, Privilege.Clazz clazz, String ident) {
++                return true; // This test case doesn't check privileges.
++            }
++        };
++
++        SQLExecutor.builder(clusterService)
++            .addPartitionedTable(
++                "CREATE TABLE doc.p1 (id int, p int) partitioned by (p)",
++                new PartitionName(new RelationName("doc", "p1"), singletonList("1")).asIndexName()
++            )
++            .build();
++        var publication = new Publication(
++            "some_user",
++            false,
++            List.of(RelationName.fromIndexName("p1"))
++        );
++
++        var resolvedRelations = publication.resolveCurrentRelations(
++            clusterService.state(),
++            user,
++            user,
++            "dummy"
++        );
++        RelationMetadata relationMetadata = resolvedRelations.get(new RelationName("doc", "p1"));
++        assertThat(relationMetadata.indices()).isEmpty();
+     }
+ }
+diff --git a/server/src/test/java/io/crate/user/metadata/UserDefinitions.java b/server/src/test/java/io/crate/user/metadata/UserDefinitions.java
+index e64952ddd7..281caaffcc 100644
+--- a/server/src/test/java/io/crate/user/metadata/UserDefinitions.java
++++ b/server/src/test/java/io/crate/user/metadata/UserDefinitions.java
+@@ -35,7 +35,7 @@ import io.crate.user.User;
+ 
+ public final class UserDefinitions {
+ 
+-    public static final Map<String, Role> SINGLE_USER_ONLY = Collections.singletonMap("Arthur", Role.of("Arthur", null));
++    public static final Map<String, Role> SINGLE_USER_ONLY = Collections.singletonMap("Arthur", User.of("Arthur"));
+ 
+     public static final Map<String, Role> DUMMY_USERS = Map.of(
+         "Ford", User.of("Ford", getSecureHash("fords-password")),
+diff --git a/server/src/test/java/io/crate/user/metadata/UsersMetadataTest.java b/server/src/test/java/io/crate/user/metadata/UsersMetadataTest.java
+new file mode 100644
+index 0000000000..031e66d833
+--- /dev/null
++++ b/server/src/test/java/io/crate/user/metadata/UsersMetadataTest.java
+@@ -0,0 +1,125 @@
++/*
++ * Licensed to Crate.io GmbH ("Crate") under one or more contributor
++ * license agreements.  See the NOTICE file distributed with this work for
++ * additional information regarding copyright ownership.  Crate licenses
++ * this file to you under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.  You may
++ * obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
++ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
++ * License for the specific language governing permissions and limitations
++ * under the License.
++ *
++ * However, if you have executed another commercial license agreement
++ * with Crate these terms will supersede the license and you may use the
++ * software solely pursuant to the terms of the relevant commercial agreement.
++ */
++
++package io.crate.user.metadata;
++
++import static io.crate.testing.Asserts.assertThat;
++
++import java.io.IOException;
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.Map;
++
++
++import org.elasticsearch.common.Strings;
++import org.elasticsearch.common.io.stream.BytesStreamOutput;
++import org.elasticsearch.common.io.stream.StreamInput;
++import org.elasticsearch.common.xcontent.DeprecationHandler;
++import org.elasticsearch.common.xcontent.ToXContent;
++import org.elasticsearch.common.xcontent.XContentBuilder;
++import org.elasticsearch.common.xcontent.XContentParser;
++import org.elasticsearch.common.xcontent.json.JsonXContent;
++import org.elasticsearch.test.ESTestCase;
++import org.junit.Test;
++
++import io.crate.user.Role;
++import io.crate.user.SecureHash;
++
++public class UsersMetadataTest extends ESTestCase {
++
++    @Test
++    public void testUsersMetadataStreaming() throws IOException {
++        UsersMetadata users = of(UserDefinitions.SINGLE_USER_ONLY);
++        BytesStreamOutput out = new BytesStreamOutput();
++        users.writeTo(out);
++
++        StreamInput in = out.bytes().streamInput();
++        UsersMetadata users2 = new UsersMetadata(in);
++        assertThat(users2).isEqualTo(users);
++    }
++
++    @Test
++    public void testUsersMetadataToXContent() throws IOException {
++        XContentBuilder builder = JsonXContent.builder();
++
++        // reflects the logic used to process custom metadata in the cluster state
++        builder.startObject();
++
++        UsersMetadata users = of(UserDefinitions.DUMMY_USERS);
++        users.toXContent(builder, ToXContent.EMPTY_PARAMS);
++        builder.endObject();
++
++        XContentParser parser = JsonXContent.JSON_XCONTENT.createParser(
++            xContentRegistry(),
++            DeprecationHandler.THROW_UNSUPPORTED_OPERATION,
++            Strings.toString(builder));
++        parser.nextToken(); // start object
++        UsersMetadata users2 = UsersMetadata.fromXContent(parser);
++        assertThat(users2).isEqualTo(users);
++
++        // a metadata custom must consume the surrounded END_OBJECT token, no token must be left
++        assertThat(parser.nextToken()).isNull();
++    }
++
++    @Test
++    public void testUsersMetadataWithoutAttributesToXContent() throws IOException {
++        XContentBuilder builder = JsonXContent.builder();
++
++        // reflects the logic used to process custom metadata in the cluster state
++        builder.startObject();
++
++        UsersMetadata users = of(UserDefinitions.SINGLE_USER_ONLY);
++        users.toXContent(builder, ToXContent.EMPTY_PARAMS);
++        builder.endObject();
++
++        XContentParser parser = JsonXContent.JSON_XCONTENT.createParser(
++            xContentRegistry(),
++            DeprecationHandler.THROW_UNSUPPORTED_OPERATION,
++            Strings.toString(builder));
++        parser.nextToken(); // start object
++        UsersMetadata users2 = UsersMetadata.fromXContent(parser);
++        assertThat(users2).isEqualTo(users);
++
++        // a metadata custom must consume the surrounded END_OBJECT token, no token must be left
++        assertThat(parser.nextToken()).isNull();
++    }
++
++    @Test
++    public void testUserMetadataWithAttributesStreaming() throws Exception {
++        UsersMetadata writeUserMeta = of(UserDefinitions.DUMMY_USERS);
++        BytesStreamOutput out = new BytesStreamOutput();
++        writeUserMeta.writeTo(out);
++
++        StreamInput in = out.bytes().streamInput();
++        UsersMetadata readUserMeta = new UsersMetadata(in);
++
++        assertThat(readUserMeta.users()).isEqualTo(writeUserMeta.users());
++    }
++
++    private static UsersMetadata of(Map<String, Role> users) {
++        Map<String, SecureHash> map = new HashMap<>(users.size());
++        for (var user : users.entrySet()) {
++            if (user.getValue().isUser())
++                map.put(user.getKey(), user.getValue().password());
++        }
++        return new UsersMetadata(Collections.unmodifiableMap(map));
++    }
++}
+diff --git a/server/src/testFixtures/java/io/crate/test/integration/CrateDummyClusterServiceUnitTest.java b/server/src/testFixtures/java/io/crate/test/integration/CrateDummyClusterServiceUnitTest.java
+index 5dc06c6b59..42f7725d3e 100644
+--- a/server/src/testFixtures/java/io/crate/test/integration/CrateDummyClusterServiceUnitTest.java
++++ b/server/src/testFixtures/java/io/crate/test/integration/CrateDummyClusterServiceUnitTest.java
+@@ -21,6 +21,15 @@
+ 
+ package io.crate.test.integration;
+ 
++import static org.elasticsearch.test.ClusterServiceUtils.createClusterStatePublisher;
++import static org.elasticsearch.test.ClusterServiceUtils.createNoOpNodeConnectionsService;
++
++import java.util.Collection;
++import java.util.Collections;
++import java.util.HashSet;
++import java.util.Set;
++import java.util.concurrent.TimeUnit;
++
+ import org.elasticsearch.Version;
+ import org.elasticsearch.cluster.ClusterName;
+ import org.elasticsearch.cluster.ClusterState;
+@@ -44,15 +53,6 @@ import org.junit.AfterClass;
+ import org.junit.Before;
+ import org.junit.BeforeClass;
+ 
+-import java.util.Collection;
+-import java.util.Collections;
+-import java.util.HashSet;
+-import java.util.Set;
+-import java.util.concurrent.TimeUnit;
+-
+-import static org.elasticsearch.test.ClusterServiceUtils.createClusterStatePublisher;
+-import static org.elasticsearch.test.ClusterServiceUtils.createNoOpNodeConnectionsService;
+-
+ public class CrateDummyClusterServiceUnitTest extends ESTestCase {
+ 
+     public static final String NODE_ID = "n1";
+diff --git a/server/src/testFixtures/java/io/crate/testing/IndexEnv.java b/server/src/testFixtures/java/io/crate/testing/IndexEnv.java
+index a444cdcd77..4578f38dd1 100644
+--- a/server/src/testFixtures/java/io/crate/testing/IndexEnv.java
++++ b/server/src/testFixtures/java/io/crate/testing/IndexEnv.java
+@@ -63,6 +63,7 @@ import org.elasticsearch.test.IndexSettingsModule;
+ import org.elasticsearch.threadpool.ThreadPool;
+ 
+ import io.crate.expression.reference.doc.lucene.LuceneReferenceResolver;
++import io.crate.lucene.CrateLuceneTestCase;
+ import io.crate.metadata.doc.DocTableInfo;
+ 
+ public final class IndexEnv implements AutoCloseable {
+@@ -78,11 +79,11 @@ public final class IndexEnv implements AutoCloseable {
+     public IndexEnv(ThreadPool threadPool,
+                     DocTableInfo table,
+                     ClusterState clusterState,
+-                    Version indexVersion,
+-                    Path tempDir) throws IOException {
++                    Version indexVersion) throws IOException {
+         String indexName = table.ident().indexNameOrAlias();
+         assert clusterState.metadata().hasIndex(indexName) : "ClusterState must contain the index: " + indexName;
+ 
++        Path tempDir = CrateLuceneTestCase.createTempDir();
+         Index index = new Index(indexName, UUIDs.randomBase64UUID());
+         Settings nodeSettings = Settings.builder()
+             .put(IndexMetadata.SETTING_VERSION_CREATED, indexVersion)
+diff --git a/server/src/testFixtures/java/io/crate/testing/QueryTester.java b/server/src/testFixtures/java/io/crate/testing/QueryTester.java
+index 400afd274d..369c3f13ab 100644
+--- a/server/src/testFixtures/java/io/crate/testing/QueryTester.java
++++ b/server/src/testFixtures/java/io/crate/testing/QueryTester.java
+@@ -25,7 +25,6 @@ import static java.util.Objects.requireNonNull;
+ import static org.elasticsearch.cluster.metadata.Metadata.COLUMN_OID_UNASSIGNED;
+ 
+ import java.io.IOException;
+-import java.nio.file.Path;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.concurrent.TimeUnit;
+@@ -80,13 +79,12 @@ public final class QueryTester implements AutoCloseable {
+         private final IndexEnv indexEnv;
+         private final LuceneQueryBuilder queryBuilder;
+ 
+-        public Builder(Path tempDir,
+-                       ThreadPool threadPool,
++        public Builder(ThreadPool threadPool,
+                        ClusterService clusterService,
+                        Version indexVersion,
+                        String createTableStmt,
+                        AbstractModule... additionalModules) throws IOException {
+-            this(tempDir,
++            this(
+                 threadPool,
+                 clusterService,
+                 indexVersion,
+@@ -97,8 +95,7 @@ public final class QueryTester implements AutoCloseable {
+                 additionalModules);
+         }
+ 
+-        public Builder(Path tempDir,
+-                       ThreadPool threadPool,
++        public Builder(ThreadPool threadPool,
+                        ClusterService clusterService,
+                        Version indexVersion,
+                        String createTableStmt,
+@@ -119,8 +116,7 @@ public final class QueryTester implements AutoCloseable {
+                 threadPool,
+                 table,
+                 clusterService.state(),
+-                indexVersion,
+-                tempDir
++                indexVersion
+             );
+             queryBuilder = new LuceneQueryBuilder(plannerContext.nodeContext());
+             var docTableRelation = new DocTableRelation(table);
+diff --git a/server/src/testFixtures/java/io/crate/testing/SQLExecutor.java b/server/src/testFixtures/java/io/crate/testing/SQLExecutor.java
+index 5ce84520e3..a988fe0f4e 100644
+--- a/server/src/testFixtures/java/io/crate/testing/SQLExecutor.java
++++ b/server/src/testFixtures/java/io/crate/testing/SQLExecutor.java
+@@ -31,12 +31,13 @@ import static org.elasticsearch.cluster.metadata.IndexMetadata.INDEX_CLOSED_BLOC
+ import static org.elasticsearch.cluster.metadata.IndexMetadata.SETTING_CREATION_DATE;
+ import static org.elasticsearch.cluster.metadata.IndexMetadata.SETTING_INDEX_UUID;
+ import static org.elasticsearch.cluster.metadata.IndexMetadata.SETTING_VERSION_CREATED;
++import static org.elasticsearch.cluster.routing.ShardRoutingState.INITIALIZING;
+ import static org.elasticsearch.env.Environment.PATH_HOME_SETTING;
+ import static org.mockito.Mockito.mock;
+ import static org.mockito.Mockito.when;
+ 
+-import java.io.File;
+ import java.io.IOException;
++import java.nio.file.Path;
+ import java.time.Instant;
+ import java.util.Arrays;
+ import java.util.Collections;
+@@ -51,8 +52,6 @@ import java.util.concurrent.atomic.AtomicReference;
+ import java.util.function.LongSupplier;
+ import java.util.stream.Stream;
+ 
+-import org.apache.logging.log4j.LogManager;
+-import org.apache.logging.log4j.Logger;
+ import org.elasticsearch.Version;
+ import org.elasticsearch.action.admin.cluster.repositories.delete.TransportDeleteRepositoryAction;
+ import org.elasticsearch.action.admin.cluster.repositories.put.TransportPutRepositoryAction;
+@@ -71,6 +70,7 @@ import org.elasticsearch.cluster.metadata.Metadata;
+ import org.elasticsearch.cluster.node.DiscoveryNode;
+ import org.elasticsearch.cluster.node.DiscoveryNodes;
+ import org.elasticsearch.cluster.routing.RoutingTable;
++import org.elasticsearch.cluster.routing.ShardRouting;
+ import org.elasticsearch.cluster.routing.allocation.AllocationService;
+ import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
+ import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
+@@ -132,6 +132,7 @@ import io.crate.expression.symbol.Symbol;
+ import io.crate.expression.udf.UDFLanguage;
+ import io.crate.expression.udf.UserDefinedFunctionMetadata;
+ import io.crate.expression.udf.UserDefinedFunctionService;
++import io.crate.lucene.CrateLuceneTestCase;
+ import io.crate.metadata.CoordinatorTxnCtx;
+ import io.crate.metadata.FulltextAnalyzerResolver;
+ import io.crate.metadata.IndexParts;
+@@ -190,8 +191,6 @@ import io.crate.user.UserManager;
+  */
+ public class SQLExecutor {
+ 
+-    private static final Logger LOGGER = LogManager.getLogger(SQLExecutor.class);
+-
+     public final Sessions sqlOperations;
+     public final Analyzer analyzer;
+     public final Planner planner;
+@@ -277,10 +276,10 @@ public class SQLExecutor {
+             nodeCtx = createNodeContext(additionalModules);
+             DocTableInfoFactory tableInfoFactory = new DocTableInfoFactory(nodeCtx);
+             udfService = new UserDefinedFunctionService(clusterService, tableInfoFactory, nodeCtx);
+-            File homeDir = createTempDir();
++            Path homeDir = CrateLuceneTestCase.createTempDir();
+             Environment environment = new Environment(
+-                Settings.builder().put(PATH_HOME_SETTING.getKey(), homeDir.getAbsolutePath()).build(),
+-                homeDir.toPath().resolve("config")
++                Settings.builder().put(PATH_HOME_SETTING.getKey(), homeDir.toAbsolutePath()).build(),
++                homeDir.resolve("config")
+             );
+             Map<String, SchemaInfo> schemaInfoByName = new HashMap<>();
+             schemaInfoByName.put("sys", new SysSchemaInfo(clusterService));
+@@ -438,21 +437,6 @@ public class SQLExecutor {
+             );
+         }
+ 
+-        private static File createTempDir() {
+-            int attempt = 0;
+-            while (attempt < 3) {
+-                try {
+-                    attempt++;
+-                    File tempDir = File.createTempFile("temp", Long.toString(System.nanoTime()));
+-                    tempDir.deleteOnExit();
+-                    return tempDir;
+-                } catch (IOException e) {
+-                    LOGGER.warn("Unable to create temp dir on attempt {} due to {}", attempt, e.getMessage());
+-                }
+-            }
+-            throw new IllegalStateException("Cannot create temp dir");
+-        }
+-
+         public Builder addPartitionedTable(String createTableStmt, String... partitions) throws IOException {
+             return addPartitionedTable(createTableStmt, Settings.EMPTY, partitions);
+         }
+@@ -573,6 +557,18 @@ public class SQLExecutor {
+             return this;
+         }
+ 
++        public Builder startShards(String... indices) {
++            var clusterState = clusterService.state();
++            for (var index : indices) {
++                var indexName = new IndexParts(index).toRelationName().indexNameOrAlias();
++                final List<ShardRouting> startedShards = clusterState.getRoutingNodes().shardsWithState(indexName, INITIALIZING);
++                clusterState = allocationService.applyStartedShards(clusterState, startedShards);
++            }
++            clusterState = allocationService.reroute(clusterState, "reroute after starting");
++            ClusterServiceUtils.setState(clusterService, clusterState);
++            return this;
++        }
++
+         public Builder closeTable(String tableName) throws IOException {
+             String indexName = RelationName.of(QualifiedName.of(tableName), Schemas.DOC_SCHEMA_NAME).indexNameOrAlias();
+             ClusterState prevState = clusterService.state();
+diff --git a/server/src/testFixtures/java/io/crate/types/DataTypeTestCase.java b/server/src/testFixtures/java/io/crate/types/DataTypeTestCase.java
+index 28172f6557..60ca1df6ae 100644
+--- a/server/src/testFixtures/java/io/crate/types/DataTypeTestCase.java
++++ b/server/src/testFixtures/java/io/crate/types/DataTypeTestCase.java
+@@ -24,6 +24,7 @@ package io.crate.types;
+ import static io.crate.execution.dml.IndexerTest.getIndexer;
+ import static io.crate.execution.dml.IndexerTest.item;
+ import static io.crate.testing.Asserts.assertThat;
++import static org.assertj.core.api.Assertions.assertThat;
+ 
+ import java.io.IOException;
+ import java.util.List;
+@@ -88,8 +89,7 @@ public abstract class DataTypeTestCase<T> extends CrateDummyClusterServiceUnitTe
+                 THREAD_POOL,
+                 table,
+                 clusterService.state(),
+-                Version.CURRENT,
+-                createTempDir())) {
++                Version.CURRENT)) {
+             T value = dataGenerator.get();
+ 
+             MapperService mapperService = indexEnv.mapperService();

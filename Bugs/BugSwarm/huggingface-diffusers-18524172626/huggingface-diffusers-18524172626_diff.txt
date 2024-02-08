@@ -1,0 +1,927 @@
+diff --git a/src/diffusers/loaders.py b/src/diffusers/loaders.py
+index cb786611..4590c245 100644
+--- a/src/diffusers/loaders.py
++++ b/src/diffusers/loaders.py
+@@ -1412,13 +1412,9 @@ class LoraLoaderMixin:
+         )
+ 
+         if any(f.endswith(LORA_WEIGHT_NAME) for f in targeted_files):
+-            targeted_files = list(
+-                filter(lambda x: x.endswith(LORA_WEIGHT_NAME), targeted_files)
+-            )
++            targeted_files = list(filter(lambda x: x.endswith(LORA_WEIGHT_NAME), targeted_files))
+         elif any(f.endswith(LORA_WEIGHT_NAME_SAFE) for f in targeted_files):
+-            targeted_files = list(
+-                filter(lambda x: x.endswith(LORA_WEIGHT_NAME_SAFE), targeted_files)
+-            )
++            targeted_files = list(filter(lambda x: x.endswith(LORA_WEIGHT_NAME_SAFE), targeted_files))
+ 
+         if len(targeted_files) > 1:
+             raise ValueError(
+diff --git a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py
+index a9f0de22..2dbc2604 100644
+--- a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py
++++ b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion.py
+@@ -588,6 +588,34 @@ class AltDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+         """Disables the FreeU mechanism if enabled."""
+         self.unet.disable_freeu()
+ 
++    def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
++        """
++        See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
++
++        Args:
++            timesteps (`torch.Tensor`):
++                generate embedding vectors at these timesteps
++            embedding_dim (`int`, *optional*, defaults to 512):
++                dimension of the embeddings to generate
++            dtype:
++                data type of the generated embeddings
++
++        Returns:
++            `torch.FloatTensor`: Embedding vectors with shape `(len(timesteps), embedding_dim)`
++        """
++        assert len(w.shape) == 1
++        w = w * 1000.0
++
++        half_dim = embedding_dim // 2
++        emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
++        emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
++        emb = w.to(dtype)[:, None] * emb[None, :]
++        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
++        if embedding_dim % 2 == 1:  # zero pad
++            emb = torch.nn.functional.pad(emb, (0, 1))
++        assert emb.shape == (w.shape[0], embedding_dim)
++        return emb
++
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -605,7 +633,7 @@ class AltDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+     # corresponds to doing no classifier free guidance.
+     @property
+     def do_classifier_free_guidance(self):
+-        return self._guidance_scale > 1
++        return self._guidance_scale > 1 and self.unet.config.time_cond_proj_dim is None
+ 
+     @property
+     def cross_attention_kwargs(self):
+@@ -804,6 +832,14 @@ class AltDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+         # 6. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
+         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
+ 
++        # 6.5 Optionally get Guidance Scale Embedding
++        timestep_cond = None
++        if self.unet.config.time_cond_proj_dim is not None:
++            guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
++
+         # 7. Denoising loop
+         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
+         self._num_timesteps = len(timesteps)
+@@ -818,6 +854,7 @@ class AltDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+                     latent_model_input,
+                     t,
+                     encoder_hidden_states=prompt_embeds,
++                    timestep_cond=timestep_cond,
+                     cross_attention_kwargs=self.cross_attention_kwargs,
+                     return_dict=False,
+                 )[0]
+diff --git a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
+index 74d5a15a..baaadefa 100644
+--- a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
++++ b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
+@@ -646,6 +646,34 @@ class AltDiffusionImg2ImgPipeline(
+         """Disables the FreeU mechanism if enabled."""
+         self.unet.disable_freeu()
+ 
++    def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
++        """
++        See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
++
++        Args:
++            timesteps (`torch.Tensor`):
++                generate embedding vectors at these timesteps
++            embedding_dim (`int`, *optional*, defaults to 512):
++                dimension of the embeddings to generate
++            dtype:
++                data type of the generated embeddings
++
++        Returns:
++            `torch.FloatTensor`: Embedding vectors with shape `(len(timesteps), embedding_dim)`
++        """
++        assert len(w.shape) == 1
++        w = w * 1000.0
++
++        half_dim = embedding_dim // 2
++        emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
++        emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
++        emb = w.to(dtype)[:, None] * emb[None, :]
++        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
++        if embedding_dim % 2 == 1:  # zero pad
++            emb = torch.nn.functional.pad(emb, (0, 1))
++        assert emb.shape == (w.shape[0], embedding_dim)
++        return emb
++
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -659,7 +687,7 @@ class AltDiffusionImg2ImgPipeline(
+     # corresponds to doing no classifier free guidance.
+     @property
+     def do_classifier_free_guidance(self):
+-        return self._guidance_scale > 1
++        return self._guidance_scale > 1 and self.unet.config.time_cond_proj_dim is None
+ 
+     @property
+     def cross_attention_kwargs(self):
+@@ -849,6 +877,14 @@ class AltDiffusionImg2ImgPipeline(
+         # 7. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
+         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
+ 
++        # 7.5 Optionally get Guidance Scale Embedding
++        timestep_cond = None
++        if self.unet.config.time_cond_proj_dim is not None:
++            guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
++
+         # 8. Denoising loop
+         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
+         self._num_timesteps = len(timesteps)
+@@ -863,6 +899,7 @@ class AltDiffusionImg2ImgPipeline(
+                     latent_model_input,
+                     t,
+                     encoder_hidden_states=prompt_embeds,
++                    timestep_cond=timestep_cond,
+                     cross_attention_kwargs=self.cross_attention_kwargs,
+                     return_dict=False,
+                 )[0]
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
+index f2f8c07d..9911cbe7 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
+@@ -550,6 +550,32 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
+         latents = latents * self.scheduler.init_noise_sigma
+         return latents
+ 
++    def enable_freeu(self, s1: float, s2: float, b1: float, b2: float):
++        r"""Enables the FreeU mechanism as in https://arxiv.org/abs/2309.11497.
++
++        The suffixes after the scaling factors represent the stages where they are being applied.
++
++        Please refer to the [official repository](https://github.com/ChenyangSi/FreeU) for combinations of the values
++        that are known to work well for different pipelines such as Stable Diffusion v1, v2, and Stable Diffusion XL.
++
++        Args:
++            s1 (`float`):
++                Scaling factor for stage 1 to attenuate the contributions of the skip features. This is done to
++                mitigate "oversmoothing effect" in the enhanced denoising process.
++            s2 (`float`):
++                Scaling factor for stage 2 to attenuate the contributions of the skip features. This is done to
++                mitigate "oversmoothing effect" in the enhanced denoising process.
++            b1 (`float`): Scaling factor for stage 1 to amplify the contributions of backbone features.
++            b2 (`float`): Scaling factor for stage 2 to amplify the contributions of backbone features.
++        """
++        if not hasattr(self, "unet"):
++            raise ValueError("The pipeline must have `unet` for using FreeU.")
++        self.unet.enable_freeu(s1=s1, s2=s2, b1=b1, b2=b2)
++
++    def disable_freeu(self):
++        """Disables the FreeU mechanism if enabled."""
++        self.unet.disable_freeu()
++
+     # Copied from diffusers.pipelines.latent_consistency_models.pipeline_latent_consistency_text2img.LatentConsistencyModelPipeline.get_guidance_scale_embedding
+     def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
+         """
+@@ -579,33 +605,6 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
+         assert emb.shape == (w.shape[0], embedding_dim)
+         return emb
+ 
+-
+-    def enable_freeu(self, s1: float, s2: float, b1: float, b2: float):
+-        r"""Enables the FreeU mechanism as in https://arxiv.org/abs/2309.11497.
+-
+-        The suffixes after the scaling factors represent the stages where they are being applied.
+-
+-        Please refer to the [official repository](https://github.com/ChenyangSi/FreeU) for combinations of the values
+-        that are known to work well for different pipelines such as Stable Diffusion v1, v2, and Stable Diffusion XL.
+-
+-        Args:
+-            s1 (`float`):
+-                Scaling factor for stage 1 to attenuate the contributions of the skip features. This is done to
+-                mitigate "oversmoothing effect" in the enhanced denoising process.
+-            s2 (`float`):
+-                Scaling factor for stage 2 to attenuate the contributions of the skip features. This is done to
+-                mitigate "oversmoothing effect" in the enhanced denoising process.
+-            b1 (`float`): Scaling factor for stage 1 to amplify the contributions of backbone features.
+-            b2 (`float`): Scaling factor for stage 2 to amplify the contributions of backbone features.
+-        """
+-        if not hasattr(self, "unet"):
+-            raise ValueError("The pipeline must have `unet` for using FreeU.")
+-        self.unet.enable_freeu(s1=s1, s2=s2, b1=b1, b2=b2)
+-
+-    def disable_freeu(self):
+-        """Disables the FreeU mechanism if enabled."""
+-        self.unet.disable_freeu()
+-
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -824,9 +823,9 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
+         timestep_cond = None
+         if self.unet.config.time_cond_proj_dim is not None:
+             guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
+-            timestep_cond = self.get_guidance_scale_embedding(guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim).to(
+-                device=device, dtype=latents.dtype
+-            )
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
+ 
+         # 7. Denoising loop
+         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
+index a01ace26..40daecfa 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
+@@ -640,6 +640,35 @@ class StableDiffusionImg2ImgPipeline(
+         """Disables the FreeU mechanism if enabled."""
+         self.unet.disable_freeu()
+ 
++    # Copied from diffusers.pipelines.latent_consistency_models.pipeline_latent_consistency_text2img.LatentConsistencyModelPipeline.get_guidance_scale_embedding
++    def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
++        """
++        See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
++
++        Args:
++            timesteps (`torch.Tensor`):
++                generate embedding vectors at these timesteps
++            embedding_dim (`int`, *optional*, defaults to 512):
++                dimension of the embeddings to generate
++            dtype:
++                data type of the generated embeddings
++
++        Returns:
++            `torch.FloatTensor`: Embedding vectors with shape `(len(timesteps), embedding_dim)`
++        """
++        assert len(w.shape) == 1
++        w = w * 1000.0
++
++        half_dim = embedding_dim // 2
++        emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
++        emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
++        emb = w.to(dtype)[:, None] * emb[None, :]
++        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
++        if embedding_dim % 2 == 1:  # zero pad
++            emb = torch.nn.functional.pad(emb, (0, 1))
++        assert emb.shape == (w.shape[0], embedding_dim)
++        return emb
++
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -653,7 +682,7 @@ class StableDiffusionImg2ImgPipeline(
+     # corresponds to doing no classifier free guidance.
+     @property
+     def do_classifier_free_guidance(self):
+-        return self._guidance_scale > 1
++        return self._guidance_scale > 1 and self.unet.config.time_cond_proj_dim is None
+ 
+     @property
+     def cross_attention_kwargs(self):
+@@ -841,6 +870,14 @@ class StableDiffusionImg2ImgPipeline(
+         # 7. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
+         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
+ 
++        # 7.5 Optionally get Guidance Scale Embedding
++        timestep_cond = None
++        if self.unet.config.time_cond_proj_dim is not None:
++            guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
++
+         # 8. Denoising loop
+         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
+         self._num_timesteps = len(timesteps)
+@@ -855,6 +892,7 @@ class StableDiffusionImg2ImgPipeline(
+                     latent_model_input,
+                     t,
+                     encoder_hidden_states=prompt_embeds,
++                    timestep_cond=timestep_cond,
+                     cross_attention_kwargs=self.cross_attention_kwargs,
+                     return_dict=False,
+                 )[0]
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
+index bd3ccce7..f9171d86 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
+@@ -765,6 +765,35 @@ class StableDiffusionInpaintPipeline(
+         """Disables the FreeU mechanism if enabled."""
+         self.unet.disable_freeu()
+ 
++    # Copied from diffusers.pipelines.latent_consistency_models.pipeline_latent_consistency_text2img.LatentConsistencyModelPipeline.get_guidance_scale_embedding
++    def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
++        """
++        See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
++
++        Args:
++            timesteps (`torch.Tensor`):
++                generate embedding vectors at these timesteps
++            embedding_dim (`int`, *optional*, defaults to 512):
++                dimension of the embeddings to generate
++            dtype:
++                data type of the generated embeddings
++
++        Returns:
++            `torch.FloatTensor`: Embedding vectors with shape `(len(timesteps), embedding_dim)`
++        """
++        assert len(w.shape) == 1
++        w = w * 1000.0
++
++        half_dim = embedding_dim // 2
++        emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
++        emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
++        emb = w.to(dtype)[:, None] * emb[None, :]
++        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
++        if embedding_dim % 2 == 1:  # zero pad
++            emb = torch.nn.functional.pad(emb, (0, 1))
++        assert emb.shape == (w.shape[0], embedding_dim)
++        return emb
++
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -778,7 +807,7 @@ class StableDiffusionInpaintPipeline(
+     # corresponds to doing no classifier free guidance.
+     @property
+     def do_classifier_free_guidance(self):
+-        return self._guidance_scale > 1
++        return self._guidance_scale > 1 and self.unet.config.time_cond_proj_dim is None
+ 
+     @property
+     def cross_attention_kwargs(self):
+@@ -1087,6 +1116,14 @@ class StableDiffusionInpaintPipeline(
+         # 9. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
+         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
+ 
++        # 9.5 Optionally get Guidance Scale Embedding
++        timestep_cond = None
++        if self.unet.config.time_cond_proj_dim is not None:
++            guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
++
+         # 10. Denoising loop
+         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
+         self._num_timesteps = len(timesteps)
+@@ -1106,6 +1143,7 @@ class StableDiffusionInpaintPipeline(
+                     latent_model_input,
+                     t,
+                     encoder_hidden_states=prompt_embeds,
++                    timestep_cond=timestep_cond,
+                     cross_attention_kwargs=self.cross_attention_kwargs,
+                     return_dict=False,
+                 )[0]
+diff --git a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py
+index fd1183f5..151cbed4 100644
+--- a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py
++++ b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py
+@@ -631,6 +631,11 @@ class StableDiffusionXLPipeline(
+             raise ValueError("The pipeline must have `unet` for using FreeU.")
+         self.unet.enable_freeu(s1=s1, s2=s2, b1=b1, b2=b2)
+ 
++    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.disable_freeu
++    def disable_freeu(self):
++        """Disables the FreeU mechanism if enabled."""
++        self.unet.disable_freeu()
++
+     # Copied from diffusers.pipelines.latent_consistency_models.pipeline_latent_consistency_text2img.LatentConsistencyModelPipeline.get_guidance_scale_embedding
+     def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
+         """
+@@ -660,11 +665,6 @@ class StableDiffusionXLPipeline(
+         assert emb.shape == (w.shape[0], embedding_dim)
+         return emb
+ 
+-    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.disable_freeu
+-    def disable_freeu(self):
+-        """Disables the FreeU mechanism if enabled."""
+-        self.unet.disable_freeu()
+-
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -1022,9 +1022,9 @@ class StableDiffusionXLPipeline(
+         timestep_cond = None
+         if self.unet.config.time_cond_proj_dim is not None:
+             guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
+-            timestep_cond = self.get_guidance_scale_embedding(guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim).to(
+-                device=device, dtype=latents.dtype
+-            )
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
+ 
+         self._num_timesteps = len(timesteps)
+         with self.progress_bar(total=num_inference_steps) as progress_bar:
+diff --git a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py
+index 02a220fa..f444edde 100644
+--- a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py
++++ b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py
+@@ -763,6 +763,35 @@ class StableDiffusionXLImg2ImgPipeline(
+         """Disables the FreeU mechanism if enabled."""
+         self.unet.disable_freeu()
+ 
++    # Copied from diffusers.pipelines.latent_consistency_models.pipeline_latent_consistency_text2img.LatentConsistencyModelPipeline.get_guidance_scale_embedding
++    def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
++        """
++        See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
++
++        Args:
++            timesteps (`torch.Tensor`):
++                generate embedding vectors at these timesteps
++            embedding_dim (`int`, *optional*, defaults to 512):
++                dimension of the embeddings to generate
++            dtype:
++                data type of the generated embeddings
++
++        Returns:
++            `torch.FloatTensor`: Embedding vectors with shape `(len(timesteps), embedding_dim)`
++        """
++        assert len(w.shape) == 1
++        w = w * 1000.0
++
++        half_dim = embedding_dim // 2
++        emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
++        emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
++        emb = w.to(dtype)[:, None] * emb[None, :]
++        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
++        if embedding_dim % 2 == 1:  # zero pad
++            emb = torch.nn.functional.pad(emb, (0, 1))
++        assert emb.shape == (w.shape[0], embedding_dim)
++        return emb
++
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -780,7 +809,7 @@ class StableDiffusionXLImg2ImgPipeline(
+     # corresponds to doing no classifier free guidance.
+     @property
+     def do_classifier_free_guidance(self):
+-        return self._guidance_scale > 1
++        return self._guidance_scale > 1 and self.unet.config.time_cond_proj_dim is None
+ 
+     @property
+     def cross_attention_kwargs(self):
+@@ -1156,6 +1185,15 @@ class StableDiffusionXLImg2ImgPipeline(
+             )
+             num_inference_steps = len(list(filter(lambda ts: ts >= discrete_timestep_cutoff, timesteps)))
+             timesteps = timesteps[:num_inference_steps]
++
++        # 9.2 Optionally get Guidance Scale Embedding
++        timestep_cond = None
++        if self.unet.config.time_cond_proj_dim is not None:
++            guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
++
+         self._num_timesteps = len(timesteps)
+         with self.progress_bar(total=num_inference_steps) as progress_bar:
+             for i, t in enumerate(timesteps):
+@@ -1170,6 +1208,7 @@ class StableDiffusionXLImg2ImgPipeline(
+                     latent_model_input,
+                     t,
+                     encoder_hidden_states=prompt_embeds,
++                    timestep_cond=timestep_cond,
+                     cross_attention_kwargs=self.cross_attention_kwargs,
+                     added_cond_kwargs=added_cond_kwargs,
+                     return_dict=False,
+diff --git a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py
+index 7890774c..667e7aec 100644
+--- a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py
++++ b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py
+@@ -982,6 +982,35 @@ class StableDiffusionXLInpaintPipeline(
+         """Disables the FreeU mechanism if enabled."""
+         self.unet.disable_freeu()
+ 
++    # Copied from diffusers.pipelines.latent_consistency_models.pipeline_latent_consistency_text2img.LatentConsistencyModelPipeline.get_guidance_scale_embedding
++    def get_guidance_scale_embedding(self, w, embedding_dim=512, dtype=torch.float32):
++        """
++        See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
++
++        Args:
++            timesteps (`torch.Tensor`):
++                generate embedding vectors at these timesteps
++            embedding_dim (`int`, *optional*, defaults to 512):
++                dimension of the embeddings to generate
++            dtype:
++                data type of the generated embeddings
++
++        Returns:
++            `torch.FloatTensor`: Embedding vectors with shape `(len(timesteps), embedding_dim)`
++        """
++        assert len(w.shape) == 1
++        w = w * 1000.0
++
++        half_dim = embedding_dim // 2
++        emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
++        emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
++        emb = w.to(dtype)[:, None] * emb[None, :]
++        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
++        if embedding_dim % 2 == 1:  # zero pad
++            emb = torch.nn.functional.pad(emb, (0, 1))
++        assert emb.shape == (w.shape[0], embedding_dim)
++        return emb
++
+     @property
+     def guidance_scale(self):
+         return self._guidance_scale
+@@ -999,7 +1028,7 @@ class StableDiffusionXLInpaintPipeline(
+     # corresponds to doing no classifier free guidance.
+     @property
+     def do_classifier_free_guidance(self):
+-        return self._guidance_scale > 1
++        return self._guidance_scale > 1 and self.unet.config.time_cond_proj_dim is None
+ 
+     @property
+     def cross_attention_kwargs(self):
+@@ -1464,6 +1493,14 @@ class StableDiffusionXLInpaintPipeline(
+             num_inference_steps = len(list(filter(lambda ts: ts >= discrete_timestep_cutoff, timesteps)))
+             timesteps = timesteps[:num_inference_steps]
+ 
++        # 11.1 Optionally get Guidance Scale Embedding
++        timestep_cond = None
++        if self.unet.config.time_cond_proj_dim is not None:
++            guidance_scale_tensor = torch.tensor(self.guidance_scale - 1).repeat(batch_size * num_images_per_prompt)
++            timestep_cond = self.get_guidance_scale_embedding(
++                guidance_scale_tensor, embedding_dim=self.unet.config.time_cond_proj_dim
++            ).to(device=device, dtype=latents.dtype)
++
+         self._num_timesteps = len(timesteps)
+         with self.progress_bar(total=num_inference_steps) as progress_bar:
+             for i, t in enumerate(timesteps):
+@@ -1482,6 +1519,7 @@ class StableDiffusionXLInpaintPipeline(
+                     latent_model_input,
+                     t,
+                     encoder_hidden_states=prompt_embeds,
++                    timestep_cond=timestep_cond,
+                     cross_attention_kwargs=self.cross_attention_kwargs,
+                     added_cond_kwargs=added_cond_kwargs,
+                     return_dict=False,
+diff --git a/tests/lora/test_lora_layers_peft.py b/tests/lora/test_lora_layers_peft.py
+index e0e3b91a..68e98679 100644
+--- a/tests/lora/test_lora_layers_peft.py
++++ b/tests/lora/test_lora_layers_peft.py
+@@ -28,12 +28,12 @@ from transformers import CLIPTextModel, CLIPTextModelWithProjection, CLIPTokeniz
+ 
+ from diffusers import (
+     AutoencoderKL,
++    AutoPipelineForImage2Image,
+     ControlNetModel,
+     DDIMScheduler,
+-    LCMScheduler,
+-    AutoPipelineForImage2Image,
+     DiffusionPipeline,
+     EulerDiscreteScheduler,
++    LCMScheduler,
+     StableDiffusionPipeline,
+     StableDiffusionXLControlNetPipeline,
+     StableDiffusionXLPipeline,
+@@ -55,8 +55,6 @@ from diffusers.utils.testing_utils import (
+     torch_device,
+ )
+ 
+-from diffusers.pipelines.auto_pipeline import AutoPipelineForText2Image
+-
+ 
+ if is_accelerate_available():
+     from accelerate.utils import release_memory
+@@ -112,7 +110,6 @@ class PeftLoraLoaderMixinTests:
+     vae_kwargs = None
+ 
+     def get_dummy_components(self, scheduler_cls=None):
+-
+         scheduler_cls = self.scheduler_cls if scheduler_cls is None else LCMScheduler
+ 
+         torch.manual_seed(0)
+@@ -233,7 +230,9 @@ class PeftLoraLoaderMixinTests:
+             self.assertTrue(output_no_lora.shape == (1, 64, 64, 3))
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 pipe.text_encoder_2.add_adapter(text_lora_config)
+@@ -262,7 +261,9 @@ class PeftLoraLoaderMixinTests:
+             self.assertTrue(output_no_lora.shape == (1, 64, 64, 3))
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 pipe.text_encoder_2.add_adapter(text_lora_config)
+@@ -307,7 +308,9 @@ class PeftLoraLoaderMixinTests:
+             self.assertTrue(output_no_lora.shape == (1, 64, 64, 3))
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 pipe.text_encoder_2.add_adapter(text_lora_config)
+@@ -317,7 +320,9 @@ class PeftLoraLoaderMixinTests:
+ 
+             pipe.fuse_lora()
+             # Fusing should still keep the LoRA layers
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 self.assertTrue(
+@@ -327,7 +332,7 @@ class PeftLoraLoaderMixinTests:
+             ouput_fused = pipe(**inputs, generator=torch.manual_seed(0)).images
+             self.assertFalse(
+                 np.allclose(ouput_fused, output_no_lora, atol=1e-3, rtol=1e-3), "Fused lora should change the output"
+-        )
++            )
+ 
+     def test_simple_inference_with_text_lora_unloaded(self):
+         """
+@@ -345,7 +350,9 @@ class PeftLoraLoaderMixinTests:
+             self.assertTrue(output_no_lora.shape == (1, 64, 64, 3))
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 pipe.text_encoder_2.add_adapter(text_lora_config)
+@@ -361,12 +368,14 @@ class PeftLoraLoaderMixinTests:
+ 
+             if self.has_two_text_encoders:
+                 self.assertFalse(
+-                    self.check_if_lora_correctly_set(pipe.text_encoder_2), "Lora not correctly unloaded in text encoder 2"
++                    self.check_if_lora_correctly_set(pipe.text_encoder_2),
++                    "Lora not correctly unloaded in text encoder 2",
+                 )
+ 
+             ouput_unloaded = pipe(**inputs, generator=torch.manual_seed(0)).images
+             self.assertTrue(
+-                np.allclose(ouput_unloaded, output_no_lora, atol=1e-3, rtol=1e-3), "Fused lora should change the output"
++                np.allclose(ouput_unloaded, output_no_lora, atol=1e-3, rtol=1e-3),
++                "Fused lora should change the output",
+             )
+ 
+     def test_simple_inference_with_text_lora_save_load(self):
+@@ -384,7 +393,9 @@ class PeftLoraLoaderMixinTests:
+             self.assertTrue(output_no_lora.shape == (1, 64, 64, 3))
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 pipe.text_encoder_2.add_adapter(text_lora_config)
+@@ -418,7 +429,9 @@ class PeftLoraLoaderMixinTests:
+                 pipe.load_lora_weights(os.path.join(tmpdirname, "pytorch_lora_weights.bin"))
+ 
+             images_lora_from_pretrained = pipe(**inputs, generator=torch.manual_seed(0)).images
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 self.assertTrue(
+@@ -445,7 +458,9 @@ class PeftLoraLoaderMixinTests:
+             self.assertTrue(output_no_lora.shape == (1, 64, 64, 3))
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+ 
+             if self.has_two_text_encoders:
+                 pipe.text_encoder_2.add_adapter(text_lora_config)
+@@ -496,7 +511,9 @@ class PeftLoraLoaderMixinTests:
+             pipe.text_encoder.add_adapter(text_lora_config)
+             pipe.unet.add_adapter(unet_lora_config)
+ 
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -534,7 +551,9 @@ class PeftLoraLoaderMixinTests:
+                 pipe.load_lora_weights(os.path.join(tmpdirname, "pytorch_lora_weights.bin"))
+ 
+             images_lora_from_pretrained = pipe(**inputs, generator=torch.manual_seed(0)).images
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -564,7 +583,9 @@ class PeftLoraLoaderMixinTests:
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+             pipe.unet.add_adapter(unet_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -617,7 +638,9 @@ class PeftLoraLoaderMixinTests:
+             pipe.text_encoder.add_adapter(text_lora_config)
+             pipe.unet.add_adapter(unet_lora_config)
+ 
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -628,7 +651,9 @@ class PeftLoraLoaderMixinTests:
+ 
+             pipe.fuse_lora()
+             # Fusing should still keep the LoRA layers
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in unet")
+ 
+             if self.has_two_text_encoders:
+@@ -658,7 +683,9 @@ class PeftLoraLoaderMixinTests:
+ 
+             pipe.text_encoder.add_adapter(text_lora_config)
+             pipe.unet.add_adapter(unet_lora_config)
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -676,12 +703,14 @@ class PeftLoraLoaderMixinTests:
+ 
+             if self.has_two_text_encoders:
+                 self.assertFalse(
+-                    self.check_if_lora_correctly_set(pipe.text_encoder_2), "Lora not correctly unloaded in text encoder 2"
++                    self.check_if_lora_correctly_set(pipe.text_encoder_2),
++                    "Lora not correctly unloaded in text encoder 2",
+                 )
+ 
+             ouput_unloaded = pipe(**inputs, generator=torch.manual_seed(0)).images
+             self.assertTrue(
+-                np.allclose(ouput_unloaded, output_no_lora, atol=1e-3, rtol=1e-3), "Fused lora should change the output"
++                np.allclose(ouput_unloaded, output_no_lora, atol=1e-3, rtol=1e-3),
++                "Fused lora should change the output",
+             )
+ 
+     def test_simple_inference_with_text_unet_lora_unfused(self):
+@@ -699,7 +728,9 @@ class PeftLoraLoaderMixinTests:
+             pipe.text_encoder.add_adapter(text_lora_config)
+             pipe.unet.add_adapter(unet_lora_config)
+ 
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -716,7 +747,9 @@ class PeftLoraLoaderMixinTests:
+ 
+             output_unfused_lora = pipe(**inputs, generator=torch.manual_seed(0)).images
+             # unloading should remove the LoRA layers
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Unfuse should still keep LoRA layers")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Unfuse should still keep LoRA layers"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Unfuse should still keep LoRA layers")
+ 
+             if self.has_two_text_encoders:
+@@ -750,7 +783,9 @@ class PeftLoraLoaderMixinTests:
+             pipe.unet.add_adapter(unet_lora_config, "adapter-1")
+             pipe.unet.add_adapter(unet_lora_config, "adapter-2")
+ 
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -816,7 +851,9 @@ class PeftLoraLoaderMixinTests:
+             pipe.unet.add_adapter(unet_lora_config, "adapter-1")
+             pipe.unet.add_adapter(unet_lora_config, "adapter-2")
+ 
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -882,7 +919,9 @@ class PeftLoraLoaderMixinTests:
+ 
+             pipe.unet.add_adapter(unet_lora_config, "adapter-1")
+ 
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             # corrupt one LoRA weight with `inf` values
+@@ -956,7 +995,8 @@ class PeftLoraLoaderMixinTests:
+ 
+             pipe.set_adapters(["adapter-1", "adapter-2"])
+             self.assertDictEqual(
+-                pipe.get_list_adapters(), {"unet": ["adapter-1", "adapter-2"], "text_encoder": ["adapter-1", "adapter-2"]}
++                pipe.get_list_adapters(),
++                {"unet": ["adapter-1", "adapter-2"], "text_encoder": ["adapter-1", "adapter-2"]},
+             )
+ 
+             pipe.unet.add_adapter(unet_lora_config, "adapter-3")
+@@ -981,7 +1021,9 @@ class PeftLoraLoaderMixinTests:
+             pipe.text_encoder.add_adapter(text_lora_config)
+             pipe.unet.add_adapter(unet_lora_config)
+ 
+-            self.assertTrue(self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder")
++            self.assertTrue(
++                self.check_if_lora_correctly_set(pipe.text_encoder), "Lora not correctly set in text encoder"
++            )
+             self.assertTrue(self.check_if_lora_correctly_set(pipe.unet), "Lora not correctly set in Unet")
+ 
+             if self.has_two_text_encoders:
+@@ -1607,10 +1649,12 @@ class LoraSDXLIntegrationTests(unittest.TestCase):
+         generator = torch.Generator().manual_seed(0)
+ 
+         lora_model_id = "latent-consistency/lcm-lora-sdxl"
+-        
++
+         pipe.load_lora_weights(lora_model_id)
+ 
+-        image = pipe("masterpiece, best quality, mountain", generator=generator, num_inference_steps=4, guidance_scale=0.5).images[0]
++        image = pipe(
++            "masterpiece, best quality, mountain", generator=generator, num_inference_steps=4, guidance_scale=0.5
++        ).images[0]
+ 
+         expected_image = load_image(
+             "https://huggingface.co/datasets/hf-internal-testing/diffusers-images/resolve/main/lcm_lora/sdxl_lcm_lora.png"
+@@ -1635,7 +1679,9 @@ class LoraSDXLIntegrationTests(unittest.TestCase):
+         lora_model_id = "latent-consistency/lcm-lora-sdv1-5"
+         pipe.load_lora_weights(lora_model_id)
+ 
+-        image = pipe("masterpiece, best quality, mountain", generator=generator, num_inference_steps=4, guidance_scale=0.5).images[0]
++        image = pipe(
++            "masterpiece, best quality, mountain", generator=generator, num_inference_steps=4, guidance_scale=0.5
++        ).images[0]
+ 
+         expected_image = load_image(
+             "https://huggingface.co/datasets/hf-internal-testing/diffusers-images/resolve/main/lcm_lora/sdv15_lcm_lora.png"
+@@ -1664,7 +1710,14 @@ class LoraSDXLIntegrationTests(unittest.TestCase):
+         lora_model_id = "latent-consistency/lcm-lora-sdv1-5"
+         pipe.load_lora_weights(lora_model_id)
+ 
+-        image = pipe("snowy mountain", generator=generator, image=init_image, strength=0.5, num_inference_steps=4, guidance_scale=0.5).images[0]
++        image = pipe(
++            "snowy mountain",
++            generator=generator,
++            image=init_image,
++            strength=0.5,
++            num_inference_steps=4,
++            guidance_scale=0.5,
++        ).images[0]
+ 
+         expected_image = load_image(
+             "https://huggingface.co/datasets/hf-internal-testing/diffusers-images/resolve/main/lcm_lora/sdv15_lcm_lora_img2img.png"

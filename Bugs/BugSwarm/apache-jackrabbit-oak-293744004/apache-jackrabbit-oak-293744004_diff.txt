@@ -1,0 +1,1304 @@
+diff --git a/oak-core/src/main/java/org/apache/jackrabbit/oak/plugins/index/Cursors.java b/oak-core/src/main/java/org/apache/jackrabbit/oak/plugins/index/Cursors.java
+index 2c3507b84b..b16ecacb8c 100644
+--- a/oak-core/src/main/java/org/apache/jackrabbit/oak/plugins/index/Cursors.java
++++ b/oak-core/src/main/java/org/apache/jackrabbit/oak/plugins/index/Cursors.java
+@@ -59,6 +59,14 @@ public class Cursors {
+     private Cursors() {
+     }
+     
++    public static void checkMemoryLimit(long count, QueryLimits settings) {
++        FilterIterators.checkMemoryLimit(count, settings);
++    }    
++
++    public static void checkReadLimit(long count, QueryLimits settings) {
++        FilterIterators.checkReadLimit(count, settings);
++    }    
++
+     public static Cursor newIntersectionCursor(Cursor a, Cursor b, QueryLimits settings) {
+         return new IntersectionCursor(a, b, settings);
+     }
+diff --git a/oak-core/src/main/java/org/apache/jackrabbit/oak/security/user/UserInitializer.java b/oak-core/src/main/java/org/apache/jackrabbit/oak/security/user/UserInitializer.java
+index 729aaf60bd..ef6a4d0271 100644
+--- a/oak-core/src/main/java/org/apache/jackrabbit/oak/security/user/UserInitializer.java
++++ b/oak-core/src/main/java/org/apache/jackrabbit/oak/security/user/UserInitializer.java
+@@ -28,11 +28,14 @@ import org.apache.jackrabbit.oak.commons.PathUtils;
+ import org.apache.jackrabbit.oak.namepath.NamePathMapper;
+ import org.apache.jackrabbit.oak.plugins.index.IndexConstants;
+ import org.apache.jackrabbit.oak.plugins.index.IndexUtils;
++import org.apache.jackrabbit.oak.plugins.index.nodetype.NodeTypeIndexProvider;
++import org.apache.jackrabbit.oak.plugins.index.property.PropertyIndexProvider;
+ import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore;
+ import org.apache.jackrabbit.oak.plugins.tree.factories.RootFactory;
+ import org.apache.jackrabbit.oak.plugins.tree.TreeUtil;
+ import org.apache.jackrabbit.oak.spi.commit.EmptyHook;
+ import org.apache.jackrabbit.oak.spi.lifecycle.WorkspaceInitializer;
++import org.apache.jackrabbit.oak.spi.query.CompositeQueryIndexProvider;
+ import org.apache.jackrabbit.oak.spi.query.QueryIndexProvider;
+ import org.apache.jackrabbit.oak.spi.query.QueryIndexProviderAware;
+ import org.apache.jackrabbit.oak.spi.security.ConfigurationParameters;
+@@ -82,7 +85,8 @@ class UserInitializer implements WorkspaceInitializer, UserConstants, QueryIndex
+ 
+     private final SecurityProvider securityProvider;
+ 
+-    private QueryIndexProvider queryIndexProvider;
++    private QueryIndexProvider queryIndexProvider = new CompositeQueryIndexProvider(new PropertyIndexProvider(),
++            new NodeTypeIndexProvider());
+ 
+     UserInitializer(SecurityProvider securityProvider) {
+         this.securityProvider = securityProvider;
+@@ -97,7 +101,7 @@ class UserInitializer implements WorkspaceInitializer, UserConstants, QueryIndex
+         MemoryNodeStore store = new MemoryNodeStore(base);
+ 
+         Root root = RootFactory.createSystemRoot(store, EmptyHook.INSTANCE, workspaceName,
+-                securityProvider,  getIndexProvider());
++                securityProvider,  queryIndexProvider);
+ 
+         UserConfiguration userConfiguration = securityProvider.getConfiguration(UserConfiguration.class);
+         UserManager userManager = userConfiguration.getUserManager(root, NamePathMapper.DEFAULT);
+@@ -155,10 +159,6 @@ class UserInitializer implements WorkspaceInitializer, UserConstants, QueryIndex
+         target.compareAgainstBaseState(base, new ApplyDiff(builder));
+     }
+ 
+-    private QueryIndexProvider getIndexProvider() {
+-        return checkNotNull(queryIndexProvider, "QueryIndexProvider yet not initialized");
+-    }
+-
+     @Override
+     public void setQueryIndexProvider(QueryIndexProvider provider) {
+         this.queryIndexProvider = provider;
+diff --git a/oak-http/pom.xml b/oak-http/pom.xml
+index 2d37061595..2b95e04a50 100644
+--- a/oak-http/pom.xml
++++ b/oak-http/pom.xml
+@@ -73,17 +73,17 @@
+     <dependency>
+       <groupId>com.fasterxml.jackson.core</groupId>
+       <artifactId>jackson-core</artifactId>
+-      <version>2.0.0</version>
++      <version>2.9.2</version>
+     </dependency>
+     <dependency>
+       <groupId>com.fasterxml.jackson.core</groupId>
+       <artifactId>jackson-databind</artifactId>
+-      <version>2.0.0</version>
++      <version>2.9.2</version>
+     </dependency>
+     <dependency>
+       <groupId>com.fasterxml.jackson.dataformat</groupId>
+       <artifactId>jackson-dataformat-smile</artifactId>
+-      <version>2.0.2</version>
++      <version>2.9.2</version>
+     </dependency>
+     <dependency>
+       <groupId>javax.servlet</groupId>
+diff --git a/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndex.java b/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndex.java
+index 88da912642..3fbb73f0ce 100644
+--- a/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndex.java
++++ b/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndex.java
+@@ -48,6 +48,7 @@ import org.apache.jackrabbit.oak.spi.query.fulltext.FullTextOr;
+ import org.apache.jackrabbit.oak.spi.query.fulltext.FullTextTerm;
+ import org.apache.jackrabbit.oak.spi.query.fulltext.FullTextVisitor;
+ import org.apache.jackrabbit.oak.spi.query.Cursor;
++import org.apache.jackrabbit.oak.plugins.index.Cursors;
+ import org.apache.jackrabbit.oak.plugins.index.Cursors.PathCursor;
+ import org.apache.jackrabbit.oak.spi.query.Filter;
+ import org.apache.jackrabbit.oak.spi.query.Filter.PropertyRestriction;
+@@ -62,11 +63,9 @@ import org.apache.lucene.analysis.TokenStream;
+ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+ import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+ import org.apache.lucene.document.Document;
+-import org.apache.lucene.index.FieldInfo;
+ import org.apache.lucene.index.IndexReader;
+ import org.apache.lucene.index.IndexableField;
+ import org.apache.lucene.index.MultiFields;
+-import org.apache.lucene.index.StoredFieldVisitor;
+ import org.apache.lucene.index.Term;
+ import org.apache.lucene.queryparser.classic.ParseException;
+ import org.apache.lucene.queryparser.classic.QueryParser;
+@@ -101,7 +100,6 @@ import static org.apache.jackrabbit.JcrConstants.JCR_MIXINTYPES;
+ import static org.apache.jackrabbit.JcrConstants.JCR_PRIMARYTYPE;
+ import static org.apache.jackrabbit.oak.api.Type.STRING;
+ import static org.apache.jackrabbit.oak.commons.PathUtils.*;
+-import static org.apache.jackrabbit.oak.plugins.index.lucene.FieldNames.PATH;
+ import static org.apache.jackrabbit.oak.plugins.index.lucene.LuceneIndexConstants.VERSION;
+ import static org.apache.jackrabbit.oak.plugins.index.lucene.TermFactory.newFulltextTerm;
+ import static org.apache.jackrabbit.oak.plugins.index.lucene.TermFactory.newPathTerm;
+@@ -499,7 +497,7 @@ public class LuceneIndex implements AdvanceFulltextQueryIndex {
+                 return -1;
+             }
+         };
+-        return new LucenePathCursor(itr, settings, sizeEstimator);
++        return new LucenePathCursor(itr, settings, sizeEstimator, filter);
+     }
+ 
+     private String getExcerpt(Analyzer analyzer, IndexSearcher searcher, ScoreDoc doc) throws IOException {
+@@ -1123,15 +1121,20 @@ public class LuceneIndex implements AdvanceFulltextQueryIndex {
+      */
+     static class LucenePathCursor implements Cursor {
+ 
++        private static final int TRAVERSING_WARNING = Integer.getInteger("oak.traversing.warning", 10000);
++
+         private final Cursor pathCursor;
+         LuceneResultRow currentRow;
+         private final SizeEstimator sizeEstimator;
+         private long estimatedSize;
+ 
+-        LucenePathCursor(final Iterator<LuceneResultRow> it, QueryLimits settings, SizeEstimator sizeEstimator) {
++        LucenePathCursor(final Iterator<LuceneResultRow> it, QueryLimits settings, SizeEstimator sizeEstimator, Filter filter) {
+             this.sizeEstimator = sizeEstimator;
++
+             Iterator<String> pathIterator = new Iterator<String>() {
+ 
++                private int readCount;
++
+                 @Override
+                 public boolean hasNext() {
+                     return it.hasNext();
+@@ -1140,6 +1143,11 @@ public class LuceneIndex implements AdvanceFulltextQueryIndex {
+                 @Override
+                 public String next() {
+                     currentRow = it.next();
++                    readCount++;
++                    if (readCount % TRAVERSING_WARNING == 0) {
++                        Cursors.checkReadLimit(readCount, settings);
++                        LOG.warn("Index-Traversed {} nodes with filter {}", readCount, filter);
++                    }
+                     return currentRow.path;
+                 }
+ 
+diff --git a/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LucenePropertyIndex.java b/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LucenePropertyIndex.java
+index 4a2a36ee4e..a848b962c4 100644
+--- a/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LucenePropertyIndex.java
++++ b/oak-lucene/src/main/java/org/apache/jackrabbit/oak/plugins/index/lucene/LucenePropertyIndex.java
+@@ -67,6 +67,7 @@ import org.apache.jackrabbit.oak.spi.query.fulltext.FullTextOr;
+ import org.apache.jackrabbit.oak.spi.query.fulltext.FullTextTerm;
+ import org.apache.jackrabbit.oak.spi.query.fulltext.FullTextVisitor;
+ import org.apache.jackrabbit.oak.spi.query.Cursor;
++import org.apache.jackrabbit.oak.plugins.index.Cursors;
+ import org.apache.jackrabbit.oak.plugins.index.Cursors.PathCursor;
+ import org.apache.jackrabbit.oak.spi.query.Filter;
+ import org.apache.jackrabbit.oak.spi.query.Filter.PropertyRestriction;
+@@ -1640,6 +1641,8 @@ public class LucenePropertyIndex implements AdvancedQueryIndex, QueryIndex, Nati
+      */
+     static class LucenePathCursor implements Cursor {
+ 
++        private static final int TRAVERSING_WARNING = Integer.getInteger("oak.traversing.warning", 10000);
++
+         private final Cursor pathCursor;
+         private final String pathPrefix;
+         LuceneResultRow currentRow;
+@@ -1652,6 +1655,8 @@ public class LucenePropertyIndex implements AdvancedQueryIndex, QueryIndex, Nati
+             this.sizeEstimator = sizeEstimator;
+             Iterator<String> pathIterator = new Iterator<String>() {
+ 
++                private int readCount;
++
+                 @Override
+                 public boolean hasNext() {
+                     return it.hasNext();
+@@ -1660,6 +1665,11 @@ public class LucenePropertyIndex implements AdvancedQueryIndex, QueryIndex, Nati
+                 @Override
+                 public String next() {
+                     currentRow = it.next();
++                    readCount++;
++                    if (readCount % TRAVERSING_WARNING == 0) {
++                        Cursors.checkReadLimit(readCount, settings);
++                        LOG.warn("Index-Traversed {} nodes with filter {}", readCount, plan.getFilter());
++                    }
+                     return currentRow.path;
+                 }
+ 
+diff --git a/oak-lucene/src/test/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndexQueryTest.java b/oak-lucene/src/test/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndexQueryTest.java
+index c277c29d89..25e23a8024 100644
+--- a/oak-lucene/src/test/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndexQueryTest.java
++++ b/oak-lucene/src/test/java/org/apache/jackrabbit/oak/plugins/index/lucene/LuceneIndexQueryTest.java
+@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
+ 
+ import java.util.ArrayList;
+ import java.util.Iterator;
++import java.util.List;
+ 
+ import org.apache.jackrabbit.oak.Oak;
+ import org.apache.jackrabbit.oak.api.ContentRepository;
+@@ -31,6 +32,7 @@ import org.apache.jackrabbit.oak.query.AbstractQueryTest;
+ import org.apache.jackrabbit.oak.spi.commit.Observer;
+ import org.apache.jackrabbit.oak.spi.query.QueryIndexProvider;
+ import org.apache.jackrabbit.oak.spi.security.OpenSecurityProvider;
++import org.junit.Assert;
+ import org.junit.Ignore;
+ import org.junit.Test;
+ 
+@@ -68,10 +70,10 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+         TestUtil.enableFunctionIndex(props, "length([name])");
+         TestUtil.enableFunctionIndex(props, "lower([name])");
+         TestUtil.enableFunctionIndex(props, "upper([name])");
+-        
+-        root.commit();                
++
++        root.commit();
+     }
+-    
++
+     @Override
+     protected ContentRepository createRepository() {
+         return getOakRepo().createContentRepository();
+@@ -85,7 +87,7 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+             .with((Observer) provider)
+             .with(new LuceneIndexEditorProvider());
+     }
+-    
++
+     @Test
+     public void sql1() throws Exception {
+         test("sql1.txt");
+@@ -95,7 +97,7 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+     public void sql2() throws Exception {
+         test("sql2.txt");
+     }
+-    
++
+     @Test
+     public void sql2FullText() throws Exception {
+         test("sql2-fulltext.txt");
+@@ -182,6 +184,52 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+ 
+     }
+ 
++    @Test
++    public void containsNot() throws Exception {
++
++        // see also OAK-3371
++        // "if we have only NOT CLAUSES we have to add a match all docs (*.*) for the
++        // query to work"
++
++        executeQuery("/jcr:root//*[jcr:contains(@a,'-test*')]", "xpath", false);
++
++        String planPrefix = "[nt:base] as [a] /* lucene:test-index(/oak:index/test-index) ";
++
++        assertXPathPlan("/jcr:root//*[@a]",
++                planPrefix + "a:[* TO *]");
++
++        assertXPathPlan("/jcr:root//*[jcr:contains(., '*')]",
++                planPrefix + ":fulltext:* ft:(\"*\")");
++
++        assertXPathPlan("/jcr:root//*[jcr:contains(@a,'*')]",
++                planPrefix + "full:a:* ft:(a:\"*\")");
++
++        assertXPathPlan("/jcr:root//*[jcr:contains(@a,'hello -world')]",
++                planPrefix + "+full:a:hello -full:a:world ft:(a:\"hello\" -a:\"world\")");
++
++        assertXPathPlan("/jcr:root//*[jcr:contains(@a,'test*')]",
++                planPrefix + "full:a:test* ft:(a:\"test*\")");
++
++        assertXPathPlan("/jcr:root//*[jcr:contains(@a,'-test')]",
++                planPrefix + "-full:a:test *:* ft:(-a:\"test\")");
++
++        assertXPathPlan("/jcr:root//*[jcr:contains(@a,'-test*')]",
++                planPrefix + "-full:a:test* *:* ft:(-a:\"test*\")");
++
++        assertXPathPlan("/jcr:root//*[jcr:contains(., '-*')]",
++                planPrefix + "-:fulltext:* *:* ft:(-\"*\")");
++
++    }
++
++    private void assertXPathPlan(String xpathQuery, String expectedPlan) {
++        List<String> result = executeQuery("explain " + xpathQuery, "xpath", false);
++        String plan = result.get(0);
++        int newline = plan.indexOf('\n');
++        if (newline >= 0) {
++            plan = plan.substring(0, newline);
++        }
++        Assert.assertEquals(expectedPlan, plan);
++    }
+     @Ignore("OAK-2424")
+     @Test
+     public void containsDash() throws Exception {
+@@ -312,7 +360,7 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+ 
+     @Test
+     public void testRepSimilarAsNativeQuery() throws Exception {
+-        String nativeQueryString = "select [jcr:path] from [nt:base] where " + 
++        String nativeQueryString = "select [jcr:path] from [nt:base] where " +
+                 "native('lucene', 'mlt?stream.body=/test/a&mlt.fl=:path&mlt.mindf=0&mlt.mintf=0')";
+         Tree test = root.getTree("/").addChild("test");
+         test.addChild("a").setProperty("text", "Hello World");
+@@ -326,7 +374,7 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+         assertEquals("/test/b", result.next());
+         assertFalse(result.hasNext());
+     }
+-    
++
+     @Test
+     public void testRepSimilarQuery() throws Exception {
+         String query = "select [jcr:path] from [nt:base] where similar(., '/test/a')";
+@@ -415,7 +463,7 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+             walktree(t1);
+         }
+     }
+-    
++
+     private static Tree child(Tree t, String n, String type) {
+         Tree t1 = t.addChild(n);
+         t1.setProperty(JCR_PRIMARYTYPE, type, Type.NAME);
+@@ -426,7 +474,7 @@ public class LuceneIndexQueryTest extends AbstractQueryTest {
+     public void oak3371() throws Exception {
+         setTraversalEnabled(false);
+         Tree t, t1;
+-        
++
+         t = root.getTree("/");
+         t = child(t, "test", NT_UNSTRUCTURED);
+         t1 = child(t, "a", NT_UNSTRUCTURED);
+diff --git a/oak-remote/pom.xml b/oak-remote/pom.xml
+index 8a5e24bd90..b3e3f98d9e 100644
+--- a/oak-remote/pom.xml
++++ b/oak-remote/pom.xml
+@@ -129,13 +129,13 @@
+         <dependency>
+             <groupId>com.fasterxml.jackson.core</groupId>
+             <artifactId>jackson-core</artifactId>
+-            <version>2.0.0</version>
++            <version>2.9.2</version>
+             <scope>provided</scope>
+         </dependency>
+         <dependency>
+             <groupId>com.fasterxml.jackson.core</groupId>
+             <artifactId>jackson-databind</artifactId>
+-            <version>2.0.0</version>
++            <version>2.9.2</version>
+             <scope>provided</scope>
+         </dependency>
+         <dependency>
+diff --git a/oak-segment-tar/src/test/java/org/apache/jackrabbit/oak/segment/standby/DataStoreTestBase.java b/oak-segment-tar/src/test/java/org/apache/jackrabbit/oak/segment/standby/DataStoreTestBase.java
+index 7c05da86eb..98b03d57b4 100644
+--- a/oak-segment-tar/src/test/java/org/apache/jackrabbit/oak/segment/standby/DataStoreTestBase.java
++++ b/oak-segment-tar/src/test/java/org/apache/jackrabbit/oak/segment/standby/DataStoreTestBase.java
+@@ -25,6 +25,7 @@ import static org.junit.Assert.assertFalse;
+ import static org.junit.Assert.assertNotEquals;
+ import static org.junit.Assert.assertNotNull;
+ import static org.junit.Assert.assertTrue;
++import static org.junit.Assume.assumeFalse;
+ 
+ import java.io.ByteArrayInputStream;
+ import java.io.IOException;
+@@ -37,6 +38,7 @@ import org.apache.jackrabbit.oak.api.Blob;
+ import org.apache.jackrabbit.oak.api.CommitFailedException;
+ import org.apache.jackrabbit.oak.api.PropertyState;
+ import org.apache.jackrabbit.oak.api.Type;
++import org.apache.jackrabbit.oak.commons.CIHelper;
+ import org.apache.jackrabbit.oak.commons.junit.TemporaryPort;
+ import org.apache.jackrabbit.oak.segment.SegmentNodeStoreBuilders;
+ import org.apache.jackrabbit.oak.segment.file.FileStore;
+@@ -225,6 +227,8 @@ public abstract class DataStoreTestBase extends TestBase {
+      */
+     @Test
+     public void testSyncBigBlob() throws Exception {
++        assumeFalse(CIHelper.windows());
++        
+         final long blobSize = GB;
+         final int seed = 13;
+ 
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/DocumentStore.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/DocumentStore.java
+index 17817fb1a8..6c4136db83 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/DocumentStore.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/DocumentStore.java
+@@ -178,9 +178,10 @@ public interface DocumentStore {
+             throws DocumentStoreException;
+ 
+     /**
+-     * Batch remove documents with given keys and corresponding conditions. Keys
+-     * for documents that do not exist are simply ignored. A document is only
+-     * removed if the corresponding conditions are met.
++     * Batch remove documents with given keys and corresponding equal conditions
++     * on {@link NodeDocument#MODIFIED_IN_SECS} values. Keys for documents that
++     * do not exist are simply ignored. A document is only removed if the
++     * corresponding condition is met.
+      * <p>
+      * In case of a {@code DocumentStoreException}, the documents with the given
+      * keys may or may not have been removed from the store. It may also be
+@@ -190,16 +191,18 @@ public interface DocumentStore {
+      * properly reflected in the document cache. That is, an implementation
+      * could simply evict documents with the given keys from the cache.
+      *
+-     * @param <T> the document type
+-     * @param collection the collection.
+-     * @param toRemove the keys of the documents to remove with the
+-     *                 corresponding conditions.
++     * @param <T>
++     *            the document type
++     * @param collection
++     *            the collection.
++     * @param toRemove
++     *            the keys of the documents to remove with the corresponding
++     *            timestamps.
+      * @return the number of removed documents.
+-     * @throws DocumentStoreException if the operation failed. E.g. because of
+-     *          an I/O error.
++     * @throws DocumentStoreException
++     *             if the operation failed. E.g. because of an I/O error.
+      */
+-    <T extends Document> int remove(Collection<T> collection,
+-                                    Map<String, Map<UpdateOp.Key, UpdateOp.Condition>> toRemove)
++    <T extends Document> int remove(Collection<T> collection, Map<String, Long> toRemove)
+             throws DocumentStoreException;
+ 
+ 
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/VersionGarbageCollector.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/VersionGarbageCollector.java
+index 08d187dc82..e46f0fcd11 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/VersionGarbageCollector.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/VersionGarbageCollector.java
+@@ -44,8 +44,6 @@ import com.google.common.collect.Maps;
+ import com.google.common.collect.Sets;
+ 
+ import org.apache.jackrabbit.oak.commons.sort.StringSort;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.util.TimeInterval;
+ import org.apache.jackrabbit.oak.plugins.document.util.Utils;
+ import org.apache.jackrabbit.oak.spi.gc.DelegatingGCMonitor;
+@@ -61,7 +59,6 @@ import static com.google.common.base.StandardSystemProperty.LINE_SEPARATOR;
+ import static com.google.common.collect.Iterables.all;
+ import static com.google.common.collect.Iterators.partition;
+ import static com.google.common.util.concurrent.Atomics.newReference;
+-import static java.util.Collections.singletonMap;
+ import static java.util.concurrent.TimeUnit.MICROSECONDS;
+ import static org.apache.jackrabbit.oak.plugins.document.Collection.NODES;
+ import static org.apache.jackrabbit.oak.plugins.document.Collection.SETTINGS;
+@@ -69,7 +66,6 @@ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.MODIFIED_I
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.SplitDocType.COMMIT_ROOT_ONLY;
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.SplitDocType.DEFAULT_LEAF;
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.SplitDocType.DEFAULT_NO_BRANCH;
+-import static org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition.newEqualsCondition;
+ import static org.slf4j.helpers.MessageFormatter.arrayFormat;
+ 
+ public class VersionGarbageCollector {
+@@ -78,7 +74,6 @@ public class VersionGarbageCollector {
+     private static final int DELETE_BATCH_SIZE = 450;
+     private static final int UPDATE_BATCH_SIZE = 450;
+     private static final int PROGRESS_BATCH_SIZE = 10000;
+-    private static final Key KEY_MODIFIED = new Key(MODIFIED_IN_SECS, null);
+     private static final String STATUS_IDLE = "IDLE";
+     private static final String STATUS_INITIALIZING = "INITIALIZING";
+     private static final Logger log = LoggerFactory.getLogger(VersionGarbageCollector.class);
+@@ -853,7 +848,7 @@ public class VersionGarbageCollector {
+             int lastLoggedCount = 0;
+             int recreatedCount = 0;
+             while (idListItr.hasNext() && !cancel.get()) {
+-                Map<String, Map<Key, Condition>> deletionBatch = Maps.newLinkedHashMap();
++                Map<String, Long> deletionBatch = Maps.newLinkedHashMap();
+                 for (String s : idListItr.next()) {
+                     Map.Entry<String, Long> parsed;
+                     try {
+@@ -862,7 +857,7 @@ public class VersionGarbageCollector {
+                         monitor.warn("Invalid _modified suffix for {}", s);
+                         continue;
+                     }
+-                    deletionBatch.put(parsed.getKey(), singletonMap(KEY_MODIFIED, newEqualsCondition(parsed.getValue())));
++                    deletionBatch.put(parsed.getKey(), parsed.getValue());
+                 }
+ 
+                 if (log.isTraceEnabled()) {
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/memory/MemoryDocumentStore.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/memory/MemoryDocumentStore.java
+index e97fb3f752..eeafd94dbd 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/memory/MemoryDocumentStore.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/memory/MemoryDocumentStore.java
+@@ -17,6 +17,7 @@
+ package org.apache.jackrabbit.oak.plugins.document.memory;
+ 
+ import java.util.ArrayList;
++import java.util.Collections;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.concurrent.ConcurrentNavigableMap;
+@@ -41,6 +42,7 @@ import org.apache.jackrabbit.oak.plugins.document.JournalEntry;
+ import org.apache.jackrabbit.oak.plugins.document.NodeDocument;
+ import org.apache.jackrabbit.oak.plugins.document.UpdateOp;
+ import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
++import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.UpdateUtils;
+ 
+ import com.google.common.base.Splitter;
+@@ -49,6 +51,8 @@ import com.mongodb.WriteConcern;
+ import org.apache.jackrabbit.oak.plugins.document.cache.CacheInvalidationStats;
+ import org.apache.jackrabbit.oak.plugins.document.util.Utils;
+ 
++import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.MODIFIED_IN_SECS;
++import static org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition.newEqualsCondition;
+ import static org.apache.jackrabbit.oak.plugins.document.UpdateUtils.assertUnconditional;
+ import static org.apache.jackrabbit.oak.plugins.document.UpdateUtils.checkConditions;
+ 
+@@ -94,6 +98,8 @@ public class MemoryDocumentStore implements DocumentStore {
+ 
+     private final boolean maintainModCount;
+ 
++    private static final Key KEY_MODIFIED = new Key(MODIFIED_IN_SECS, null);
++
+     public MemoryDocumentStore() {
+         this(false);
+     }
+@@ -192,16 +198,16 @@ public class MemoryDocumentStore implements DocumentStore {
+     }
+ 
+     @Override
+-    public <T extends Document> int remove(Collection<T> collection,
+-                                           Map<String, Map<UpdateOp.Key, Condition>> toRemove) {
++    public <T extends Document> int remove(Collection<T> collection, Map<String, Long> toRemove) {
+         int num = 0;
+         ConcurrentSkipListMap<String, T> map = getMap(collection);
+-        for (Map.Entry<String, Map<UpdateOp.Key, Condition>> entry : toRemove.entrySet()) {
++        for (Map.Entry<String, Long> entry : toRemove.entrySet()) {
+             Lock lock = rwLock.writeLock();
+             lock.lock();
+             try {
+                 T doc = map.get(entry.getKey());
+-                if (doc != null && checkConditions(doc, entry.getValue())) {
++                Condition c = newEqualsCondition(entry.getValue());
++                if (doc != null && checkConditions(doc, Collections.singletonMap(KEY_MODIFIED, c))) {
+                     if (map.remove(entry.getKey()) != null) {
+                         num++;
+                     }
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/mongo/MongoDocumentStore.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/mongo/MongoDocumentStore.java
+index c076d1c976..0c854d9eb1 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/mongo/MongoDocumentStore.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/mongo/MongoDocumentStore.java
+@@ -112,6 +112,7 @@ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.DELETED_ON
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.MODIFIED_IN_SECS;
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.SD_MAX_REV_TIME_IN_SECS;
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.SD_TYPE;
++import static org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition.newEqualsCondition;
+ import static org.apache.jackrabbit.oak.plugins.document.mongo.MongoUtils.createIndex;
+ import static org.apache.jackrabbit.oak.plugins.document.mongo.MongoUtils.createPartialIndex;
+ import static org.apache.jackrabbit.oak.plugins.document.mongo.MongoUtils.hasIndex;
+@@ -229,6 +230,8 @@ public class MongoDocumentStore implements DocumentStore, RevisionListener {
+ 
+     private boolean hasModifiedIdCompoundIndex = true;
+ 
++    private static final Key KEY_MODIFIED = new Key(MODIFIED_IN_SECS, null);
++
+     public MongoDocumentStore(DB db, DocumentMK.Builder builder) {
+         MongoStatus mongoStatus = builder.getMongoStatus();
+         if (mongoStatus == null) {
+@@ -721,8 +724,7 @@ public class MongoDocumentStore implements DocumentStore, RevisionListener {
+     }
+ 
+     @Override
+-    public <T extends Document> int remove(Collection<T> collection,
+-                                           Map<String, Map<Key, Condition>> toRemove) {
++    public <T extends Document> int remove(Collection<T> collection, Map<String, Long> toRemove) {
+         log("remove", toRemove);
+         int num = 0;
+         DBCollection dbCollection = getDBCollection(collection);
+@@ -730,11 +732,12 @@ public class MongoDocumentStore implements DocumentStore, RevisionListener {
+         try {
+             List<String> batchIds = Lists.newArrayList();
+             List<DBObject> batch = Lists.newArrayList();
+-            Iterator<Entry<String, Map<Key, Condition>>> it = toRemove.entrySet().iterator();
++            Iterator<Entry<String, Long>> it = toRemove.entrySet().iterator();
+             while (it.hasNext()) {
+-                Entry<String, Map<Key, Condition>> entry = it.next();
++                Entry<String, Long> entry = it.next();
++                Condition c = newEqualsCondition(entry.getValue());
+                 QueryBuilder query = createQueryForUpdate(
+-                        entry.getKey(), entry.getValue());
++                        entry.getKey(),  Collections.singletonMap(KEY_MODIFIED, c));
+                 batchIds.add(entry.getKey());
+                 batch.add(query.get());
+                 if (!it.hasNext() || batch.size() == IN_CLAUSE_BATCH_SIZE) {
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStore.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStore.java
+index 6f6c9f5495..b30c76e71f 100755
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStore.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStore.java
+@@ -72,9 +72,7 @@ import org.apache.jackrabbit.oak.plugins.document.DocumentStore;
+ import org.apache.jackrabbit.oak.plugins.document.DocumentStoreException;
+ import org.apache.jackrabbit.oak.plugins.document.DocumentStoreStatsCollector;
+ import org.apache.jackrabbit.oak.plugins.document.NodeDocument;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
++import org.apache.jackrabbit.oak.plugins.document.UpdateOp;import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Operation;
+ import org.apache.jackrabbit.oak.plugins.document.UpdateUtils;
+ import org.apache.jackrabbit.oak.plugins.document.cache.CacheChangesTracker;
+@@ -308,7 +306,7 @@ public class RDBDocumentStore implements DocumentStore {
+     }
+ 
+     @Override
+-    public <T extends Document> int remove(Collection<T> collection, Map<String, Map<Key, Condition>> toRemove) {
++    public <T extends Document> int remove(Collection<T> collection, Map<String, Long> toRemove) {
+         try {
+             return delete(collection, toRemove);
+         } finally {
+@@ -1774,14 +1772,13 @@ public class RDBDocumentStore implements DocumentStore {
+         return numDeleted;
+     }
+ 
+-    private <T extends Document> int delete(Collection<T> collection,
+-                                            Map<String, Map<Key, Condition>> toRemove) {
++    private <T extends Document> int delete(Collection<T> collection, Map<String, Long> toRemove) {
+         int numDeleted = 0;
+         RDBTableMetaData tmd = getTable(collection);
+-        Map<String, Map<Key, Condition>> subMap = Maps.newHashMap();
+-        Iterator<Entry<String, Map<Key, Condition>>> it = toRemove.entrySet().iterator();
++        Map<String, Long> subMap = Maps.newHashMap();
++        Iterator<Entry<String, Long>> it = toRemove.entrySet().iterator();
+         while (it.hasNext()) {
+-            Entry<String, Map<Key, Condition>> entry = it.next();
++            Entry<String, Long> entry = it.next();
+             subMap.put(entry.getKey(), entry.getValue());
+             if (subMap.size() == 64 || !it.hasNext()) {
+                 Connection connection = null;
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStoreJDBC.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStoreJDBC.java
+index 164157a678..ae5551ed67 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStoreJDBC.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/rdb/RDBDocumentStoreJDBC.java
+@@ -18,7 +18,6 @@ package org.apache.jackrabbit.oak.plugins.document.rdb;
+ 
+ import static com.google.common.collect.Iterables.transform;
+ import static com.google.common.collect.Sets.newHashSet;
+-import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.MODIFIED_IN_SECS;
+ import static org.apache.jackrabbit.oak.plugins.document.rdb.RDBDocumentStore.CHAR2OCTETRATIO;
+ import static org.apache.jackrabbit.oak.plugins.document.rdb.RDBDocumentStore.asBytes;
+ import static org.apache.jackrabbit.oak.plugins.document.rdb.RDBJDBCTools.closeResultSet;
+@@ -53,9 +52,6 @@ import javax.annotation.Nonnull;
+ import org.apache.jackrabbit.oak.plugins.document.Document;
+ import org.apache.jackrabbit.oak.plugins.document.DocumentStoreException;
+ import org.apache.jackrabbit.oak.plugins.document.NodeDocument;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.rdb.RDBDocumentStore.QueryCondition;
+ import org.apache.jackrabbit.oak.plugins.document.rdb.RDBDocumentStore.RDBTableMetaData;
+ import org.apache.jackrabbit.oak.plugins.document.rdb.RDBDocumentStoreDB.FETCHFIRSTSYNTAX;
+@@ -199,26 +195,13 @@ public class RDBDocumentStoreJDBC {
+         return count;
+     }
+ 
+-    public int delete(Connection connection, RDBTableMetaData tmd, Map<String, Map<Key, Condition>> toDelete)
++    public int delete(Connection connection, RDBTableMetaData tmd, Map<String, Long> toDelete)
+             throws SQLException, DocumentStoreException {
+-        // sanity check on parameters; see OAK-6789
+-        for (Entry<String, Map<Key, Condition>> entry : toDelete.entrySet()) {
+-            if (entry.getValue().entrySet().size() != 1) {
+-                throw new DocumentStoreException("Unsupported number of conditions in : " + entry.getValue().entrySet());
+-            }
+-            Entry<Key, Condition> c = entry.getValue().entrySet().iterator().next();
+-            if (!c.getKey().getName().equals(MODIFIED) || c.getKey().getRevision() != null
+-                    || c.getValue().type != Condition.Type.EQUALS) {
+-                throw new DocumentStoreException("Unsupported condition: " + c);
+-            }
+-        }
+-
+         PreparedStatement stmt = connection.prepareStatement("delete from " + tmd.getName() + " where ID=? and MODIFIED=?");
+-        UpdateOp.Key MODIFIEDKEY = new UpdateOp.Key(MODIFIED_IN_SECS, null);
+         try {
+-            for (Entry<String, Map<Key, Condition>> entry : toDelete.entrySet()) {
++            for (Entry<String, Long> entry : toDelete.entrySet()) {
+                 setIdInStatement(tmd, stmt, 1, entry.getKey());
+-                stmt.setLong(2, (Long) entry.getValue().get(MODIFIEDKEY).value);
++                stmt.setLong(2, entry.getValue());
+                 stmt.addBatch();
+             }
+             int[] rets = stmt.executeBatch();
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LeaseCheckDocumentStoreWrapper.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LeaseCheckDocumentStoreWrapper.java
+index b7a3e01fae..d3bd52b16d 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LeaseCheckDocumentStoreWrapper.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LeaseCheckDocumentStoreWrapper.java
+@@ -30,8 +30,6 @@ import org.apache.jackrabbit.oak.plugins.document.DocumentStoreException;
+ import org.apache.jackrabbit.oak.plugins.document.RevisionListener;
+ import org.apache.jackrabbit.oak.plugins.document.RevisionVector;
+ import org.apache.jackrabbit.oak.plugins.document.UpdateOp;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.cache.CacheInvalidationStats;
+ 
+ /**
+@@ -103,7 +101,7 @@ public final class LeaseCheckDocumentStoreWrapper implements DocumentStore, Revi
+ 
+     @Override
+     public final <T extends Document> int remove(Collection<T> collection,
+-            Map<String, Map<Key, Condition>> toRemove) {
++            Map<String, Long> toRemove) {
+         performLeaseCheck();
+         return delegate.remove(collection, toRemove);
+     }
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LoggingDocumentStoreWrapper.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LoggingDocumentStoreWrapper.java
+index fead88b107..1980e8bed0 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LoggingDocumentStoreWrapper.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/LoggingDocumentStoreWrapper.java
+@@ -157,7 +157,7 @@ public class LoggingDocumentStoreWrapper implements DocumentStore, RevisionListe
+ 
+     @Override
+     public <T extends Document> int remove(final Collection<T> collection,
+-                                           final Map<String, Map<UpdateOp.Key, UpdateOp.Condition>> toRemove) {
++                                           final Map<String, Long> toRemove) {
+         try {
+             logMethod("remove", collection, toRemove);
+             return logResult(new Callable<Integer>() {
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/SynchronizingDocumentStoreWrapper.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/SynchronizingDocumentStoreWrapper.java
+index 355a2926e1..d37c9c73a8 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/SynchronizingDocumentStoreWrapper.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/SynchronizingDocumentStoreWrapper.java
+@@ -79,7 +79,7 @@ public class SynchronizingDocumentStoreWrapper implements DocumentStore, Revisio
+ 
+     @Override
+     public synchronized <T extends Document> int remove(Collection<T> collection,
+-                                                        Map<String, Map<UpdateOp.Key, UpdateOp.Condition>> toRemove) {
++                                                        Map<String, Long> toRemove) {
+         return store.remove(collection, toRemove);
+     }
+ 
+diff --git a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/TimingDocumentStoreWrapper.java b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/TimingDocumentStoreWrapper.java
+index be76ab9783..66c02ae8e8 100644
+--- a/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/TimingDocumentStoreWrapper.java
++++ b/oak-store-document/src/main/java/org/apache/jackrabbit/oak/plugins/document/util/TimingDocumentStoreWrapper.java
+@@ -197,7 +197,7 @@ public class TimingDocumentStoreWrapper implements DocumentStore, RevisionListen
+ 
+     @Override
+     public <T extends Document> int remove(Collection<T> collection,
+-                                           Map<String, Map<UpdateOp.Key, UpdateOp.Condition>> toRemove) {
++                                           Map<String, Long> toRemove) {
+         try {
+             long start = now();
+             int result = base.remove(collection, toRemove);
+diff --git a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/BasicDocumentStoreTest.java b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/BasicDocumentStoreTest.java
+index bf2d137bf7..139d13f21c 100644
+--- a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/BasicDocumentStoreTest.java
++++ b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/BasicDocumentStoreTest.java
+@@ -34,8 +34,6 @@ import java.util.Map;
+ import java.util.Set;
+ import java.util.UUID;
+ 
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.util.Utils;
+ import org.junit.Test;
+ import org.slf4j.Logger;
+@@ -1118,11 +1116,11 @@ public class BasicDocumentStoreTest extends AbstractDocumentStoreTest {
+             assertNotNull(ds.find(Collection.NODES, op.getId()));
+         }
+ 
+-        Map<String, Map<Key, Condition>> toRemove = Maps.newHashMap();
+-        removeDocument(toRemove, "/foo", 100); // matches
+-        removeDocument(toRemove, "/bar", 300); // modified differs
+-        removeDocument(toRemove, "/qux", 100); // does not exist
+-        removeDocument(toRemove, "/baz", 300); // matches
++        Map<String, Long> toRemove = Maps.newHashMap();
++        toRemove.put(Utils.getIdFromPath("/foo"), 100L); // matches
++        toRemove.put(Utils.getIdFromPath("/bar"), 300L); // modified differs
++        toRemove.put(Utils.getIdFromPath("/qux"), 100L); // does not exist
++        toRemove.put(Utils.getIdFromPath("/baz"), 300L); // matches
+ 
+         int removed = ds.remove(Collection.NODES, toRemove);
+ 
+@@ -1141,10 +1139,7 @@ public class BasicDocumentStoreTest extends AbstractDocumentStoreTest {
+         long modified = 1;
+         removeMe.add(id);
+         ds.create(Collection.NODES, Collections.singletonList(newDocument(id, modified)));
+-
+-        Map<Key, Condition> conditions = Collections.singletonMap(new Key(NodeDocument.MODIFIED_IN_SECS, null),
+-                Condition.newEqualsCondition(modified));
+-        ds.remove(Collection.NODES, Collections.singletonMap(id, conditions));
++        ds.remove(Collection.NODES, Collections.singletonMap(id, modified));
+         assertNull(ds.getIfCached(Collection.NODES, id));
+     }
+ 
+@@ -1162,13 +1157,4 @@ public class BasicDocumentStoreTest extends AbstractDocumentStoreTest {
+         op.set(NodeDocument.MODIFIED_IN_SECS, modified);
+         return op;
+     }
+-
+-    private void removeDocument(Map<String, Map<Key, Condition>> toRemove,
+-                                String path,
+-                                long modified) {
+-        toRemove.put(Utils.getIdFromPath(path),
+-                Collections.singletonMap(
+-                        new Key(NodeDocument.MODIFIED_IN_SECS, null),
+-                        Condition.newEqualsCondition(modified)));
+-    }
+ }
+diff --git a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/CountingDocumentStore.java b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/CountingDocumentStore.java
+index b0b2596a88..81cef35ce6 100644
+--- a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/CountingDocumentStore.java
++++ b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/CountingDocumentStore.java
+@@ -23,8 +23,6 @@ import java.util.Map;
+ import javax.annotation.Nonnull;
+ 
+ import org.apache.jackrabbit.oak.cache.CacheStats;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.cache.CacheInvalidationStats;
+ 
+ public class CountingDocumentStore implements DocumentStore, RevisionListener {
+@@ -143,7 +141,7 @@ public class CountingDocumentStore implements DocumentStore, RevisionListener {
+ 
+     @Override
+     public <T extends Document> int remove(Collection<T> collection,
+-                                           Map<String, Map<Key, Condition>> toRemove) {
++                                           Map<String, Long> toRemove) {
+         getStats(collection).numRemoveCalls++;
+         return delegate.remove(collection, toRemove);
+     }
+diff --git a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreStatsIT.java b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreStatsIT.java
+index 16860d2400..f677d13a98 100644
+--- a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreStatsIT.java
++++ b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreStatsIT.java
+@@ -28,8 +28,6 @@ import java.util.UUID;
+ import com.google.common.collect.Lists;
+ import com.google.common.collect.Maps;
+ 
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp.Key;
+ import org.apache.jackrabbit.oak.plugins.document.memory.MemoryDocumentStore;
+ import org.apache.jackrabbit.oak.plugins.document.mongo.MongoDocumentStore;
+ import org.apache.jackrabbit.oak.plugins.document.rdb.RDBDocumentStore;
+@@ -39,10 +37,8 @@ import org.junit.Test;
+ import org.junit.rules.TestName;
+ 
+ import static java.util.Collections.singletonList;
+-import static java.util.Collections.singletonMap;
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.MODIFIED_IN_SECS;
+ import static org.apache.jackrabbit.oak.plugins.document.NodeDocument.getModifiedInSecs;
+-import static org.apache.jackrabbit.oak.plugins.document.UpdateOp.Condition.newEqualsCondition;
+ import static org.junit.Assert.assertTrue;
+ import static org.junit.Assume.assumeFalse;
+ import static org.mockito.Matchers.anyInt;
+@@ -191,12 +187,11 @@ public class DocumentStoreStatsIT extends AbstractDocumentStoreTest {
+     @Test
+     public void removeConditional() throws Exception {
+         Revision r = Revision.newRevision(1);
+-        Key modified = new Key(MODIFIED_IN_SECS, null);
+-        Condition c = newEqualsCondition(getModifiedInSecs(r.getTimestamp()));
+-        Map<String, Map<Key, Condition>> ids = Maps.newHashMap();
++        long modified = getModifiedInSecs(r.getTimestamp());
++        Map<String, Long> ids = Maps.newHashMap();
+         for (int i = 0; i < 10; i++) {
+             String id = testName.getMethodName() + "-" + i;
+-            ids.put(id, singletonMap(modified, c));
++            ids.put(id, modified);
+             UpdateOp up = new UpdateOp(id, true);
+             NodeDocument.setModified(up, r);
+             ds.create(Collection.NODES, singletonList(up));
+diff --git a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreWrapper.java b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreWrapper.java
+index 1e070a1671..4f4bb897da 100644
+--- a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreWrapper.java
++++ b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/DocumentStoreWrapper.java
+@@ -83,7 +83,7 @@ public class DocumentStoreWrapper implements DocumentStore, RevisionListener {
+ 
+     @Override
+     public <T extends Document> int remove(Collection<T> collection,
+-                                           Map<String, Map<UpdateOp.Key, UpdateOp.Condition>> toRemove) {
++                                           Map<String, Long> toRemove) {
+         return store.remove(collection, toRemove);
+     }
+ 
+diff --git a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/FailingDocumentStore.java b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/FailingDocumentStore.java
+index 102978c950..84f6e34122 100644
+--- a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/FailingDocumentStore.java
++++ b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/FailingDocumentStore.java
+@@ -106,10 +106,10 @@ class FailingDocumentStore extends DocumentStoreWrapper {
+ 
+     @Override
+     public <T extends Document> int remove(Collection<T> collection,
+-                                           Map<String, Map<UpdateOp.Key, UpdateOp.Condition>> toRemove) {
++                                           Map<String, Long> toRemove) {
+         int num = 0;
+         // remove individually
+-        for (Map.Entry<String, Map<UpdateOp.Key, UpdateOp.Condition>> rm : toRemove.entrySet()) {
++        for (Map.Entry<String, Long> rm : toRemove.entrySet()) {
+             maybeFail();
+             num += super.remove(collection, singletonMap(rm.getKey(), rm.getValue()));
+         }
+diff --git a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/util/ReadOnlyDocumentStoreWrapperTest.java b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/util/ReadOnlyDocumentStoreWrapperTest.java
+index 20df31bda0..56d31f66e0 100644
+--- a/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/util/ReadOnlyDocumentStoreWrapperTest.java
++++ b/oak-store-document/src/test/java/org/apache/jackrabbit/oak/plugins/document/util/ReadOnlyDocumentStoreWrapperTest.java
+@@ -1,195 +1,194 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.jackrabbit.oak.plugins.document.util;
+-
+-import com.google.common.collect.Lists;
+-import com.google.common.collect.Maps;
+-import org.apache.jackrabbit.oak.plugins.document.Collection;
+-import org.apache.jackrabbit.oak.plugins.document.Document;
+-import org.apache.jackrabbit.oak.plugins.document.DocumentMKBuilderProvider;
+-import org.apache.jackrabbit.oak.plugins.document.DocumentNodeStore;
+-import org.apache.jackrabbit.oak.plugins.document.DocumentStore;
+-import org.apache.jackrabbit.oak.plugins.document.UpdateOp;
+-import org.apache.jackrabbit.oak.plugins.document.memory.MemoryDocumentStore;
+-import org.apache.jackrabbit.oak.spi.commit.CommitInfo;
+-import org.apache.jackrabbit.oak.spi.commit.EmptyHook;
+-import org.apache.jackrabbit.oak.spi.state.NodeBuilder;
+-import org.junit.Assert;
+-import org.junit.Rule;
+-import org.junit.Test;
+-
+-import java.lang.reflect.InvocationHandler;
+-import java.lang.reflect.InvocationTargetException;
+-import java.lang.reflect.Method;
+-import java.lang.reflect.Proxy;
+-import java.util.Arrays;
+-import java.util.List;
+-import java.util.Map;
+-
+-import static org.junit.Assert.assertFalse;
+-import static org.junit.Assert.assertTrue;
+-
+-public class ReadOnlyDocumentStoreWrapperTest {
+-    @Rule
+-    public DocumentMKBuilderProvider builderProvider = new DocumentMKBuilderProvider();
+-
+-    @Test
+-    public void testPassthrough() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+-        final List<String> disallowedMethods = Lists.newArrayList(
+-                "create", "update", "remove", "createOrUpdate", "findAndUpdate");
+-        InvocationHandler handler = new InvocationHandler() {
+-            @Override
+-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+-                String methodName = method.getName();
+-
+-                if (disallowedMethods.contains(methodName)) {
+-                    Assert.fail(String.format("Invalid passthrough of method (%s) with params %s", method, Arrays.toString(args)));
+-                }
+-
+-                if ("determineServerTimeDifferenceMillis".equals(methodName)) {
+-                    return new Long(0);
+-                } else {
+-                    return null;
+-                }
+-            }
+-        };
+-        DocumentStore proxyStore = (DocumentStore)Proxy.newProxyInstance(DocumentStore.class.getClassLoader(),
+-                new Class[]{DocumentStore.class},
+-                handler);
+-
+-        DocumentStore readOnlyStore = ReadOnlyDocumentStoreWrapperFactory.getInstance(proxyStore);
+-
+-        Collection<? extends Document> []collections = new Collection[] {
+-                Collection.CLUSTER_NODES, Collection.JOURNAL, Collection.NODES, Collection.SETTINGS
+-        };
+-        for (Collection collection : collections) {
+-            readOnlyStore.find(collection, null);
+-            readOnlyStore.find(collection, null, 0);
+-
+-            readOnlyStore.query(collection, null, null, 0);
+-            readOnlyStore.query(collection, null, null, null, 0, 0);
+-
+-            boolean uoeThrown = false;
+-            try {
+-                readOnlyStore.remove(collection, "");
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("remove must throw UnsupportedOperationException", uoeThrown);
+-
+-            uoeThrown = false;
+-            try {
+-                readOnlyStore.remove(collection, Lists.<String>newArrayList());
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("remove must throw UnsupportedOperationException", uoeThrown);
+-
+-            uoeThrown = false;
+-            try {
+-                readOnlyStore.remove(collection, Maps.<String, Map<UpdateOp.Key, UpdateOp.Condition>>newHashMap());
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("remove must throw UnsupportedOperationException", uoeThrown);
+-            uoeThrown = false;
+-
+-            try {
+-                readOnlyStore.create(collection, null);
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("create must throw UnsupportedOperationException", uoeThrown);
+-            uoeThrown = false;
+-
+-            try {
+-                readOnlyStore.update(collection, null, null);
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("update must throw UnsupportedOperationException", uoeThrown);
+-            uoeThrown = false;
+-
+-            try {
+-                readOnlyStore.createOrUpdate(collection, (UpdateOp) null);
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("createOrUpdate must throw UnsupportedOperationException", uoeThrown);
+-            uoeThrown = false;
+-
+-            try {
+-                readOnlyStore.createOrUpdate(collection, Lists.<UpdateOp>newArrayList());
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("createOrUpdate must throw UnsupportedOperationException", uoeThrown);
+-            uoeThrown = false;
+-
+-            try {
+-                readOnlyStore.findAndUpdate(collection, null);
+-            } catch (UnsupportedOperationException uoe) {
+-                //catch uoe thrown by read only wrapper
+-                uoeThrown = true;
+-            }
+-            assertTrue("findAndUpdate must throw UnsupportedOperationException", uoeThrown);
+-
+-            readOnlyStore.invalidateCache(collection, null);
+-            readOnlyStore.getIfCached(collection, null);
+-        }
+-
+-        readOnlyStore.invalidateCache();
+-        readOnlyStore.invalidateCache(null);
+-
+-        readOnlyStore.dispose();
+-        readOnlyStore.setReadWriteMode(null);
+-        readOnlyStore.getCacheStats();
+-        readOnlyStore.getMetadata();
+-        readOnlyStore.determineServerTimeDifferenceMillis();
+-    }
+-
+-    @Test
+-    public void backgroundRead() throws Exception {
+-        DocumentStore docStore = new MemoryDocumentStore();
+-
+-        DocumentNodeStore store = builderProvider.newBuilder().setAsyncDelay(0)
+-                .setDocumentStore(docStore).setClusterId(2).getNodeStore();
+-        DocumentNodeStore readOnlyStore = builderProvider.newBuilder().setAsyncDelay(0)
+-                .setDocumentStore(docStore).setClusterId(1).setReadOnlyMode().getNodeStore();
+-
+-        NodeBuilder builder = store.getRoot().builder();
+-        builder.child("node");
+-        store.merge(builder, EmptyHook.INSTANCE, CommitInfo.EMPTY);
+-
+-        store.runBackgroundOperations();
+-
+-        // at this point node must not be visible
+-        assertFalse(readOnlyStore.getRoot().hasChildNode("node"));
+-
+-        readOnlyStore.runBackgroundOperations();
+-
+-        // at this point node should get visible
+-        assertTrue(readOnlyStore.getRoot().hasChildNode("node"));
+-    }
+-}
++/*
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.
++ * The ASF licenses this file to You under the Apache License, Version 2.0
++ * (the "License"); you may not use this file except in compliance with
++ * the License.  You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.apache.jackrabbit.oak.plugins.document.util;
++
++import com.google.common.collect.Lists;
++import com.google.common.collect.Maps;
++import org.apache.jackrabbit.oak.plugins.document.Collection;
++import org.apache.jackrabbit.oak.plugins.document.Document;
++import org.apache.jackrabbit.oak.plugins.document.DocumentMKBuilderProvider;
++import org.apache.jackrabbit.oak.plugins.document.DocumentNodeStore;
++import org.apache.jackrabbit.oak.plugins.document.DocumentStore;
++import org.apache.jackrabbit.oak.plugins.document.UpdateOp;
++import org.apache.jackrabbit.oak.plugins.document.memory.MemoryDocumentStore;
++import org.apache.jackrabbit.oak.spi.commit.CommitInfo;
++import org.apache.jackrabbit.oak.spi.commit.EmptyHook;
++import org.apache.jackrabbit.oak.spi.state.NodeBuilder;
++import org.junit.Assert;
++import org.junit.Rule;
++import org.junit.Test;
++
++import java.lang.reflect.InvocationHandler;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.lang.reflect.Proxy;
++import java.util.Arrays;
++import java.util.List;
++
++import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
++
++public class ReadOnlyDocumentStoreWrapperTest {
++    @Rule
++    public DocumentMKBuilderProvider builderProvider = new DocumentMKBuilderProvider();
++
++    @Test
++    public void testPassthrough() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
++        final List<String> disallowedMethods = Lists.newArrayList(
++                "create", "update", "remove", "createOrUpdate", "findAndUpdate");
++        InvocationHandler handler = new InvocationHandler() {
++            @Override
++            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
++                String methodName = method.getName();
++
++                if (disallowedMethods.contains(methodName)) {
++                    Assert.fail(String.format("Invalid passthrough of method (%s) with params %s", method, Arrays.toString(args)));
++                }
++
++                if ("determineServerTimeDifferenceMillis".equals(methodName)) {
++                    return new Long(0);
++                } else {
++                    return null;
++                }
++            }
++        };
++        DocumentStore proxyStore = (DocumentStore)Proxy.newProxyInstance(DocumentStore.class.getClassLoader(),
++                new Class[]{DocumentStore.class},
++                handler);
++
++        DocumentStore readOnlyStore = ReadOnlyDocumentStoreWrapperFactory.getInstance(proxyStore);
++
++        Collection<? extends Document> []collections = new Collection[] {
++                Collection.CLUSTER_NODES, Collection.JOURNAL, Collection.NODES, Collection.SETTINGS
++        };
++        for (Collection collection : collections) {
++            readOnlyStore.find(collection, null);
++            readOnlyStore.find(collection, null, 0);
++
++            readOnlyStore.query(collection, null, null, 0);
++            readOnlyStore.query(collection, null, null, null, 0, 0);
++
++            boolean uoeThrown = false;
++            try {
++                readOnlyStore.remove(collection, "");
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("remove must throw UnsupportedOperationException", uoeThrown);
++
++            uoeThrown = false;
++            try {
++                readOnlyStore.remove(collection, Lists.<String>newArrayList());
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("remove must throw UnsupportedOperationException", uoeThrown);
++
++            uoeThrown = false;
++            try {
++                readOnlyStore.remove(collection, Maps.<String, Long>newHashMap());
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("remove must throw UnsupportedOperationException", uoeThrown);
++            uoeThrown = false;
++
++            try {
++                readOnlyStore.create(collection, null);
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("create must throw UnsupportedOperationException", uoeThrown);
++            uoeThrown = false;
++
++            try {
++                readOnlyStore.update(collection, null, null);
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("update must throw UnsupportedOperationException", uoeThrown);
++            uoeThrown = false;
++
++            try {
++                readOnlyStore.createOrUpdate(collection, (UpdateOp) null);
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("createOrUpdate must throw UnsupportedOperationException", uoeThrown);
++            uoeThrown = false;
++
++            try {
++                readOnlyStore.createOrUpdate(collection, Lists.<UpdateOp>newArrayList());
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("createOrUpdate must throw UnsupportedOperationException", uoeThrown);
++            uoeThrown = false;
++
++            try {
++                readOnlyStore.findAndUpdate(collection, null);
++            } catch (UnsupportedOperationException uoe) {
++                //catch uoe thrown by read only wrapper
++                uoeThrown = true;
++            }
++            assertTrue("findAndUpdate must throw UnsupportedOperationException", uoeThrown);
++
++            readOnlyStore.invalidateCache(collection, null);
++            readOnlyStore.getIfCached(collection, null);
++        }
++
++        readOnlyStore.invalidateCache();
++        readOnlyStore.invalidateCache(null);
++
++        readOnlyStore.dispose();
++        readOnlyStore.setReadWriteMode(null);
++        readOnlyStore.getCacheStats();
++        readOnlyStore.getMetadata();
++        readOnlyStore.determineServerTimeDifferenceMillis();
++    }
++
++    @Test
++    public void backgroundRead() throws Exception {
++        DocumentStore docStore = new MemoryDocumentStore();
++
++        DocumentNodeStore store = builderProvider.newBuilder().setAsyncDelay(0)
++                .setDocumentStore(docStore).setClusterId(2).getNodeStore();
++        DocumentNodeStore readOnlyStore = builderProvider.newBuilder().setAsyncDelay(0)
++                .setDocumentStore(docStore).setClusterId(1).setReadOnlyMode().getNodeStore();
++
++        NodeBuilder builder = store.getRoot().builder();
++        builder.child("node");
++        store.merge(builder, EmptyHook.INSTANCE, CommitInfo.EMPTY);
++
++        store.runBackgroundOperations();
++
++        // at this point node must not be visible
++        assertFalse(readOnlyStore.getRoot().hasChildNode("node"));
++
++        readOnlyStore.runBackgroundOperations();
++
++        // at this point node should get visible
++        assertTrue(readOnlyStore.getRoot().hasChildNode("node"));
++    }
++}

@@ -1,0 +1,13 @@
+diff --git a/okhttp-tests/src/test/java/okhttp3/CallTest.java b/okhttp-tests/src/test/java/okhttp3/CallTest.java
+index f6569fe79..a87ecc7b5 100644
+--- a/okhttp-tests/src/test/java/okhttp3/CallTest.java
++++ b/okhttp-tests/src/test/java/okhttp3/CallTest.java
+@@ -1063,7 +1063,7 @@ public final class CallTest {
+       client.newCall(request).execute();
+       fail();
+     } catch (UnknownServiceException expected) {
+-      assertTrue(expected.getMessage().contains("CLEARTEXT communication not supported"));
++      assertEquals("CLEARTEXT communication not enabled for client", expected.getMessage());
+     }
+   }
+ 

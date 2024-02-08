@@ -1,0 +1,14 @@
+diff --git a/src/test/java/com/thealgorithms/datastructures/hashmap/hashing/MajorityElementTest.java b/src/test/java/com/thealgorithms/datastructures/hashmap/hashing/MajorityElementTest.java
+index d03896f..56d4f17 100644
+--- a/src/test/java/com/thealgorithms/datastructures/hashmap/hashing/MajorityElementTest.java
++++ b/src/test/java/com/thealgorithms/datastructures/hashmap/hashing/MajorityElementTest.java
+@@ -15,8 +15,7 @@ public class MajorityElementTest{
+     @Test
+     void testMajorityWithSingleMajorityElement() {
+         int[] nums = {1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 9};
+-        List<Integer> expected = new ArrayList<>();
+-        expected.add(0);
++        List<Integer> expected = Collections.emptyList(); // create an empty list
+         List<Integer> actual = MajorityElement.majority(nums);
+         assertEquals(expected, actual);
+     }

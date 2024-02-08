@@ -1,0 +1,50 @@
+diff --git a/mode/type/cluster/core/src/main/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriber.java b/mode/type/cluster/core/src/main/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriber.java
+index a4f4bf7d554..daaa9c41033 100644
+--- a/mode/type/cluster/core/src/main/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriber.java
++++ b/mode/type/cluster/core/src/main/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriber.java
+@@ -64,10 +64,8 @@ public final class ConfigurationChangedSubscriber {
+      */
+     @Subscribe
+     public synchronized void renew(final DataSourceChangedEvent event) {
+-        if (persistService.getMetaDataVersionPersistService().isActiveVersion(event.getDatabaseName(), event.getDatabaseVersion())) {
+-            contextManager.alterDataSourceConfiguration(event.getDatabaseName(), event.getDataSourcePropertiesMap());
+-            disableDataSources();
+-        }
++        contextManager.alterDataSourceConfiguration(event.getDatabaseName(), event.getDataSourcePropertiesMap());
++        disableDataSources();
+     }
+     
+     /**
+@@ -77,10 +75,8 @@ public final class ConfigurationChangedSubscriber {
+      */
+     @Subscribe
+     public synchronized void renew(final RuleConfigurationsChangedEvent event) {
+-        if (persistService.getMetaDataVersionPersistService().isActiveVersion(event.getDatabaseName(), event.getDatabaseVersion())) {
+-            contextManager.alterRuleConfiguration(event.getDatabaseName(), event.getRuleConfigs());
+-            disableDataSources();
+-        }
++        contextManager.alterRuleConfiguration(event.getDatabaseName(), event.getRuleConfigs());
++        disableDataSources();
+     }
+     
+     /**
+diff --git a/mode/type/cluster/core/src/test/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriberTest.java b/mode/type/cluster/core/src/test/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriberTest.java
+index 2d5c73f3473..28c5b9b85e9 100644
+--- a/mode/type/cluster/core/src/test/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriberTest.java
++++ b/mode/type/cluster/core/src/test/java/org/apache/shardingsphere/mode/manager/cluster/coordinator/subscriber/ConfigurationChangedSubscriberTest.java
+@@ -126,7 +126,6 @@ class ConfigurationChangedSubscriberTest {
+     
+     @Test
+     void assertRenewForRuleConfigurationsChanged() {
+-        when(persistService.getMetaDataVersionPersistService().isActiveVersion("db", "0")).thenReturn(true);
+         assertThat(contextManager.getMetaDataContexts().getMetaData().getDatabase("db"), is(database));
+         subscriber.renew(new RuleConfigurationsChangedEvent("db", "0", Collections.emptyList()));
+         assertThat(contextManager.getMetaDataContexts().getMetaData().getDatabase("db"), not(database));
+@@ -134,7 +133,6 @@ class ConfigurationChangedSubscriberTest {
+     
+     @Test
+     void assertRenewForDataSourceChanged() {
+-        when(persistService.getMetaDataVersionPersistService().isActiveVersion("db", "0")).thenReturn(true);
+         subscriber.renew(new DataSourceChangedEvent("db", "0", createChangedDataSourcePropertiesMap()));
+         assertTrue(contextManager.getMetaDataContexts().getMetaData().getDatabase("db").getResourceMetaData().getDataSources().containsKey("ds_2"));
+     }

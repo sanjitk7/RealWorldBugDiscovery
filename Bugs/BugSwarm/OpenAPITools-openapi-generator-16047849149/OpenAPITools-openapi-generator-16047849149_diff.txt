@@ -1,0 +1,56 @@
+diff --git a/modules/openapi-generator/src/main/java/org/openapitools/codegen/languages/PhpClientCodegen.java b/modules/openapi-generator/src/main/java/org/openapitools/codegen/languages/PhpClientCodegen.java
+index 0cba9450b02..f286ebe5132 100644
+--- a/modules/openapi-generator/src/main/java/org/openapitools/codegen/languages/PhpClientCodegen.java
++++ b/modules/openapi-generator/src/main/java/org/openapitools/codegen/languages/PhpClientCodegen.java
+@@ -126,7 +126,11 @@ public class PhpClientCodegen extends AbstractPhpCodegen {
+         supportingFiles.add(new SupportingFile(".php-cs-fixer.dist.php", "", ".php-cs-fixer.dist.php"));
+         supportingFiles.add(new SupportingFile("git_push.sh.mustache", "", "git_push.sh"));
+ 
+-        if (PSR18.equals(library)) {
++        if (additionalProperties.containsKey(CodegenConstants.LIBRARY)) {
++            this.setLibrary((String) additionalProperties.get(CodegenConstants.LIBRARY));
++        }
++
++        if (PSR18.equals(getLibrary())) {
+             supportingFiles.add(new SupportingFile("DebugPlugin.mustache", toSrcPath(invokerPackage, srcBasePath), "DebugPlugin.php"));
+         }
+ 
+diff --git a/modules/openapi-generator/src/test/java/org/openapitools/codegen/options/PhpClientOptionsProvider.java b/modules/openapi-generator/src/test/java/org/openapitools/codegen/options/PhpClientOptionsProvider.java
+index 2ef78d72167..bf26ac750fa 100644
+--- a/modules/openapi-generator/src/test/java/org/openapitools/codegen/options/PhpClientOptionsProvider.java
++++ b/modules/openapi-generator/src/test/java/org/openapitools/codegen/options/PhpClientOptionsProvider.java
+@@ -42,6 +42,7 @@ public class PhpClientOptionsProvider implements OptionsProvider {
+     public static final String ARTIFACTURL_VALUE = "https://anotherUrl.com";
+     public static final String DEVELOPER_ORGANIZATION_VALUE = "openapi generator contributors";
+     public static final String COMPOSER_PACKAGE_NAME_VALUE = "package/name";
++    public static final String LIBRARY_VALUE = "psr-18";
+ 
+     @Override
+     public String getLanguage() {
+@@ -72,6 +73,7 @@ public class PhpClientOptionsProvider implements OptionsProvider {
+                 .put(CodegenConstants.ARTIFACT_URL, ARTIFACTURL_VALUE)
+                 .put(CodegenConstants.DEVELOPER_ORGANIZATION, DEVELOPER_ORGANIZATION_VALUE)
+                 .put(CodegenConstants.COMPOSER_PACKAGE_NAME, COMPOSER_PACKAGE_NAME_VALUE)
++                .put(CodegenConstants.LIBRARY, LIBRARY_VALUE)
+                 .build();
+     }
+ 
+diff --git a/modules/openapi-generator/src/test/java/org/openapitools/codegen/php/PhpClientOptionsTest.java b/modules/openapi-generator/src/test/java/org/openapitools/codegen/php/PhpClientOptionsTest.java
+index 5a849757b5f..b984010b8b5 100644
+--- a/modules/openapi-generator/src/test/java/org/openapitools/codegen/php/PhpClientOptionsTest.java
++++ b/modules/openapi-generator/src/test/java/org/openapitools/codegen/php/PhpClientOptionsTest.java
+@@ -21,7 +21,6 @@ import org.openapitools.codegen.AbstractOptionsTest;
+ import org.openapitools.codegen.CodegenConfig;
+ import org.openapitools.codegen.languages.PhpClientCodegen;
+ import org.openapitools.codegen.options.PhpClientOptionsProvider;
+-import org.openapitools.codegen.options.PhpLumenServerOptionsProvider;
+ 
+ import static org.mockito.Mockito.mock;
+ import static org.mockito.Mockito.verify;
+@@ -54,5 +53,6 @@ public class PhpClientOptionsTest extends AbstractOptionsTest {
+         verify(clientCodegen).setDeveloperOrganizationUrl(PhpClientOptionsProvider.DEVELOPER_ORGANIZATION_URL_VALUE);
+         verify(clientCodegen).setArtifactUrl(PhpClientOptionsProvider.ARTIFACTURL_VALUE);
+         verify(clientCodegen).setDeveloperOrganization(PhpClientOptionsProvider.DEVELOPER_ORGANIZATION_VALUE);
++        verify(clientCodegen).setLibrary(PhpClientOptionsProvider.LIBRARY_VALUE);
+     }
+ }

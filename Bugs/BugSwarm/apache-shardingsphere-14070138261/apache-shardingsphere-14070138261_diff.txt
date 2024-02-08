@@ -1,0 +1,80 @@
+diff --git a/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseBasedPersistService.java b/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseBasedPersistService.java
+deleted file mode 100644
+index b14dabe3f26..00000000000
+--- a/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseBasedPersistService.java
++++ /dev/null
+@@ -1,43 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package org.apache.shardingsphere.metadata.persist.service.config.database;
+-
+-/**
+- * TODO Rename DatabaseBasedPersistService when metadata structure adjustment completed. #25485
+- * Database based persist service.
+- *
+- * @param <T> type of configuration
+- */
+-public interface NewDatabaseBasedPersistService<T> {
+-    
+-    /**
+-     * Persist configurations.
+-     *
+-     * @param databaseName database name
+-     * @param configs configurations
+-     */
+-    void persist(String databaseName, T configs);
+-    
+-    /**
+-     * Load configurations.
+-     *
+-     * @param databaseName database name
+-     * @return configurations
+-     */
+-    T load(String databaseName);
+-}
+diff --git a/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRuleBasedPersistService.java b/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRuleBasedPersistService.java
+index 086ec06f705..7e6ffce1e80 100644
+--- a/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRuleBasedPersistService.java
++++ b/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRuleBasedPersistService.java
+@@ -29,7 +29,7 @@ import java.util.Map;
+  *
+  * @param <T> type of configuration
+  */
+-public interface NewDatabaseRuleBasedPersistService<T> extends NewDatabaseBasedPersistService<T> {
++public interface NewDatabaseRuleBasedPersistService<T> extends DatabaseBasedPersistService<T> {
+     
+     /**
+      * Persist configurations.
+diff --git a/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRulePersistService.java b/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRulePersistService.java
+index accfcf41628..6b1eb4775a8 100644
+--- a/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRulePersistService.java
++++ b/kernel/metadata/core/src/main/java/org/apache/shardingsphere/metadata/persist/service/config/database/NewDatabaseRulePersistService.java
+@@ -87,6 +87,13 @@ public final class NewDatabaseRulePersistService implements NewDatabaseRuleBased
+         return new NewYamlRuleConfigurationSwapperEngine().swapToRuleConfigurations(getDataNodes(result));
+     }
+     
++    @Deprecated
++    @Override
++    public Collection<RuleConfiguration> load(final String databaseName, final String version) {
++        // TODO Remove this method when metadata structure adjustment completed. #25485
++        return Collections.emptyList();
++    }
++    
+     private void getAllNodes(final Collection<String> keys, final String path) {
+         keys.add(path);
+         List<String> childrenKeys = repository.getChildrenKeys(path);

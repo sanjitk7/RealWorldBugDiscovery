@@ -1,0 +1,83 @@
+diff --git a/features/sharding/core/src/test/java/org/apache/shardingsphere/sharding/route/engine/condition/engine/WhereClauseShardingConditionEngineTest.java b/features/sharding/core/src/test/java/org/apache/shardingsphere/sharding/route/engine/condition/engine/WhereClauseShardingConditionEngineTest.java
+index 3a8f12698b8..81a1c3a493a 100644
+--- a/features/sharding/core/src/test/java/org/apache/shardingsphere/sharding/route/engine/condition/engine/WhereClauseShardingConditionEngineTest.java
++++ b/features/sharding/core/src/test/java/org/apache/shardingsphere/sharding/route/engine/condition/engine/WhereClauseShardingConditionEngineTest.java
+@@ -20,6 +20,7 @@ package org.apache.shardingsphere.sharding.route.engine.condition.engine;
+ import org.apache.groovy.util.Maps;
+ import org.apache.shardingsphere.infra.binder.segment.table.TablesContext;
+ import org.apache.shardingsphere.infra.binder.statement.dml.SelectStatementContext;
++import org.apache.shardingsphere.infra.config.props.ConfigurationProperties;
+ import org.apache.shardingsphere.infra.database.type.DatabaseTypeEngine;
+ import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
+ import org.apache.shardingsphere.sharding.route.engine.condition.ShardingCondition;
+@@ -44,6 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Optional;
++import java.util.Properties;
+ 
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.MatcherAssert.assertThat;
+@@ -73,7 +75,7 @@ class WhereClauseShardingConditionEngineTest {
+     @BeforeEach
+     void setUp() {
+         shardingConditionEngine = new WhereClauseShardingConditionEngine(
+-                ShardingSphereDatabase.create("test_db", DatabaseTypeEngine.getDatabaseType("MySQL")), shardingRule, mock(TimestampServiceRule.class));
++                ShardingSphereDatabase.create("test_db", DatabaseTypeEngine.getDatabaseType("MySQL"), new ConfigurationProperties(new Properties())), shardingRule, mock(TimestampServiceRule.class));
+         when(sqlStatementContext.getWhereSegments()).thenReturn(Collections.singleton(whereSegment));
+         when(sqlStatementContext.getTablesContext()).thenReturn(tablesContext);
+         when(tablesContext.findTableNamesByColumnSegment(anyCollection(), any())).thenReturn(Maps.of("foo_sharding_col", "table_1"));
+diff --git a/infra/common/src/test/java/org/apache/shardingsphere/infra/metadata/ShardingSphereMetaDataTest.java b/infra/common/src/test/java/org/apache/shardingsphere/infra/metadata/ShardingSphereMetaDataTest.java
+index d99b88cf5e3..d01c920284f 100644
+--- a/infra/common/src/test/java/org/apache/shardingsphere/infra/metadata/ShardingSphereMetaDataTest.java
++++ b/infra/common/src/test/java/org/apache/shardingsphere/infra/metadata/ShardingSphereMetaDataTest.java
+@@ -60,11 +60,12 @@ class ShardingSphereMetaDataTest {
+         ResourceHeldRule<?> globalResourceHeldRule = mock(ResourceHeldRule.class);
+         ShardingSphereDatabase database = mockDatabase(mock(ShardingSphereResourceMetaData.class), new MockedDataSource(), mock(ResourceHeldRule.class));
+         DatabaseType databaseType = mock(DatabaseType.class);
+-        when(ShardingSphereDatabase.create("foo_db", databaseType, new ConfigurationProperties(new Properties()))).thenReturn(database);
++        ConfigurationProperties configProps = new ConfigurationProperties(new Properties());
++        when(ShardingSphereDatabase.create("foo_db", databaseType, configProps)).thenReturn(database);
+         Map<String, ShardingSphereDatabase> databases = new HashMap<>(Collections.singletonMap("foo_db", database));
+         ShardingSphereMetaData metaData = new ShardingSphereMetaData(
+-                databases, new ShardingSphereRuleMetaData(Collections.singleton(globalResourceHeldRule)), new ConfigurationProperties(new Properties()));
+-        metaData.addDatabase("foo_db", databaseType, new ConfigurationProperties(new Properties()));
++                databases, new ShardingSphereRuleMetaData(Collections.singleton(globalResourceHeldRule)), configProps);
++        metaData.addDatabase("foo_db", databaseType, configProps);
+         assertThat(metaData.getDatabases(), is(databases));
+         verify(globalResourceHeldRule).addResource(database);
+     }
+diff --git a/mode/core/src/test/java/org/apache/shardingsphere/mode/manager/ContextManagerTest.java b/mode/core/src/test/java/org/apache/shardingsphere/mode/manager/ContextManagerTest.java
+index 83e9ae04438..284ad286d46 100644
+--- a/mode/core/src/test/java/org/apache/shardingsphere/mode/manager/ContextManagerTest.java
++++ b/mode/core/src/test/java/org/apache/shardingsphere/mode/manager/ContextManagerTest.java
+@@ -121,14 +121,14 @@ class ContextManagerTest {
+     @Test
+     void assertAddDatabase() {
+         contextManager.addDatabase("new_db");
+-        verify(metaDataContexts.getMetaData()).addDatabase(eq("new_db"), any(DatabaseType.class), new ConfigurationProperties(new Properties()));
++        verify(metaDataContexts.getMetaData()).addDatabase(eq("new_db"), any(DatabaseType.class), any(ConfigurationProperties.class));
+     }
+     
+     @Test
+     void assertAddExistedDatabase() {
+         when(metaDataContexts.getMetaData().containsDatabase("foo_db")).thenReturn(true);
+         contextManager.addDatabase("foo_db");
+-        verify(metaDataContexts.getMetaData(), times(0)).addDatabase(eq("foo_db"), any(DatabaseType.class), new ConfigurationProperties(new Properties()));
++        verify(metaDataContexts.getMetaData(), times(0)).addDatabase(eq("foo_db"), any(DatabaseType.class), any(ConfigurationProperties.class));
+     }
+     
+     @Test
+diff --git a/proxy/backend/core/src/test/java/org/apache/shardingsphere/proxy/backend/handler/distsql/ral/queryable/ShowDistVariablesExecutorTest.java b/proxy/backend/core/src/test/java/org/apache/shardingsphere/proxy/backend/handler/distsql/ral/queryable/ShowDistVariablesExecutorTest.java
+index c7e4fa5a746..6aa65eec812 100644
+--- a/proxy/backend/core/src/test/java/org/apache/shardingsphere/proxy/backend/handler/distsql/ral/queryable/ShowDistVariablesExecutorTest.java
++++ b/proxy/backend/core/src/test/java/org/apache/shardingsphere/proxy/backend/handler/distsql/ral/queryable/ShowDistVariablesExecutorTest.java
+@@ -63,7 +63,7 @@ class ShowDistVariablesExecutorTest {
+         when(metaData.getGlobalRuleMetaData()).thenReturn(new ShardingSphereRuleMetaData(Collections.singleton(new LoggingRule(new DefaultLoggingRuleConfigurationBuilder().build()))));
+         ShowDistVariablesExecutor executor = new ShowDistVariablesExecutor();
+         Collection<LocalDataQueryResultRow> actual = executor.getRows(metaData, connectionSession, mock(ShowDistVariablesStatement.class));
+-        assertThat(actual.size(), is(20));
++        assertThat(actual.size(), is(21));
+         LocalDataQueryResultRow row = actual.iterator().next();
+         assertThat(row.getCell(1), is("agent_plugins_enabled"));
+         assertThat(row.getCell(2), is("true"));

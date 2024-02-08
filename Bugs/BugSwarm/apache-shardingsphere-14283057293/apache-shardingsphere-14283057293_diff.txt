@@ -1,0 +1,209 @@
+diff --git a/infra/context/pom.xml b/infra/context/pom.xml
+index 59af72c3ad4..8821f28bd68 100644
+--- a/infra/context/pom.xml
++++ b/infra/context/pom.xml
+@@ -55,7 +55,7 @@
+         </dependency>
+         <dependency>
+             <groupId>org.apache.shardingsphere</groupId>
+-            <artifactId>shardingsphere-single-core</artifactId>
++            <artifactId>shardingsphere-single-api</artifactId>
+             <version>${project.version}</version>
+         </dependency>
+         <dependency>
+diff --git a/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/CreateTableStatementSchemaRefresher.java b/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/CreateTableStatementSchemaRefresher.java
+index 419ecd9380f..65adc62c0be 100644
+--- a/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/CreateTableStatementSchemaRefresher.java
++++ b/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/CreateTableStatementSchemaRefresher.java
+@@ -61,7 +61,7 @@ public final class CreateTableStatementSchemaRefresher implements MetaDataRefres
+             AlterSchemaMetaDataPOJO alterSchemaMetaDataPOJO = new AlterSchemaMetaDataPOJO(database.getName(), schemaName, logicDataSourceNames);
+             alterSchemaMetaDataPOJO.getAlteredTables().add(actualTableMetaData.get());
+             modeContextManager.alterSchemaMetaData(alterSchemaMetaDataPOJO);
+-            if (isSingleTable && TableRefreshUtils.isRuleRefreshRequired(database.getName(), database.getProtocolType(), ruleMetaData, schemaName, tableName)) {
++            if (isSingleTable && TableRefreshUtils.isRuleRefreshRequired(ruleMetaData, schemaName, tableName)) {
+                 modeContextManager.alterRuleConfiguration(database.getName(), ruleMetaData.getConfigurations());
+             }
+         }
+diff --git a/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/DropTableStatementSchemaRefresher.java b/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/DropTableStatementSchemaRefresher.java
+index 75ab409476b..38dd649b3d6 100644
+--- a/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/DropTableStatementSchemaRefresher.java
++++ b/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/type/table/DropTableStatementSchemaRefresher.java
+@@ -45,7 +45,7 @@ public final class DropTableStatementSchemaRefresher implements MetaDataRefreshe
+         for (SimpleTableSegment each : sqlStatement.getTables()) {
+             String tableName = each.getTableName().getIdentifier().getValue();
+             if (isSingleTable(tableName, ruleMetaData)
+-                    && TableRefreshUtils.isRuleRefreshRequired(database.getName(), database.getProtocolType(), ruleMetaData, schemaName, tableName)) {
++                    && TableRefreshUtils.isRuleRefreshRequired(ruleMetaData, schemaName, tableName)) {
+                 modeContextManager.alterRuleConfiguration(database.getName(), ruleMetaData.getConfigurations());
+                 break;
+             }
+diff --git a/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/util/TableRefreshUtils.java b/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/util/TableRefreshUtils.java
+index d86bcccfc3f..97613db9404 100644
+--- a/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/util/TableRefreshUtils.java
++++ b/infra/context/src/main/java/org/apache/shardingsphere/infra/connection/refresher/util/TableRefreshUtils.java
+@@ -17,14 +17,15 @@
+ 
+ package org.apache.shardingsphere.infra.connection.refresher.util;
+ 
++import com.google.common.base.Joiner;
+ import lombok.AccessLevel;
+ import lombok.NoArgsConstructor;
+-import org.apache.shardingsphere.infra.database.type.DatabaseType;
++import org.apache.shardingsphere.infra.config.rule.RuleConfiguration;
+ import org.apache.shardingsphere.infra.datanode.DataNode;
+ import org.apache.shardingsphere.infra.metadata.database.rule.ShardingSphereRuleMetaData;
+-import org.apache.shardingsphere.single.constant.SingleTableConstants;
+-import org.apache.shardingsphere.single.rule.SingleRule;
+-import org.apache.shardingsphere.single.util.SingleTableLoadUtils;
++import org.apache.shardingsphere.infra.rule.identifier.type.MutableDataNodeRule;
++import org.apache.shardingsphere.single.api.config.SingleRuleConfiguration;
++import org.apache.shardingsphere.single.api.constant.SingleTableConstants;
+ 
+ import java.util.Collection;
+ import java.util.Optional;
+@@ -38,35 +39,37 @@ public final class TableRefreshUtils {
+     /**
+      * Get aggregated data source map.
+      * 
+-     * @param databaseName database name
+-     * @param databaseType database type
+      * @param ruleMetaData rule meta data
+      * @param schemaName schema name
+      * @param tableName table name
+      * @return aggregated data source map
+      */
+-    public static boolean isRuleRefreshRequired(final String databaseName, final DatabaseType databaseType, final ShardingSphereRuleMetaData ruleMetaData,
+-                                                final String schemaName, final String tableName) {
+-        Optional<SingleRule> singleRule = ruleMetaData.findSingleRule(SingleRule.class);
++    public static boolean isRuleRefreshRequired(final ShardingSphereRuleMetaData ruleMetaData, final String schemaName, final String tableName) {
++        Optional<MutableDataNodeRule> singleRule = ruleMetaData.findSingleRule(MutableDataNodeRule.class);
+         if (!singleRule.isPresent()) {
+             return false;
+         }
+-        Optional<DataNode> dataNode = singleRule.get().findTableDataNode(schemaName, tableName);
+-        if (!dataNode.isPresent()) {
++        RuleConfiguration ruleConfiguration = singleRule.get().getConfiguration();
++        if (!(ruleConfiguration instanceof SingleRuleConfiguration)) {
+             return false;
+         }
+-        DataNode actualNode = dataNode.get();
+-        Collection<String> tablesConfig = SingleTableLoadUtils.splitTableLines(singleRule.get().getConfiguration().getTables());
++        Collection<String> tablesConfig = ((SingleRuleConfiguration) ruleConfiguration).getTables();
+         if (tablesConfig.contains(SingleTableConstants.ALL_TABLES) || tablesConfig.contains(SingleTableConstants.ALL_SCHEMA_TABLES)) {
+             return false;
+         }
+-        Collection<DataNode> dataNods = SingleTableLoadUtils.convertToDataNodes(databaseName, databaseType, tablesConfig);
+-        for (DataNode each : dataNods) {
+-            if (each.equals(actualNode) || SingleTableConstants.ASTERISK.equals(each.getSchemaName())
+-                    || each.getDataSourceName().equals(actualNode.getDataSourceName()) && SingleTableConstants.ASTERISK.equals(each.getTableName())) {
+-                return false;
+-            }
++        Optional<DataNode> dataNode = singleRule.get().findTableDataNode(schemaName, tableName);
++        if (!dataNode.isPresent()) {
++            return false;
+         }
+-        return true;
++        DataNode actualNode = dataNode.get();
++        return !tablesConfig.contains(joinDataNodeSegments(actualNode.getDataSourceName(), actualNode.getSchemaName(), actualNode.getTableName()))
++                && !tablesConfig.contains(joinDataNodeSegments(actualNode.getDataSourceName(), SingleTableConstants.ASTERISK))
++                && !tablesConfig.contains(joinDataNodeSegments(actualNode.getDataSourceName(), actualNode.getTableName()))
++                && !tablesConfig.contains(joinDataNodeSegments(actualNode.getDataSourceName(), SingleTableConstants.ASTERISK, SingleTableConstants.ASTERISK))
++                && !tablesConfig.contains(joinDataNodeSegments(actualNode.getDataSourceName(), actualNode.getSchemaName(), SingleTableConstants.ASTERISK));
++    }
++    
++    private static String joinDataNodeSegments(final String... segments) {
++        return Joiner.on(".").join(segments);
+     }
+ }
+diff --git a/kernel/single/api/src/main/java/org/apache/shardingsphere/single/api/constant/SingleTableConstants.java b/kernel/single/api/src/main/java/org/apache/shardingsphere/single/api/constant/SingleTableConstants.java
+new file mode 100644
+index 00000000000..7fd11af7cad
+--- /dev/null
++++ b/kernel/single/api/src/main/java/org/apache/shardingsphere/single/api/constant/SingleTableConstants.java
+@@ -0,0 +1,34 @@
++/*
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.
++ * The ASF licenses this file to You under the Apache License, Version 2.0
++ * (the "License"); you may not use this file except in compliance with
++ * the License.  You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package org.apache.shardingsphere.single.api.constant;
++
++import lombok.AccessLevel;
++import lombok.NoArgsConstructor;
++
++/**
++ * Single table constants.
++ */
++@NoArgsConstructor(access = AccessLevel.PRIVATE)
++public final class SingleTableConstants {
++    
++    public static final String ASTERISK = "*";
++    
++    public static final String ALL_TABLES = "*.*";
++    
++    public static final String ALL_SCHEMA_TABLES = "*.*.*";
++}
+diff --git a/kernel/single/core/src/main/java/org/apache/shardingsphere/single/datanode/SingleTableDataNodeLoader.java b/kernel/single/core/src/main/java/org/apache/shardingsphere/single/datanode/SingleTableDataNodeLoader.java
+index 8d913cafe97..43d5c3c5a1e 100644
+--- a/kernel/single/core/src/main/java/org/apache/shardingsphere/single/datanode/SingleTableDataNodeLoader.java
++++ b/kernel/single/core/src/main/java/org/apache/shardingsphere/single/datanode/SingleTableDataNodeLoader.java
+@@ -23,7 +23,7 @@ import org.apache.shardingsphere.infra.database.type.DatabaseType;
+ import org.apache.shardingsphere.infra.datanode.DataNode;
+ import org.apache.shardingsphere.infra.metadata.database.schema.loader.common.SchemaMetaDataLoader;
+ import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
+-import org.apache.shardingsphere.single.constant.SingleTableConstants;
++import org.apache.shardingsphere.single.api.constant.SingleTableConstants;
+ import org.apache.shardingsphere.single.exception.SingleTablesLoadingException;
+ import org.apache.shardingsphere.single.util.SingleTableLoadUtils;
+ 
+diff --git a/kernel/single/core/src/main/java/org/apache/shardingsphere/single/util/SingleTableLoadUtils.java b/kernel/single/core/src/main/java/org/apache/shardingsphere/single/util/SingleTableLoadUtils.java
+index 560baa32cbc..a92eae45c5e 100644
+--- a/kernel/single/core/src/main/java/org/apache/shardingsphere/single/util/SingleTableLoadUtils.java
++++ b/kernel/single/core/src/main/java/org/apache/shardingsphere/single/util/SingleTableLoadUtils.java
+@@ -26,7 +26,7 @@ import org.apache.shardingsphere.infra.datanode.DataNode;
+ import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
+ import org.apache.shardingsphere.infra.rule.identifier.type.DataSourceContainedRule;
+ import org.apache.shardingsphere.infra.rule.identifier.type.TableContainedRule;
+-import org.apache.shardingsphere.single.constant.SingleTableConstants;
++import org.apache.shardingsphere.single.api.constant.SingleTableConstants;
+ 
+ import javax.sql.DataSource;
+ import java.util.Collection;
+diff --git a/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/LoadSingleTableStatementUpdater.java b/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/LoadSingleTableStatementUpdater.java
+index c9605609153..3c9a1f83ab7 100644
+--- a/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/LoadSingleTableStatementUpdater.java
++++ b/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/LoadSingleTableStatementUpdater.java
+@@ -29,7 +29,7 @@ import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSp
+ import org.apache.shardingsphere.infra.rule.identifier.type.DataSourceContainedRule;
+ import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
+ import org.apache.shardingsphere.single.api.config.SingleRuleConfiguration;
+-import org.apache.shardingsphere.single.constant.SingleTableConstants;
++import org.apache.shardingsphere.single.api.constant.SingleTableConstants;
+ import org.apache.shardingsphere.single.datanode.SingleTableDataNodeLoader;
+ import org.apache.shardingsphere.single.distsql.handler.exception.MissingRequiredSingleTableException;
+ import org.apache.shardingsphere.single.distsql.segment.SingleTableSegment;
+diff --git a/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/UnloadSingleTableStatementUpdater.java b/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/UnloadSingleTableStatementUpdater.java
+index 7eac0a535c7..e3628661c1e 100644
+--- a/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/UnloadSingleTableStatementUpdater.java
++++ b/kernel/single/distsql/handler/src/main/java/org/apache/shardingsphere/single/distsql/handler/update/UnloadSingleTableStatementUpdater.java
+@@ -28,7 +28,7 @@ import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
+ import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSphereTable;
+ import org.apache.shardingsphere.infra.util.exception.ShardingSpherePreconditions;
+ import org.apache.shardingsphere.single.api.config.SingleRuleConfiguration;
+-import org.apache.shardingsphere.single.constant.SingleTableConstants;
++import org.apache.shardingsphere.single.api.constant.SingleTableConstants;
+ import org.apache.shardingsphere.single.distsql.statement.rdl.UnloadSingleTableStatement;
+ import org.apache.shardingsphere.single.exception.SingleTableNotFoundException;
+ import org.apache.shardingsphere.single.rule.SingleRule;

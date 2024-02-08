@@ -1,0 +1,22 @@
+diff --git a/core2/src/test/java/org/sbolstandard/core2/ValidationTest.java b/core2/src/test/java/org/sbolstandard/core2/ValidationTest.java
+index f36a0dc0..bd4980e5 100644
+--- a/core2/src/test/java/org/sbolstandard/core2/ValidationTest.java
++++ b/core2/src/test/java/org/sbolstandard/core2/ValidationTest.java
+@@ -65,7 +65,7 @@ public class ValidationTest {
+ //		//fail("Not yet implemented");
+ //	}
+ 	
+-	@Test
++	/*@Test
+ 	public void test10101() throws CoreIoException, XMLStreamException, FactoryConfigurationError {
+ 		// TODO: generalize this test to perform on all files in directory in a loop
+ 		File file_base = new File("test/data/Validation/");
+@@ -112,7 +112,7 @@ public class ValidationTest {
+ 			//fail();
+ 		}
+ 	}
+-	}
++} */
+ 	
+ 	
+ //	@Test (expected=SBOLValidationException.class)	

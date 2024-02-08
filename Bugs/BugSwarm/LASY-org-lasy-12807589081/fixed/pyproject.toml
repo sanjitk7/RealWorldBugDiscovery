@@ -1,0 +1,5 @@
+[tool.pydocstyle]
+convention = "numpy"
+ignore = ["D100"]
+#inherit = false
+#match = .*\.py

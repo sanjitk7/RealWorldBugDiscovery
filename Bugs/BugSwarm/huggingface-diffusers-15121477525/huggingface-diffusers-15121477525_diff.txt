@@ -1,0 +1,56 @@
+diff --git a/src/diffusers/utils/dummy_pt_objects.py b/src/diffusers/utils/dummy_pt_objects.py
+index b955ec532..a0e3bee76 100644
+--- a/src/diffusers/utils/dummy_pt_objects.py
++++ b/src/diffusers/utils/dummy_pt_objects.py
+@@ -240,6 +240,51 @@ class AudioPipelineOutput(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
++class AutoPipelineForImage2Image(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
++class AutoPipelineForInpainting(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
++class AutoPipelineForText2Image(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
+ class ConsistencyModelPipeline(metaclass=DummyObject):
+     _backends = ["torch"]
+ 

@@ -1,0 +1,13 @@
+diff --git a/src/main/java/org/springframework/data/projection/PropertyAccessingMethodInterceptor.java b/src/main/java/org/springframework/data/projection/PropertyAccessingMethodInterceptor.java
+index 97fa1ae1d..de2c0d0c5 100644
+--- a/src/main/java/org/springframework/data/projection/PropertyAccessingMethodInterceptor.java
++++ b/src/main/java/org/springframework/data/projection/PropertyAccessingMethodInterceptor.java
+@@ -80,7 +80,7 @@ class PropertyAccessingMethodInterceptor implements MethodInterceptor {
+ 	}
+ 
+ 	private boolean isSetterMethod(Method method, PropertyDescriptor descriptor) {
+-		return descriptor.getWriteMethod().equals(method);
++		return method.equals(descriptor.getWriteMethod());
+ 	}
+ 
+ }

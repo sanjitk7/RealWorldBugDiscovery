@@ -1,0 +1,76 @@
+diff --git a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-false.xml b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-false.xml
+index a6cf3735f..b2779461d 100644
+--- a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-false.xml
++++ b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-false.xml
+@@ -54,11 +54,11 @@
+     <bean type="com.opensymphony.xwork2.conversion.ConversionAnnotationProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionAnnotationProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ConversionFileProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionFileProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ObjectTypeDeterminer" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultObjectTypeDeterminer"/>
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterCreator" />
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterHolder" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterCreator" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterHolder" />
+     <bean type="com.opensymphony.xwork2.conversion.impl.XWorkConverter" name="default" class="com.opensymphony.xwork2.conversion.impl.XWorkConverter" />
+     <bean type="com.opensymphony.xwork2.factory.ActionFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultActionFactory" />
+-    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultConverterFactory" />
++    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.StrutsConverterFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ResultFactory" name="default" class="org.apache.struts2.factory.StrutsResultFactory" />
+     <bean type="com.opensymphony.xwork2.factory.UnknownHandlerFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultUnknownHandlerFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ValidatorFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultValidatorFactory" />
+diff --git a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-true.xml b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-true.xml
+index c694b8937..c04dc9eb9 100644
+--- a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-true.xml
++++ b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-devmode-true.xml
+@@ -54,11 +54,11 @@
+     <bean type="com.opensymphony.xwork2.conversion.ConversionAnnotationProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionAnnotationProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ConversionFileProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionFileProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ObjectTypeDeterminer" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultObjectTypeDeterminer"/>
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterCreator" />
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterHolder" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterCreator" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterHolder" />
+     <bean type="com.opensymphony.xwork2.conversion.impl.XWorkConverter" name="default" class="com.opensymphony.xwork2.conversion.impl.XWorkConverter" />
+     <bean type="com.opensymphony.xwork2.factory.ActionFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultActionFactory" />
+-    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultConverterFactory" />
++    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.StrutsConverterFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ResultFactory" name="default" class="org.apache.struts2.factory.StrutsResultFactory" />
+     <bean type="com.opensymphony.xwork2.factory.UnknownHandlerFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultUnknownHandlerFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ValidatorFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultValidatorFactory" />
+diff --git a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-true.xml b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-true.xml
+index ce5f01633..816d65407 100644
+--- a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-true.xml
++++ b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-allowstatic-true.xml
+@@ -54,11 +54,11 @@
+     <bean type="com.opensymphony.xwork2.conversion.ConversionAnnotationProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionAnnotationProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ConversionFileProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionFileProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ObjectTypeDeterminer" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultObjectTypeDeterminer"/>
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterCreator" />
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterHolder" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterCreator" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterHolder" />
+     <bean type="com.opensymphony.xwork2.conversion.impl.XWorkConverter" name="default" class="com.opensymphony.xwork2.conversion.impl.XWorkConverter" />
+     <bean type="com.opensymphony.xwork2.factory.ActionFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultActionFactory" />
+-    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultConverterFactory" />
++    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.StrutsConverterFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ResultFactory" name="default" class="org.apache.struts2.factory.StrutsResultFactory" />
+     <bean type="com.opensymphony.xwork2.factory.UnknownHandlerFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultUnknownHandlerFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ValidatorFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultValidatorFactory" />
+diff --git a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-devmode-true.xml b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-devmode-true.xml
+index dd6a41c4d..0a2f09d1d 100644
+--- a/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-devmode-true.xml
++++ b/core/src/test/resources/com/opensymphony/xwork2/config/providers/xwork-test-devmode-true.xml
+@@ -54,11 +54,11 @@
+     <bean type="com.opensymphony.xwork2.conversion.ConversionAnnotationProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionAnnotationProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ConversionFileProcessor" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultConversionFileProcessor" />
+     <bean type="com.opensymphony.xwork2.conversion.ObjectTypeDeterminer" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultObjectTypeDeterminer"/>
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterCreator" />
+-    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="com.opensymphony.xwork2.conversion.impl.DefaultTypeConverterHolder" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterCreator" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterCreator" />
++    <bean type="com.opensymphony.xwork2.conversion.TypeConverterHolder" name="default" class="org.apache.struts2.conversion.StrutsTypeConverterHolder" />
+     <bean type="com.opensymphony.xwork2.conversion.impl.XWorkConverter" name="default" class="com.opensymphony.xwork2.conversion.impl.XWorkConverter" />
+     <bean type="com.opensymphony.xwork2.factory.ActionFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultActionFactory" />
+-    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultConverterFactory" />
++    <bean type="com.opensymphony.xwork2.factory.ConverterFactory" name="default" class="com.opensymphony.xwork2.factory.StrutsConverterFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ResultFactory" name="default" class="org.apache.struts2.factory.StrutsResultFactory" />
+     <bean type="com.opensymphony.xwork2.factory.UnknownHandlerFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultUnknownHandlerFactory" />
+     <bean type="com.opensymphony.xwork2.factory.ValidatorFactory" name="default" class="com.opensymphony.xwork2.factory.DefaultValidatorFactory" />

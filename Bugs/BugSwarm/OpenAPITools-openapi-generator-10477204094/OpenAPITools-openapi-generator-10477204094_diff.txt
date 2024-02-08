@@ -1,0 +1,16 @@
+diff --git a/modules/openapi-generator/src/test/java/org/openapitools/codegen/java/JavaClientDeepObjectTest.java b/modules/openapi-generator/src/test/java/org/openapitools/codegen/java/JavaClientDeepObjectTest.java
+index 430bd231ec3..2c6197e8dcc 100644
+--- a/modules/openapi-generator/src/test/java/org/openapitools/codegen/java/JavaClientDeepObjectTest.java
++++ b/modules/openapi-generator/src/test/java/org/openapitools/codegen/java/JavaClientDeepObjectTest.java
+@@ -58,9 +58,7 @@ public class JavaClientDeepObjectTest {
+         generator.opts(input).generate();
+ 
+         assertFileContains(Paths.get(outputPath + "/src/main/java/org/openapitools/client/api/DefaultApi.java"),
+-                "options[id]", "options[name]", "options[status]",
+-                "\"csv\", \"options[tags]\"",
+-                "\"csv\", \"options[photoUrls]\"",
+-                "inputOptions[a]", "inputOptions[b]", "\"csv\", \"inputOptions[c]\"");
++                "options.toUrlQueryString(\"options\")",
++                "inputOptions.toUrlQueryString(\"inputOptions\"))");
+     }
+ }

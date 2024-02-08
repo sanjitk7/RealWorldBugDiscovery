@@ -1,0 +1,201 @@
+diff --git a/libs/sql-parser/src/main/java/io/crate/sql/tree/ExpressionRewriter.java b/libs/sql-parser/src/main/java/io/crate/sql/tree/ExpressionRewriter.java
+new file mode 100644
+index 0000000000..2af0ce03ca
+--- /dev/null
++++ b/libs/sql-parser/src/main/java/io/crate/sql/tree/ExpressionRewriter.java
+@@ -0,0 +1,70 @@
++/*
++ * Licensed to Crate.io GmbH ("Crate") under one or more contributor
++ * license agreements.  See the NOTICE file distributed with this work for
++ * additional information regarding copyright ownership.  Crate licenses
++ * this file to you under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.  You may
++ * obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
++ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
++ * License for the specific language governing permissions and limitations
++ * under the License.
++ *
++ * However, if you have executed another commercial license agreement
++ * with Crate these terms will supersede the license and you may use the
++ * software solely pursuant to the terms of the relevant commercial agreement.
++ */
++
++package io.crate.sql.tree;
++
++import java.util.Map;
++
++/**
++ * This class can be extended to rewrite AST. Override the visit method for the target expression that needs to be
++ * re-written with a map entry having the key as the expression used to identify the expression to be re-written and the
++ * value as the expression to rewrite with. See {@link RenameColumnTask.ColumnRenameVisitor} as an example.
++ */
++
++public abstract class ExpressionRewriter extends DefaultTraversalVisitor<Expression, Map.Entry<Expression, Expression>> {
++
++    protected abstract ExpressionRewriter getInstance();
++
++    @Override
++    protected Expression visitComparisonExpression(ComparisonExpression node, Map.Entry<Expression, Expression> context) {
++        return new ComparisonExpression(
++            node.getType(),
++            node.getLeft().accept(getInstance(), context),
++            node.getRight().accept(getInstance(), context));
++    }
++
++    @Override
++    protected Expression visitFunctionCall(FunctionCall node, Map.Entry<Expression, Expression> context) {
++        return new FunctionCall(
++            node.getName(),
++            node.getArguments().stream().map(arg -> arg.accept(getInstance(), context)).toList());
++    }
++
++    @Override
++    protected Expression visitArithmeticExpression(ArithmeticExpression node, Map.Entry<Expression, Expression> context) {
++        return new ArithmeticExpression(
++            node.getType(),
++            node.getLeft().accept(getInstance(), context),
++            node.getRight().accept(getInstance(), context));
++    }
++
++    @Override
++    protected Expression visitQualifiedNameReference(QualifiedNameReference node, Map.Entry<Expression, Expression> context) {
++        return node;
++    }
++
++    @Override
++    protected Expression visitSubscriptExpression(SubscriptExpression node, Map.Entry<Expression, Expression> context) {
++        return new SubscriptExpression(
++            node.base().accept(getInstance(), context),
++            node.index().accept(getInstance(), context));
++    }
++}
+diff --git a/server/src/main/java/io/crate/execution/ddl/tables/RenameColumnTask.java b/server/src/main/java/io/crate/execution/ddl/tables/RenameColumnTask.java
+index 32386ee991..ae842f919c 100644
+--- a/server/src/main/java/io/crate/execution/ddl/tables/RenameColumnTask.java
++++ b/server/src/main/java/io/crate/execution/ddl/tables/RenameColumnTask.java
+@@ -51,20 +51,17 @@ import io.crate.analyze.expressions.ExpressionAnalyzer;
+ import io.crate.common.CheckedFunction;
+ import io.crate.expression.symbol.Symbol;
+ import io.crate.expression.symbol.format.Style;
++import io.crate.metadata.ColumnIdent;
+ import io.crate.metadata.CoordinatorTxnCtx;
+ import io.crate.metadata.NodeContext;
+ import io.crate.metadata.PartitionName;
+ import io.crate.metadata.cluster.DDLClusterStateTaskExecutor;
+ import io.crate.metadata.doc.DocTableInfo;
+ import io.crate.metadata.doc.DocTableInfoFactory;
+-import io.crate.metadata.ColumnIdent;
+ import io.crate.sql.ExpressionFormatter;
+ import io.crate.sql.parser.SqlParser;
+-import io.crate.sql.tree.ArithmeticExpression;
+-import io.crate.sql.tree.ComparisonExpression;
+-import io.crate.sql.tree.DefaultTraversalVisitor;
+ import io.crate.sql.tree.Expression;
+-import io.crate.sql.tree.FunctionCall;
++import io.crate.sql.tree.ExpressionRewriter;
+ import io.crate.sql.tree.QualifiedNameReference;
+ import io.crate.sql.tree.SubscriptExpression;
+ 
+@@ -195,9 +192,9 @@ public class RenameColumnTask extends DDLClusterStateTaskExecutor<RenameColumnRe
+                 renamedPartitionedByCols.add(List.of(newName.fqn(), partitionedBy.get(1)));
+             } else {
+                 boolean parentRenamed = false;
+-                for(ColumnIdent currPartitionedByParentCol = currPartitionByCol.getParent();
+-                    currPartitionedByParentCol != null;
+-                    currPartitionedByParentCol = currPartitionedByParentCol.getParent()) {
++                for (ColumnIdent currPartitionedByParentCol = currPartitionByCol.getParent();
++                     currPartitionedByParentCol != null;
++                     currPartitionedByParentCol = currPartitionedByParentCol.getParent()) {
+                     if (colToRename.equals(currPartitionedByParentCol)) {
+                         renamedPartitionedByCols.add(
+                             List.of(
+@@ -232,9 +229,9 @@ public class RenameColumnTask extends DDLClusterStateTaskExecutor<RenameColumnRe
+                 renamed.add(newName.fqn());
+             } else {
+                 boolean parentRenamed = false;
+-                for(ColumnIdent currPkParentCol = pKCol.getParent();
+-                    currPkParentCol != null;
+-                    currPkParentCol = currPkParentCol.getParent()) {
++                for (ColumnIdent currPkParentCol = pKCol.getParent();
++                     currPkParentCol != null;
++                     currPkParentCol = currPkParentCol.getParent()) {
+                     if (colToRename.equals(currPkParentCol)) {
+                         renamed.add(pKCol.fqn().replaceFirst(colToRename.fqn(), newName.fqn()));
+                         parentRenamed = true;
+@@ -259,7 +256,7 @@ public class RenameColumnTask extends DDLClusterStateTaskExecutor<RenameColumnRe
+         var renamedChecks = new LinkedHashMap<String, String>();
+         for (var e : checks.entrySet()) {
+             var checkExpr = SqlParser.createExpression(e.getValue());
+-            var renamedCheckExpr = new ColumnRenameVisitor().rename(checkExpr, oldNameToNewName);
++            var renamedCheckExpr = checkExpr.accept(ColumnRenameVisitor.INSTANCE, oldNameToNewName);
+             renamedChecks.put(
+                 e.getKey(),
+                 // This is how check constraints in string format are obtained,
+@@ -280,7 +277,7 @@ public class RenameColumnTask extends DDLClusterStateTaskExecutor<RenameColumnRe
+         var renamedGeneratedColumns = new LinkedHashMap<String, String>();
+         for (var e : generatedColumns.entrySet()) {
+             var genExpr = SqlParser.createExpression(e.getValue());
+-            var renamedGenExpr = new ColumnRenameVisitor().rename(genExpr, oldNameToNewName);
++            var renamedGenExpr = genExpr.accept(ColumnRenameVisitor.INSTANCE, oldNameToNewName);
+             renamedGeneratedColumns.put(
+                 e.getKey(),
+                 // This is how the generated expressions in string format are obtained,
+@@ -291,37 +288,13 @@ public class RenameColumnTask extends DDLClusterStateTaskExecutor<RenameColumnRe
+     }
+ 
+     /* Renames any columns within the expression. */
+-    private static class ColumnRenameVisitor extends DefaultTraversalVisitor<Expression, Map.Entry<Expression, Expression>> {
+-
+-        private static final ColumnRenameVisitor INSTANCE = new ColumnRenameVisitor();
+-
+-        private Expression rename(Expression sourceExpr, Map.Entry<Expression, Expression> oldNameToNewName) {
+-            return sourceExpr.accept(INSTANCE, oldNameToNewName);
+-        }
++    private static class ColumnRenameVisitor extends ExpressionRewriter {
+ 
+-        @Override
+-        protected Expression visitFunctionCall(FunctionCall node, Map.Entry<Expression, Expression> context) {
+-            return new FunctionCall(
+-                node.getName(),
+-                node.getArguments().stream().map(arg -> rename(arg, context)).toList()
+-            );
+-        }
+-
+-        @Override
+-        protected Expression visitArithmeticExpression(ArithmeticExpression node, Map.Entry<Expression, Expression> context) {
+-            return new ArithmeticExpression(
+-                node.getType(),
+-                rename(node.getLeft(), context),
+-                rename(node.getRight(), context)
+-            );
+-        }
++        public static final ColumnRenameVisitor INSTANCE = new ColumnRenameVisitor();
+ 
+         @Override
+-        protected Expression visitComparisonExpression(ComparisonExpression node, Map.Entry<Expression, Expression> context) {
+-            return new ComparisonExpression(
+-                node.getType(),
+-                rename(node.getLeft(), context),
+-                rename(node.getRight(), context));
++        protected ExpressionRewriter getInstance() {
++            return INSTANCE;
+         }
+ 
+         @Override
+@@ -339,9 +312,8 @@ public class RenameColumnTask extends DDLClusterStateTaskExecutor<RenameColumnRe
+             }
+             if (context.getKey().equals(node.base())) {
+                 return new SubscriptExpression(
+-                    rename(node.base(), context),
+-                    node.index()
+-                );
++                    node.base().accept(INSTANCE, context),
++                    node.index());
+             }
+             return node;
+         }

@@ -1,0 +1,35 @@
+diff --git a/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/config/xml/ClientDetailsServiceBeanDefinitionParserTests.java b/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/config/xml/ClientDetailsServiceBeanDefinitionParserTests.java
+index 8e44fb9a..6809c079 100644
+--- a/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/config/xml/ClientDetailsServiceBeanDefinitionParserTests.java
++++ b/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/config/xml/ClientDetailsServiceBeanDefinitionParserTests.java
+@@ -43,7 +43,7 @@ public class ClientDetailsServiceBeanDefinitionParserTests {
+ 		assertTrue(scopes.contains("scope1"));
+ 		assertTrue(scopes.contains("scope2"));
+ 
+-		Collection<GrantedAuthority> authorities = clientDetails.getAuthorities();
++		Collection<? extends GrantedAuthority> authorities = clientDetails.getAuthorities();
+ 		assertNotNull(authorities);
+ 		assertEquals(2, authorities.size());
+ 		assertTrue(AuthorityUtils.authorityListToSet(authorities).contains("ROLE_USER"));
+@@ -71,7 +71,7 @@ public class ClientDetailsServiceBeanDefinitionParserTests {
+ 		assertTrue(scopes.contains("scope1"));
+ 		assertTrue(scopes.contains("scope2"));
+ 
+-		Collection<GrantedAuthority> authorities = clientDetails.getAuthorities();
++		Collection<? extends GrantedAuthority> authorities = clientDetails.getAuthorities();
+ 		assertNotNull(authorities);
+ 		assertEquals(2, authorities.size());
+ 		assertTrue(AuthorityUtils.authorityListToSet(authorities).contains("ROLE_USER"));
+diff --git a/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/provider/client/JdbcClientDetailsServiceTests.java b/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/provider/client/JdbcClientDetailsServiceTests.java
+index 762aefe0..be1ada3f 100644
+--- a/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/provider/client/JdbcClientDetailsServiceTests.java
++++ b/spring-security-oauth2/src/test/java/org/springframework/security/oauth2/provider/client/JdbcClientDetailsServiceTests.java
+@@ -194,7 +194,7 @@ public class JdbcClientDetailsServiceTests {
+ 		assertEquals("myRedirectUri1", redirectUris.next());
+ 		assertEquals("myRedirectUri2", redirectUris.next());
+ 		assertEquals(2, clientDetails.getAuthorities().size());
+-		Iterator<GrantedAuthority> authorities = clientDetails.getAuthorities()
++		Iterator<? extends GrantedAuthority> authorities = clientDetails.getAuthorities()
+ 				.iterator();
+ 		assertEquals("myAuthority1", authorities.next().getAuthority());
+ 		assertEquals("myAuthority2", authorities.next().getAuthority());

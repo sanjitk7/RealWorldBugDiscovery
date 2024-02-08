@@ -1,0 +1,402 @@
+diff --git a/README.md b/README.md
+index 9aaf474..ef5ab26 100644
+--- a/README.md
++++ b/README.md
+@@ -43,10 +43,13 @@ type only (e.g. `raw` => `runnable:win32:exe`)
+               || "openbsd",
+               || "solaris",
+     "extension": "*",        # Expected file extension
++    "mime": "*",        # Expected file mimetype
+     ... (other fields are derived from incoming task)
+ }
+ ```
+ 
++**Warning** the output `mime` field is not deterministic across libmagic versions and can change depending on the version you're using. We don't recommend creating consumers that listen on it directly.
++
+ ## Usage
+ 
+ First of all, make sure you have setup the core system: https://github.com/CERT-Polska/karton
+diff --git a/tests/test_classifier.py b/tests/test_classifier.py
+index ae10742..7e5abd9 100644
+--- a/tests/test_classifier.py
++++ b/tests/test_classifier.py
+@@ -1,4 +1,4 @@
+-from unittest.mock import MagicMock
++from unittest.mock import MagicMock, ANY
+ 
+ import pytest
+ from karton.core import Resource, Task
+@@ -22,7 +22,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "ascii",
+-                "mime": "text/plain",
++                "mime": ANY,
+             },
+             payload={
+                 "sample": resource,
+diff --git a/tests/test_classifier_archive.py b/tests/test_classifier_archive.py
+index 8a503eb..03e8971 100644
+--- a/tests/test_classifier_archive.py
++++ b/tests/test_classifier_archive.py
+@@ -1,4 +1,5 @@
+ import pytest
++from unittest.mock import ANY
+ from karton.core import Task
+ from karton.core.test import KartonTestCase
+ 
+@@ -19,7 +20,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-7z-compressed",
++                "mime": ANY,
+                 "extension": "7z",
+             },
+             payload={
+@@ -42,7 +43,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/octet-stream",
++                "mime": ANY,
+                 "extension": "ace",
+             },
+             payload={
+@@ -65,7 +66,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-bzip2",
++                "mime": ANY,
+                 "extension": "bz2",
+             },
+             payload={
+@@ -88,7 +89,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/vnd.ms-cab-compressed",
++                "mime": ANY,
+                 "extension": "cab",
+             },
+             payload={
+@@ -111,7 +112,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/vnd.ms-cab-compressed",
++                "mime": ANY,
+                 "extension": "cab",
+             },
+             payload={
+@@ -134,7 +135,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/gzip",
++                "mime": ANY,
+                 "extension": "gz",
+             },
+             payload={
+@@ -157,7 +158,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-iso9660-image",
++                "mime": ANY,
+                 "extension": "iso",
+             },
+             payload={
+@@ -180,7 +181,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-lzip",
++                "mime": ANY,
+                 "extension": "lz",
+             },
+             payload={"sample": resource, "tags": ["archive:lz"], "magic": magic},
+@@ -199,7 +200,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-rar",
++                "mime": ANY,
+                 "extension": "rar",
+             },
+             payload={
+@@ -222,7 +223,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-tar",
++                "mime": ANY,
+                 "extension": "tar",
+             },
+             payload={
+@@ -245,7 +246,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-iso9660-image",
++                "mime": ANY,
+                 "extension": "udf",
+             },
+             payload={
+@@ -268,7 +269,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/x-xz",
++                "mime": ANY,
+                 "extension": "xz",
+             },
+             payload={
+@@ -291,7 +292,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "archive",
+-                "mime": "application/zip",
++                "mime": ANY,
+                 "extension": "zip",
+             },
+             payload={
+diff --git a/tests/test_classifier_document.py b/tests/test_classifier_document.py
+index 33edb1d..5974856 100644
+--- a/tests/test_classifier_document.py
++++ b/tests/test_classifier_document.py
+@@ -1,4 +1,5 @@
+ import pytest
++from unittest.mock import ANY
+ from karton.core import Task
+ from karton.core.test import KartonTestCase
+ 
+@@ -19,7 +20,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "document",
+-                "mime": "application/msword",
++                "mime": ANY,
+                 "extension": "doc",
+                 "platform": "win32",
+             },
+@@ -43,7 +44,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "document",
+-                "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
++                "mime": ANY,
+                 "extension": "docx",
+                 "platform": "win32",
+             },
+@@ -67,7 +68,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "document",
+-                "mime": "application/pdf",
++                "mime": ANY,
+                 "extension": "pdf",
+                 "platform": "win32",
+             },
+@@ -91,7 +92,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "document",
+-                "mime": "text/rtf",
++                "mime": ANY,
+                 "extension": "rtf",
+                 "platform": "win32",
+             },
+@@ -115,7 +116,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "document",
+-                "mime": "application/vnd.ms-excel",
++                "mime": ANY,
+                 "extension": "xls",
+                 "platform": "win32",
+             },
+@@ -139,7 +140,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "document",
+-                "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
++                "mime": ANY,
+                 "extension": "xlsx",
+                 "platform": "win32",
+             },
+diff --git a/tests/test_classifier_misc.py b/tests/test_classifier_misc.py
+index 8566150..0fdcb02 100644
+--- a/tests/test_classifier_misc.py
++++ b/tests/test_classifier_misc.py
+@@ -1,4 +1,5 @@
+ import pytest
++from unittest.mock import ANY
+ from karton.core import Task
+ from karton.core.test import KartonTestCase
+ 
+@@ -19,7 +20,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "ascii",
+-                "mime": "text/plain",
++                "mime": ANY,
+             },
+             payload={
+                 "sample": resource,
+@@ -41,7 +42,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "html",
+-                "mime": "text/html",
++                "mime": ANY,
+             },
+             payload={
+                 "sample": resource,
+diff --git a/tests/test_classifier_runnable.py b/tests/test_classifier_runnable.py
+index 40c9dcf..7a9c1f8 100644
+--- a/tests/test_classifier_runnable.py
++++ b/tests/test_classifier_runnable.py
+@@ -1,4 +1,5 @@
+ import pytest
++from unittest.mock import ANY
+ from karton.core import Task
+ from karton.core.test import KartonTestCase
+ 
+@@ -19,7 +20,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/octet-stream",
++                "mime": ANY,
+                 "extension": "dex",
+                 "platform": "android",
+             },
+@@ -43,7 +44,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/x-executable",
++                "mime": ANY,
+                 "extension": "elf",
+                 "platform": "openbsd",
+             },
+@@ -67,7 +68,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/x-dosexec",
++                "mime": ANY,
+                 "extension": "dll",
+                 "platform": "win32",
+             },
+@@ -91,7 +92,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/x-dosexec",
++                "mime": ANY,
+                 "extension": "exe",
+                 "platform": "win32",
+             },
+@@ -115,7 +116,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/zip",
++                "mime": ANY,
+                 "extension": "jar",
+                 "platform": "win32",
+             },
+@@ -139,7 +140,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/octet-stream",
++                "mime": ANY,
+                 "extension": "lnk",
+                 "platform": "win32",
+             },
+@@ -163,7 +164,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/x-msi",
++                "mime": ANY,
+                 "extension": "msi",
+                 "platform": "win32",
+             },
+@@ -187,7 +188,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/x-shockwave-flash",
++                "mime": ANY,
+                 "extension": "swf",
+                 "platform": "win32",
+             },
+@@ -211,7 +212,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/x-dosexec",
++                "mime": ANY,
+                 "extension": "dll",
+                 "platform": "win64",
+             },
+@@ -235,7 +236,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "runnable",
+-                "mime": "application/x-dosexec",
++                "mime": ANY,
+                 "extension": "exe",
+                 "platform": "win64",
+             },
+diff --git a/tests/test_classifier_script.py b/tests/test_classifier_script.py
+index 4507b84..af388f3 100644
+--- a/tests/test_classifier_script.py
++++ b/tests/test_classifier_script.py
+@@ -1,4 +1,5 @@
+ import pytest
++from unittest.mock import ANY
+ from karton.core import Task
+ from karton.core.test import KartonTestCase
+ 
+@@ -19,7 +20,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "script",
+-                "mime": "text/plain",
++                "mime": ANY,
+                 "extension": "js",
+                 "platform": "win32",
+             },
+@@ -43,7 +44,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "script",
+-                "mime": "application/octet-stream",
++                "mime": ANY,
+                 "extension": "jse",
+                 "platform": "win32",
+             },
+@@ -67,7 +68,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "script",
+-                "mime": "text/plain",
++                "mime": ANY,
+                 "extension": "ps1",
+                 "platform": "win32",
+             },
+@@ -91,7 +92,7 @@ class TestClassifier(KartonTestCase):
+                 "origin": "karton.classifier",
+                 "quality": "high",
+                 "kind": "script",
+-                "mime": "text/plain",
++                "mime": ANY,
+                 "extension": "vbs",
+                 "platform": "win32",
+             },

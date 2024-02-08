@@ -1,0 +1,384 @@
+diff --git a/core/src/main/java/nl/nn/adapterframework/xml/ThreadConnectingFilter.java b/core/src/main/java/nl/nn/adapterframework/xml/ThreadConnectingFilter.java
+index 109f3fd06..2b5e58510 100644
+--- a/core/src/main/java/nl/nn/adapterframework/xml/ThreadConnectingFilter.java
++++ b/core/src/main/java/nl/nn/adapterframework/xml/ThreadConnectingFilter.java
+@@ -35,6 +35,13 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		threadInfo=threadLifeCycleEventListener!=null?threadLifeCycleEventListener.announceChildThread(owner, correlationID):null;
+ 	}
+ 
++	private void handleException(SAXException e) throws SAXException {
++		if (threadLifeCycleEventListener!=null) {
++			threadLifeCycleEventListener.threadAborted(threadInfo, e);
++		}
++		throw e;
++	}
++	
+ 	@Override
+ 	public void startDocument() throws SAXException {
+ 		if (threadLifeCycleEventListener!=null) {
+@@ -43,8 +50,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.startDocument();
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -53,8 +59,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.endDocument();
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 		if (threadLifeCycleEventListener!=null) {
+ 			threadLifeCycleEventListener.threadEnded(threadInfo,null);
+@@ -68,8 +73,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.startElement(uri, localName, qName, atts);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -78,8 +82,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.characters(ch, start, length);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -88,8 +91,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.endElement(uri, localName, qName);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 	
+@@ -99,8 +101,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.comment(ch, start, length);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -109,8 +110,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.startCDATA();
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -119,8 +119,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.endCDATA();
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -129,8 +128,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.startDTD(name, publicId, systemId);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -139,8 +137,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.endDTD();
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -149,8 +146,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.startEntity(name);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -159,8 +155,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.endEntity(name);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -170,8 +165,16 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.endPrefixMapping(prefix);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
++		}
++	}
++
++	@Override
++	public void warning(SAXParseException e) throws SAXException {
++		try {
++			super.warning(e);
++		} catch (SAXException se) {
++			handleException(se);
+ 		}
+ 	}
+ 
+@@ -180,8 +183,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.error(e);
+ 		} catch (SAXException se) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, se);
+-			throw e;
++			handleException(se);
+ 		}
+ 	}
+ 
+@@ -190,8 +192,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.fatalError(e);
+ 		} catch (SAXException se) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, se);
+-			throw e;
++			handleException(se);
+ 		}
+ 	}
+ 
+@@ -200,8 +201,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.ignorableWhitespace(ch, start, length);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -210,8 +210,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.notationDecl(name, publicId, systemId);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -220,8 +219,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.processingInstruction(target, data);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -230,7 +228,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			return super.resolveEntity(publicId, systemId);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
++			handleException(e);
+ 			throw e;
+ 		}
+ 	}
+@@ -240,8 +238,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.skippedEntity(name);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -250,8 +247,7 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.startPrefixMapping(prefix, uri);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+@@ -260,19 +256,9 @@ public class ThreadConnectingFilter extends FullXmlFilter {
+ 		try {
+ 			super.unparsedEntityDecl(name, publicId, systemId, notationName);
+ 		} catch (SAXException e) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, e);
+-			throw e;
++			handleException(e);
+ 		}
+ 	}
+ 
+-	@Override
+-	public void warning(SAXParseException e) throws SAXException {
+-		try {
+-			super.warning(e);
+-		} catch (SAXException se) {
+-			threadLifeCycleEventListener.threadAborted(threadInfo, se);
+-			throw e;
+-		}
+-	}
+ 	
+ }
+diff --git a/core/src/test/java/nl/nn/adapterframework/xml/SkipEmptyTagsFilterTest.java b/core/src/test/java/nl/nn/adapterframework/xml/SkipEmptyTagsFilterTest.java
+new file mode 100644
+index 000000000..3aecf2c9c
+--- /dev/null
++++ b/core/src/test/java/nl/nn/adapterframework/xml/SkipEmptyTagsFilterTest.java
+@@ -0,0 +1,45 @@
++package nl.nn.adapterframework.xml;
++
++import static org.junit.Assert.assertEquals;
++
++import java.io.IOException;
++
++import org.junit.Test;
++import org.xml.sax.SAXException;
++import org.xml.sax.helpers.XMLFilterImpl;
++
++import nl.nn.adapterframework.testutil.TestFileUtils;
++import nl.nn.adapterframework.util.TransformerPool;
++import nl.nn.adapterframework.util.XmlUtils;
++
++public class SkipEmptyTagsFilterTest {
++
++	
++	public void testXmlWriter(XMLFilterImpl filter, String input, String expected) throws IOException, SAXException {
++		XmlWriter xmlWriter = new XmlWriter();
++		PrettyPrintFilter ppf = new PrettyPrintFilter();
++		ppf.setIndent("");
++		ppf.setContentHandler(xmlWriter);
++		filter.setContentHandler(ppf);
++		XmlUtils.parseXml(filter, input);
++		assertEquals(expected,xmlWriter.toString());
++	}
++
++	@Test
++	public void testSkipEmptyTagsFilter() throws Exception {
++		String input =    TestFileUtils.getTestFile("/Xslt/AnyXml/in.xml");
++		String expected = TestFileUtils.getTestFile("/Xslt/AnyXml/SkipEmptyTagsCData.xml");
++		SkipEmptyTagsFilter filter = new SkipEmptyTagsFilter();
++		testXmlWriter(filter,input,expected);
++	}
++	
++	@Test
++	public void testSkipEmptyTagsTP() throws Exception {
++		String input =    TestFileUtils.getTestFile("/Xslt/AnyXml/in.xml");
++		String expected = TestFileUtils.getTestFile("/Xslt/AnyXml/SkipEmptyTagsEscaped.xml");
++		TransformerPool tp = XmlUtils.getSkipEmptyTagsTransformerPool(true, true);
++		XMLFilterImpl filter = tp.getTransformerFilter(null, null, null);
++		testXmlWriter(filter,input,expected);
++	}
++
++}
+diff --git a/core/src/test/java/nl/nn/adapterframework/xslt/XsltTestBase.java b/core/src/test/java/nl/nn/adapterframework/xslt/XsltTestBase.java
+index 0b564ef78..f2169c989 100644
+--- a/core/src/test/java/nl/nn/adapterframework/xslt/XsltTestBase.java
++++ b/core/src/test/java/nl/nn/adapterframework/xslt/XsltTestBase.java
+@@ -235,17 +235,50 @@ public abstract class XsltTestBase<P extends StreamingPipe> extends StreamingPip
+ 		TestAssertions.assertEqualsIgnoreWhitespaces(expected, result);
+ 	}
+ 
++//	@Test
++//	public void anyXmlBasic() throws Exception {
++//		String input = TestFileUtils.getTestFile("/Xslt/AnyXml/in.xml");
++//		String expected = TestFileUtils.getTestFile("/Xslt/AnyXml/in.xml");
++//
++//		setStyleSheetName("/Xslt/AnyXml/Copy.xsl");
++//		//setIndent(true);
++//		pipe.configure();
++//		pipe.start();
++//
++//		PipeRunResult prr = doPipe(pipe, input, session);
++//		String result = prr.getResult().toString();
++//		
++//		TestAssertions.assertEqualsIgnoreWhitespaces(expected, result);
++//	}
++//
++//	@Test
++//	public void anyXmlIndent() throws Exception {
++//		String input = TestFileUtils.getTestFile("/Xslt/AnyXml/in.xml");
++//		String expected = TestFileUtils.getTestFile("/Xslt/AnyXml/PrettyPrinted.xml");
++//
++//		setStyleSheetName("/Xslt/AnyXml/Copy.xsl");
++//		//setIndent(true);
++//		pipe.configure();
++//		pipe.start();
++//
++//		PipeRunResult prr = doPipe(pipe, input, session);
++//		String result = prr.getResult().toString();
++//		
++//		TestAssertions.assertEqualsIgnoreWhitespaces(expected, result);
++//	}
++
+ //	@Test
+ //	public void skipEmptyTagsXslt1() throws Exception {
+-//		setStyleSheetName("/Xslt/SkipEmptyTags/Copy.xsl");
++//		String input = TestFileUtils.getTestFile("/Xslt/AnyXml/in.xml");
++//		String expected = TestFileUtils.getTestFile("/Xslt/AnyXml/out.xml");
++//
++//		setStyleSheetName("/Xslt/AnyXml/Copy.xsl");
+ //		setXslt2(false);
+ //		setSkipEmptyTags(true);
+ //		setOutputType("xml");
+ //		//setIndent(true);
+ //		pipe.configure();
+ //		pipe.start();
+-//		String input = TestFileUtils.getTestFile("/Xslt/SkipEmptyTags/in.xml");
+-//		String expected = TestFileUtils.getTestFile("/Xslt/SkipEmptyTags/out.xml");
+ //
+ //		PipeRunResult prr = doPipe(pipe, input, session);
+ //		String result = prr.getResult().toString();
+@@ -255,14 +288,14 @@ public abstract class XsltTestBase<P extends StreamingPipe> extends StreamingPip
+ //
+ //	@Test
+ //	public void skipEmptyTagsXslt2() throws Exception {
+-//		setStyleSheetName("/Xslt/SkipEmptyTags/Copy.xsl");
++//		setStyleSheetName("/Xslt/AnyXml/Copy.xsl");
+ //		setXslt2(true);
+ //		setSkipEmptyTags(true);
+ //		//setIndent(true);
+ //		pipe.configure();
+ //		pipe.start();
+-//		String input = TestFileUtils.getTestFile("/Xslt/SkipEmptyTags/in.xml");
+-//		String expected = TestFileUtils.getTestFile("/Xslt/SkipEmptyTags/out.xml");
++//		String input = TestFileUtils.getTestFile("/Xslt/AnyXml/in.xml");
++//		String expected = TestFileUtils.getTestFile("/Xslt/AnyXml/out.xml");
+ //
+ //		PipeRunResult prr = doPipe(pipe, input, session);
+ //		String result = prr.getResult().toString();

@@ -1,0 +1,19 @@
+diff --git a/lsr_fingerprint.py b/lsr_fingerprint.py
+index b3e95b4..6ff40a9 100644
+--- a/lsr_fingerprint.py
++++ b/lsr_fingerprint.py
+@@ -35,10 +35,10 @@ dirs = [d for d in listdir(".") if isdir(d)]
+ for d in dirs:
+     for role in roles:
+         if role["lsrrolename"] == d:
+-            for root, dirs, files in walk(d):
+-                for dir in subdirs:
+-                    if dir == "templates" or dir == "meta":
+-                        dirpath = join(root, dir)
++            for root, subdirs, files in walk(d):
++                for subdir in subdirs:
++                    if subdir == "templates" or subdir == "meta":
++                        dirpath = join(root, subdir)
+                         tmpls = [
+                             f for f in listdir(dirpath) if isfile(join(dirpath, f))
+                         ]

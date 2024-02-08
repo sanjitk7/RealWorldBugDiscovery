@@ -1,0 +1,289 @@
+diff --git a/src/talondoc/analysis/registry/__init__.py b/src/talondoc/analysis/registry/__init__.py
+index 0d5f8c2b..262118e5 100644
+--- a/src/talondoc/analysis/registry/__init__.py
++++ b/src/talondoc/analysis/registry/__init__.py
+@@ -2,7 +2,7 @@ import inspect
+ import itertools
+ import json
+ from collections.abc import Callable, Iterator, Mapping, Sequence
+-from dataclasses import dataclass
++from dataclasses import asdict, dataclass, fields
+ from functools import singledispatchmethod
+ from typing import Any, ClassVar, Optional, Union, cast, overload
+ 
+@@ -245,127 +245,6 @@ class Registry:
+             _LOGGER.warning(e)
+             return None
+ 
+-    ######################################################################
+-    # Combine data
+-    ######################################################################
+-
+-    @singledispatchmethod
+-    def group(self, group: Sequence[GroupData]) -> Optional[GroupData]:
+-        if group:
+-            raise TypeError(type(group[0]))
+-        else:
+-            return None
+-
+-    @group.register
+-    def _(self, group: Sequence[data.Action]) -> Optional[data.Action]:
+-        if group:
+-            name = group[0].name
+-            description = None
+-            location = group[0].location
+-            parent_name = group[0].parent_name
+-            parent_type = group[0].parent_type
+-            function_name = None
+-            function_signature = None
+-            for obj in group:
+-                assert obj.name == name
+-                description = description or obj.description
+-                function_name = function_name or obj.function_name
+-                function_signature = function_signature or obj.function_signature
+-            return data.Action(
+-                name=name,
+-                description=description,
+-                location=location,
+-                parent_name=parent_name,
+-                parent_type=parent_type,
+-                function_name=function_name,
+-                function_signature=function_signature,
+-            )
+-        else:
+-            return None
+-
+-    @group.register
+-    def _(self, group: Sequence[data.Capture]) -> Optional[data.Capture]:
+-        if group:
+-            name = group[0].name
+-            rule = group[0].rule
+-            description = None
+-            location = group[0].location
+-            parent_name = group[0].parent_name
+-            parent_type = group[0].parent_type
+-            function_name = None
+-            function_signature = None
+-            for obj in group:
+-                assert obj.name == name
+-                description = description or obj.description
+-                function_name = function_name or obj.function_name
+-                function_signature = function_signature or obj.function_signature
+-            return data.Capture(
+-                name=name,
+-                description=description,
+-                location=location,
+-                parent_name=parent_name,
+-                parent_type=parent_type,
+-                rule=rule,
+-                function_name=function_name,
+-                function_signature=function_signature,
+-            )
+-        else:
+-            return None
+-
+-    @group.register
+-    def _(self, group: Sequence[data.List]) -> Optional[data.List]:
+-        if group:
+-            name = group[0].name
+-            description = None
+-            location = group[0].location
+-            parent_name = group[0].parent_name
+-            parent_type = group[0].parent_type
+-            value = None
+-            value_type_hint = None
+-            for obj in group:
+-                assert obj.name == name
+-                description = description or obj.description
+-                value = value or obj.value
+-                value_type_hint = value_type_hint or obj.value_type_hint
+-            return data.List(
+-                name=name,
+-                description=description,
+-                location=location,
+-                parent_name=parent_name,
+-                parent_type=parent_type,
+-                value=value,
+-                value_type_hint=value_type_hint,
+-            )
+-        else:
+-            return None
+-
+-    @group.register
+-    def _(self, group: Sequence[data.Setting]) -> Optional[data.Setting]:
+-        if group:
+-            name = group[0].name
+-            description = None
+-            location = group[0].location
+-            parent_name = group[0].parent_name
+-            parent_type = group[0].parent_type
+-            value = None
+-            value_type_hint = None
+-            for obj in group:
+-                assert obj.name == name
+-                description = description or obj.description
+-                value = value or obj.value
+-                value_type_hint = value_type_hint or obj.value_type_hint
+-            return data.Setting(
+-                name=name,
+-                description=description,
+-                location=location,
+-                parent_name=parent_name,
+-                parent_type=parent_type,
+-                value=value,
+-                value_type_hint=value_type_hint,
+-            )
+-        else:
+-            return None
+-
+     ######################################################################
+     # Look Up Data
+     ######################################################################
+@@ -437,6 +316,26 @@ class Registry:
+     def lookup(self, cls: type[Data], name: Any) -> Optional[Any]:
+         return self._typed_store(cls).get(self.resolve_name(name), None)
+ 
++    def lookup_default(
++        self, cls: type[GroupDataVar], name: str
++    ) -> Optional[GroupDataVar]:
++        declaration, default_overrides, _ = self.lookup_partition(cls, name)
++        return self._combine(cls, itertools.chain((declaration,), default_overrides))
++
++    def _combine(
++        self, cls: type[GroupDataVar], data: Iterator[Optional[GroupDataVar]]
++    ) -> Optional[GroupDataVar]:
++        init_keys: set[str] = {field.name for field in fields(cls) if field.init}
++        init_args: dict[str, Any] = {}
++        for datum in data:
++            if isinstance(datum, cls):
++                for name in init_keys:
++                    init_args[name] = init_args.get(name, getattr(datum, name))
++        if init_args:
++            return cls(**init_args)
++        else:
++            return None
++
+     def lookup_description(self, cls: type[Data], name: Any) -> Optional[str]:
+         if issubclass(cls, SimpleData):
+             simple = self.lookup(cls, name)
+@@ -496,14 +395,6 @@ class Registry:
+             return (declaration, default_overrides, other_overrides)
+         return (None, (), ())
+ 
+-    def lookup_default(
+-        self, cls: type[GroupDataVar], name: str
+-    ) -> Optional[GroupDataVar]:
+-        declaration, default_overrides, _ = self.lookup_partition(cls, name)
+-        return cast(
+-            Optional[GroupDataVar], self.group([declaration, *default_overrides])
+-        )
+-
+     def lookup_default_function(
+         self, cls: type[GroupDataHasFunction], name: str
+     ) -> Optional[Callable[..., Any]]:
+diff --git a/src/talondoc/analysis/registry/data/__init__.py b/src/talondoc/analysis/registry/data/__init__.py
+index adf5955e..00b29163 100644
+--- a/src/talondoc/analysis/registry/data/__init__.py
++++ b/src/talondoc/analysis/registry/data/__init__.py
+@@ -371,7 +371,7 @@ class Command(GroupData):
+             parent_name=field_parent_name(value),
+         )
+ 
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         return {
+             "rule": self.rule.text,
+             "script": self.script.text,
+@@ -423,7 +423,7 @@ class Action(GroupDataHasFunction):
+             parent_type=field_parent_type(value),
+         )
+ 
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         return {
+             "function_name": None,
+             "function_signature": asdict_opt(asdict_signature)(self.function_signature),
+@@ -475,7 +475,7 @@ class Capture(GroupDataHasFunction):
+             parent_type=field_parent_type(value),
+         )
+ 
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         return {
+             "rule": self.rule.text,
+             "function_name": None,
+@@ -525,7 +525,7 @@ class List(GroupData):
+             parent_type=field_parent_type(value),
+         )
+ 
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         return {
+             "value": asdict_opt(asdict_list_value)(self.value),
+             "value_type_hint": asdict_opt(asdict_class)(self.value_type_hint),
+@@ -562,7 +562,7 @@ class Setting(GroupData):
+             parent_type=field_parent_type(value),
+         )
+ 
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         return {
+             "value": asdict_opt(asdict_pickle)(self.value),
+             "value_type_hint": asdict_opt(asdict_class)(self.value_type_hint),
+@@ -593,7 +593,7 @@ class Mode(SimpleData):
+             parent_name=field_parent_name(value),
+         )
+ 
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         return {
+             "name": self.name,
+             "description": self.description,
+@@ -621,7 +621,7 @@ class Tag(SimpleData):
+             parent_name=field_parent_name(value),
+         )
+ 
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         return {
+             "name": self.name,
+             "description": self.description,
+diff --git a/src/talondoc/analysis/registry/data/abc.py b/src/talondoc/analysis/registry/data/abc.py
+index 702a4ce1..117b7ae6 100644
+--- a/src/talondoc/analysis/registry/data/abc.py
++++ b/src/talondoc/analysis/registry/data/abc.py
+@@ -189,7 +189,7 @@ class GroupData(Data):
+         ...
+ 
+     @abstractmethod
+-    def to_dict(self) -> JsonValue:
++    def to_dict(self) -> dict[str, JsonValue]:
+         ...
+ 
+ 
+diff --git a/src/talondoc/sphinx/directives/action.py b/src/talondoc/sphinx/directives/action.py
+index 05742771..b5e07f39 100644
+--- a/src/talondoc/sphinx/directives/action.py
++++ b/src/talondoc/sphinx/directives/action.py
+@@ -1,3 +1,5 @@
++import inspect
++
+ from docutils import nodes
+ from sphinx import addnodes
+ from typing_extensions import override
+@@ -26,13 +28,10 @@ class TalonActionDirective(TalonDocObjectDescription):
+     def handle_signature(self, sig: str, signode: addnodes.desc_signature) -> str:
+         default = self.talon.registry.lookup_default(data.Action, sig)
+         if default:
+-            signode += desc_name(nodes.Text(default.name))
++            signature = default.function_signature or inspect.Signature()
++            signode += desc_name(nodes.Text(default.name + str(signature)))
+             if default.description:
+                 signode += desc_content(paragraph(nodes.Text(default.description)))
+-            if default.function_signature:
+-                signode += desc_content(
+-                    paragraph(nodes.Text(str(default.function_signature)))
+-                )
+             return default.name
+         else:
+             e = UnknownReference(

@@ -1,0 +1,11 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 49f7f6d..584cdc7 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [tool.pydocstyle]
+ convention = "numpy"
++ignore = ["D100"]
+ #inherit = false
+-ignore = D100
+ #match = .*\.py

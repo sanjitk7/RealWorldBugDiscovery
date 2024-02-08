@@ -1,0 +1,24 @@
+diff --git a/src/test/java/run/halo/app/core/extension/endpoint/UserEndpointTest.java b/src/test/java/run/halo/app/core/extension/endpoint/UserEndpointTest.java
+index da7588e63..30e01be9a 100644
+--- a/src/test/java/run/halo/app/core/extension/endpoint/UserEndpointTest.java
++++ b/src/test/java/run/halo/app/core/extension/endpoint/UserEndpointTest.java
+@@ -79,7 +79,7 @@ class UserEndpointTest {
+                 .thenReturn(Mono.error(new ExtensionNotFoundException()));
+             webClient.get().uri("/apis/api.console.halo.run/v1alpha1/users/-")
+                 .exchange()
+-                .expectStatus().is5xxServerError();
++                .expectStatus().isNotFound();
+ 
+             verify(client).get(User.class, "fake-user");
+         }
+diff --git a/src/test/java/run/halo/app/infra/exception/handlers/GlobalErrorWebExceptionHandlerTest.java b/src/test/java/run/halo/app/infra/exception/handlers/GlobalErrorWebExceptionHandlerTest.java
+index d5720548b..1163a0c84 100644
+--- a/src/test/java/run/halo/app/infra/exception/handlers/GlobalErrorWebExceptionHandlerTest.java
++++ b/src/test/java/run/halo/app/infra/exception/handlers/GlobalErrorWebExceptionHandlerTest.java
+@@ -142,4 +142,4 @@ class GlobalErrorWebExceptionHandlerTest {
+                 .build();
+         }
+     }
+-}
+\ No newline at end of file
++}

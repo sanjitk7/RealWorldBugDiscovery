@@ -1,0 +1,15 @@
+diff --git a/src/main/java/run/halo/app/config/WebServerSecurityConfig.java b/src/main/java/run/halo/app/config/WebServerSecurityConfig.java
+index 886050c2f..e6ee172c2 100644
+--- a/src/main/java/run/halo/app/config/WebServerSecurityConfig.java
++++ b/src/main/java/run/halo/app/config/WebServerSecurityConfig.java
+@@ -56,9 +56,9 @@ public class WebServerSecurityConfig {
+         ObjectProvider<SecurityConfigurer> securityConfigurers) {
+ 
+         http.authorizeExchange()
+-            .pathMatchers("/**").permitAll()
+             .pathMatchers("/api/**", "/apis/**", "/login", "/logout")
+             .access(new RequestInfoAuthorizationManager(roleService))
++            .pathMatchers("/**").permitAll()
+             .and()
+             .anonymous(anonymousSpec -> {
+                 anonymousSpec.authorities(AnonymousUserConst.Role);

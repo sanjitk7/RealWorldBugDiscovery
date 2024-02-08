@@ -1,0 +1,628 @@
+diff --git a/check_api/src/main/java/com/google/errorprone/dataflow/nullnesspropagation/NullnessAnnotations.java b/check_api/src/main/java/com/google/errorprone/dataflow/nullnesspropagation/NullnessAnnotations.java
+index 30edef1a92..0eedff067b 100644
+--- a/check_api/src/main/java/com/google/errorprone/dataflow/nullnesspropagation/NullnessAnnotations.java
++++ b/check_api/src/main/java/com/google/errorprone/dataflow/nullnesspropagation/NullnessAnnotations.java
+@@ -26,6 +26,7 @@ import com.sun.source.tree.IdentifierTree;
+ import com.sun.source.tree.MemberSelectTree;
+ import com.sun.source.tree.Tree;
+ import com.sun.tools.javac.code.Symbol;
++import java.util.Collection;
+ import java.util.List;
+ import java.util.Optional;
+ import java.util.function.Predicate;
+@@ -71,6 +72,17 @@ public class NullnessAnnotations {
+     return fromAnnotationStream(annotations.stream());
+   }
+ 
++  public static boolean annotationsAreAmbiguous(
++      Collection<? extends AnnotationMirror> annotations) {
++    return annotations.stream()
++            .map(a -> simpleName(a).toString())
++            .filter(ANNOTATION_RELEVANT_TO_NULLNESS)
++            .map(NULLABLE_ANNOTATION::test)
++            .distinct()
++            .count()
++        == 2;
++  }
++
+   public static ImmutableList<AnnotationTree> annotationsRelevantToNullness(
+       List<? extends AnnotationTree> annotations) {
+     return annotations.stream()
+@@ -102,11 +114,13 @@ public class NullnessAnnotations {
+      * We try to read annotations in two ways:
+      *
+      * 1. from the TypeMirror: This is how we "should" always read *type-use* annotations, but
+-     * we can't rely on it until the fix for JDK-8225377 is widely available.
++     * JDK-8225377 prevents it from working across compilation boundaries.
+      *
+      * 2. from getRawAttributes(): This works around the problem across compilation boundaries, and
+      * it handles declaration annotations (though there are other ways we could handle declaration
+-     * annotations).
++     * annotations). But it has a bug of its own with type-use annotations on inner classes
++     * (b/203207989). To reduce the chance that we hit the inner-class bug, we apply it only if the
++     * first approach fails.
+      */
+     TypeMirror elementType;
+     switch (sym.getKind()) {
+diff --git a/core/src/main/java/com/google/errorprone/bugpatterns/nullness/NullableTypeParameter.java b/core/src/main/java/com/google/errorprone/bugpatterns/nullness/NullableTypeParameter.java
+new file mode 100644
+index 0000000000..018b107cd0
+--- /dev/null
++++ b/core/src/main/java/com/google/errorprone/bugpatterns/nullness/NullableTypeParameter.java
+@@ -0,0 +1,85 @@
++/*
++ * Copyright 2023 The Error Prone Authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.google.errorprone.bugpatterns.nullness;
++
++import static com.google.common.collect.Iterables.getOnlyElement;
++import static com.google.errorprone.BugPattern.SeverityLevel.WARNING;
++import static com.google.errorprone.matchers.Description.NO_MATCH;
++
++import com.google.common.collect.ImmutableList;
++import com.google.errorprone.BugPattern;
++import com.google.errorprone.VisitorState;
++import com.google.errorprone.bugpatterns.BugChecker;
++import com.google.errorprone.bugpatterns.BugChecker.TypeParameterTreeMatcher;
++import com.google.errorprone.dataflow.nullnesspropagation.Nullness;
++import com.google.errorprone.dataflow.nullnesspropagation.NullnessAnnotations;
++import com.google.errorprone.fixes.Fix;
++import com.google.errorprone.fixes.SuggestedFix;
++import com.google.errorprone.matchers.Description;
++import com.sun.source.tree.AnnotatedTypeTree;
++import com.sun.source.tree.AnnotationTree;
++import com.sun.source.tree.Tree;
++import com.sun.source.tree.TypeParameterTree;
++import java.util.List;
++import java.util.Optional;
++
++/** A {@link BugChecker}; see the associated {@link BugPattern} annotation for details. */
++@BugPattern(
++    summary =
++        "Nullness annotations directly on type parameters are interpreted differently by different"
++            + " tools",
++    severity = WARNING)
++public class NullableTypeParameter extends BugChecker implements TypeParameterTreeMatcher {
++
++  @Override
++  public Description matchTypeParameter(TypeParameterTree tree, VisitorState state) {
++    Optional<Nullness> nullness = NullnessAnnotations.fromAnnotationTrees(tree.getAnnotations());
++    if (nullness.isEmpty()) {
++      return NO_MATCH;
++    }
++    return describeMatch(tree, fix(tree.getAnnotations(), tree, state));
++  }
++
++  Fix fix(List<? extends AnnotationTree> annotations, TypeParameterTree tree, VisitorState state) {
++    ImmutableList<AnnotationTree> existingAnnotations =
++        NullnessAnnotations.annotationsRelevantToNullness(annotations);
++    if (existingAnnotations.size() != 1) {
++      return SuggestedFix.emptyFix();
++    }
++    AnnotationTree existingAnnotation = getOnlyElement(existingAnnotations);
++    SuggestedFix.Builder fix = SuggestedFix.builder().delete(existingAnnotation);
++    List<? extends Tree> bounds = tree.getBounds();
++    if (bounds.stream()
++        .anyMatch(
++            b ->
++                b instanceof AnnotatedTypeTree
++                    && NullnessAnnotations.fromAnnotationTrees(
++                            ((AnnotatedTypeTree) b).getAnnotations())
++                        .isPresent())) {
++      return SuggestedFix.emptyFix();
++    }
++    if (bounds.isEmpty()) {
++      return fix.postfixWith(
++              tree, String.format(" extends %s Object", state.getSourceForNode(existingAnnotation)))
++          .build();
++    } else {
++      String prefix = String.format("%s ", state.getSourceForNode(existingAnnotation));
++      bounds.forEach(bound -> fix.prefixWith(bound, prefix));
++      return fix.build();
++    }
++  }
++}
+diff --git a/core/src/main/java/com/google/errorprone/bugpatterns/nullness/NullableWildcard.java b/core/src/main/java/com/google/errorprone/bugpatterns/nullness/NullableWildcard.java
+new file mode 100644
+index 0000000000..83aa326a6b
+--- /dev/null
++++ b/core/src/main/java/com/google/errorprone/bugpatterns/nullness/NullableWildcard.java
+@@ -0,0 +1,91 @@
++/*
++ * Copyright 2023 The Error Prone Authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.google.errorprone.bugpatterns.nullness;
++
++import static com.google.common.collect.Iterables.getOnlyElement;
++import static com.google.errorprone.BugPattern.SeverityLevel.WARNING;
++import static com.google.errorprone.matchers.Description.NO_MATCH;
++
++import com.google.common.collect.ImmutableList;
++import com.google.errorprone.BugPattern;
++import com.google.errorprone.VisitorState;
++import com.google.errorprone.bugpatterns.BugChecker;
++import com.google.errorprone.bugpatterns.BugChecker.AnnotatedTypeTreeMatcher;
++import com.google.errorprone.dataflow.nullnesspropagation.Nullness;
++import com.google.errorprone.dataflow.nullnesspropagation.NullnessAnnotations;
++import com.google.errorprone.fixes.Fix;
++import com.google.errorprone.fixes.SuggestedFix;
++import com.google.errorprone.matchers.Description;
++import com.sun.source.tree.AnnotatedTypeTree;
++import com.sun.source.tree.AnnotationTree;
++import com.sun.source.tree.ExpressionTree;
++import com.sun.source.tree.Tree;
++import com.sun.source.tree.WildcardTree;
++import java.util.List;
++import java.util.Optional;
++
++/** A {@link BugChecker}; see the associated {@link BugPattern} annotation for details. */
++@BugPattern(
++    summary =
++        "Nullness annotations directly on wildcard types are interpreted differently by different"
++            + " tools",
++    severity = WARNING)
++public class NullableWildcard extends BugChecker implements AnnotatedTypeTreeMatcher {
++  @Override
++  public Description matchAnnotatedType(AnnotatedTypeTree tree, VisitorState state) {
++    Optional<Nullness> nullness = NullnessAnnotations.fromAnnotationTrees(tree.getAnnotations());
++    if (nullness.isEmpty()) {
++      return NO_MATCH;
++    }
++    ExpressionTree typeTree = tree.getUnderlyingType();
++    if (!(typeTree instanceof WildcardTree)) {
++      return NO_MATCH;
++    }
++    return describeMatch(tree, fix(tree.getAnnotations(), (WildcardTree) typeTree, state));
++  }
++
++  Fix fix(List<? extends AnnotationTree> annotations, WildcardTree tree, VisitorState state) {
++    ImmutableList<AnnotationTree> existingAnnotations =
++        NullnessAnnotations.annotationsRelevantToNullness(annotations);
++    if (existingAnnotations.size() != 1) {
++      return SuggestedFix.emptyFix();
++    }
++    AnnotationTree existingAnnotation = getOnlyElement(existingAnnotations);
++    SuggestedFix.Builder fix = SuggestedFix.builder().delete(existingAnnotation);
++    switch (tree.getKind()) {
++      case EXTENDS_WILDCARD:
++        Tree bound = tree.getBound();
++        if (bound instanceof AnnotatedTypeTree
++            && NullnessAnnotations.fromAnnotationTrees(((AnnotatedTypeTree) bound).getAnnotations())
++                .isPresent()) {
++          return SuggestedFix.emptyFix();
++        }
++        return fix.prefixWith(
++                bound, String.format("%s ", state.getSourceForNode(existingAnnotation)))
++            .build();
++      case SUPER_WILDCARD:
++        return SuggestedFix.emptyFix();
++      case UNBOUNDED_WILDCARD:
++        return fix.postfixWith(
++                tree,
++                String.format(" extends %s Object", state.getSourceForNode(existingAnnotation)))
++            .build();
++      default:
++        throw new AssertionError(tree.getKind());
++    }
++  }
++}
+diff --git a/core/src/main/java/com/google/errorprone/bugpatterns/nullness/ReturnMissingNullable.java b/core/src/main/java/com/google/errorprone/bugpatterns/nullness/ReturnMissingNullable.java
+index e06bc53213..2f32a9dc2f 100644
+--- a/core/src/main/java/com/google/errorprone/bugpatterns/nullness/ReturnMissingNullable.java
++++ b/core/src/main/java/com/google/errorprone/bugpatterns/nullness/ReturnMissingNullable.java
+@@ -62,7 +62,6 @@ import com.sun.source.tree.MethodInvocationTree;
+ import com.sun.source.tree.MethodTree;
+ import com.sun.source.tree.ReturnTree;
+ import com.sun.source.tree.StatementTree;
+-import com.sun.source.tree.Tree;
+ import com.sun.source.tree.VariableTree;
+ import com.sun.source.util.TreePathScanner;
+ import com.sun.tools.javac.code.Symbol;
+@@ -230,7 +229,7 @@ public class ReturnMissingNullable extends BugChecker implements CompilationUnit
+     }.scan(tree, null);
+     ImmutableSet<VarSymbol> definitelyNullVars = definitelyNullVarsBuilder.build();
+ 
+-    new TreePathScanner<Void, Void>() {
++    new SuppressibleTreePathScanner<Void, Void>(stateForCompilationUnit) {
+       @Override
+       public Void visitBlock(BlockTree block, Void unused) {
+         for (StatementTree statement : block.getStatements()) {
+@@ -398,14 +397,6 @@ public class ReturnMissingNullable extends BugChecker implements CompilationUnit
+           }
+         }
+       }
+-
+-      @Override
+-      public Void scan(Tree tree, Void unused) {
+-        if (isSuppressed(tree, stateForCompilationUnit)) {
+-          return null;
+-        }
+-        return super.scan(tree, unused);
+-      }
+     }.scan(tree, null);
+ 
+     return NO_MATCH; // Any reports were made through state.reportMatch.
+diff --git a/core/src/main/java/com/google/errorprone/scanner/BuiltInCheckerSuppliers.java b/core/src/main/java/com/google/errorprone/scanner/BuiltInCheckerSuppliers.java
+index 126f594db6..a1eb6c1709 100644
+--- a/core/src/main/java/com/google/errorprone/scanner/BuiltInCheckerSuppliers.java
++++ b/core/src/main/java/com/google/errorprone/scanner/BuiltInCheckerSuppliers.java
+@@ -540,6 +540,8 @@ import com.google.errorprone.bugpatterns.nullness.MultipleNullnessAnnotations;
+ import com.google.errorprone.bugpatterns.nullness.NullArgumentForNonNullParameter;
+ import com.google.errorprone.bugpatterns.nullness.NullablePrimitive;
+ import com.google.errorprone.bugpatterns.nullness.NullablePrimitiveArray;
++import com.google.errorprone.bugpatterns.nullness.NullableTypeParameter;
++import com.google.errorprone.bugpatterns.nullness.NullableWildcard;
+ import com.google.errorprone.bugpatterns.nullness.ParameterMissingNullable;
+ import com.google.errorprone.bugpatterns.nullness.ReturnMissingNullable;
+ import com.google.errorprone.bugpatterns.nullness.UnnecessaryCheckNotNull;
+@@ -1000,7 +1002,9 @@ public class BuiltInCheckerSuppliers {
+           NullableOptional.class,
+           NullablePrimitive.class,
+           NullablePrimitiveArray.class,
++          NullableTypeParameter.class,
+           NullableVoid.class,
++          NullableWildcard.class,
+           ObjectEqualsForPrimitives.class,
+           ObjectToString.class,
+           ObjectsHashCodePrimitive.class,
+diff --git a/core/src/test/java/com/google/errorprone/bugpatterns/nullness/NullableTypeParameterTest.java b/core/src/test/java/com/google/errorprone/bugpatterns/nullness/NullableTypeParameterTest.java
+new file mode 100644
+index 0000000000..58770bb0a2
+--- /dev/null
++++ b/core/src/test/java/com/google/errorprone/bugpatterns/nullness/NullableTypeParameterTest.java
+@@ -0,0 +1,100 @@
++/*
++ * Copyright 2023 The Error Prone Authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.google.errorprone.bugpatterns.nullness;
++
++import com.google.errorprone.BugCheckerRefactoringTestHelper;
++import com.google.errorprone.CompilationTestHelper;
++import org.junit.Test;
++import org.junit.runner.RunWith;
++import org.junit.runners.JUnit4;
++
++@RunWith(JUnit4.class)
++public class NullableTypeParameterTest {
++
++  private final BugCheckerRefactoringTestHelper testHelper =
++      BugCheckerRefactoringTestHelper.newInstance(NullableTypeParameter.class, getClass());
++
++  @Test
++  public void positive() {
++    testHelper
++        .addInputLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  interface I {}",
++            "  interface J {}",
++            "  <@Nullable X, @NonNull Y> void f() {}",
++            "  <@Nullable X extends Object> void h() {}",
++            "  <@Nullable X extends I & J> void i() {}",
++            "}")
++        .addOutputLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  interface I {}",
++            "  interface J {}",
++            "  <X extends @Nullable Object, Y extends @NonNull Object> void f() {}",
++            "  <X extends @Nullable Object> void h() {}",
++            "  <X extends @Nullable I & @Nullable J> void i() {}",
++            "}")
++        .doTest();
++  }
++
++  @Test
++  public void noFix() {
++    testHelper
++        .addInputLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  interface I {}",
++            "  interface J {}",
++            "  <@Nullable @NonNull X> void f() {}",
++            "  <@Nullable X extends @Nullable Object> void g() {}",
++            "  <@Nullable X extends I & @Nullable J> void h() {}",
++            "}")
++        .expectUnchanged()
++        .doTest();
++  }
++
++  @Test
++  public void diagnostics() {
++    CompilationTestHelper.newInstance(NullableTypeParameter.class, getClass())
++        .addSourceLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  interface I {}",
++            "  interface J {}",
++            "  // BUG: Diagnostic contains:",
++            "  <@Nullable @NonNull X> void f() {}",
++            "  // BUG: Diagnostic contains:",
++            "  <@Nullable X extends @Nullable Object> void g() {}",
++            "  // BUG: Diagnostic contains:",
++            "  <@Nullable X extends I & @Nullable J> void h() {}",
++            "}")
++        .doTest();
++  }
++}
+diff --git a/core/src/test/java/com/google/errorprone/bugpatterns/nullness/NullableWildcardTest.java b/core/src/test/java/com/google/errorprone/bugpatterns/nullness/NullableWildcardTest.java
+new file mode 100644
+index 0000000000..fde9b9cceb
+--- /dev/null
++++ b/core/src/test/java/com/google/errorprone/bugpatterns/nullness/NullableWildcardTest.java
+@@ -0,0 +1,90 @@
++/*
++ * Copyright 2023 The Error Prone Authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.google.errorprone.bugpatterns.nullness;
++
++import com.google.errorprone.BugCheckerRefactoringTestHelper;
++import com.google.errorprone.CompilationTestHelper;
++import org.junit.Test;
++import org.junit.runner.RunWith;
++import org.junit.runners.JUnit4;
++
++@RunWith(JUnit4.class)
++public class NullableWildcardTest {
++
++  private final BugCheckerRefactoringTestHelper testHelper =
++      BugCheckerRefactoringTestHelper.newInstance(NullableWildcard.class, getClass());
++
++  @Test
++  public void positive() {
++    testHelper
++        .addInputLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  List<@Nullable ?> xs;",
++            "  List<@NonNull ?> ys;",
++            "}")
++        .addOutputLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  List<? extends @Nullable Object> xs;",
++            "  List<? extends @NonNull Object> ys;",
++            "}")
++        .doTest();
++  }
++
++  @Test
++  public void noFix() {
++    testHelper
++        .addInputLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  List<@Nullable ? extends @Nullable Object> x;",
++            "  List<@Nullable ? super Object> y;",
++            "  List<@Nullable @NonNull ?> z;",
++            "}")
++        .expectUnchanged()
++        .doTest();
++  }
++
++  @Test
++  public void diagnostics() {
++    CompilationTestHelper.newInstance(NullableWildcard.class, getClass())
++        .addSourceLines(
++            "T.java",
++            "import java.util.List;",
++            "import org.checkerframework.checker.nullness.qual.NonNull;",
++            "import org.checkerframework.checker.nullness.qual.Nullable;",
++            "class T {",
++            "  // BUG: Diagnostic contains:",
++            "  List<@Nullable ? extends @Nullable Object> x;",
++            "  // BUG: Diagnostic contains:",
++            "  List<@Nullable ? super Object> y;",
++            "  // BUG: Diagnostic contains:",
++            "  List<@Nullable @NonNull ?> z;",
++            "}")
++        .doTest();
++  }
++}
+diff --git a/docs/bugpattern/NullableTypeParameter.md b/docs/bugpattern/NullableTypeParameter.md
+new file mode 100644
+index 0000000000..94423855c3
+--- /dev/null
++++ b/docs/bugpattern/NullableTypeParameter.md
+@@ -0,0 +1,57 @@
++Nullness annotations directly on type parameters are interpreted differently by
++different tools.
++— unless you are using the Checker Framework).
++
++### Tool interpretations and suggested alternatives
++
++#### `class Foo<@Nullable T>`
++
++To the Checker Framework, this means that a given type argument *must* be
++nullable. For example, in the Checker Framework's default JDK stubs,
++[the type argument to `ThreadLocal` must be nullable](https://github.com/typetools/jdk/blob/1973fa0811588dd0bb025fdc99345cdb887b3b52/src/java.base/share/classes/java/lang/ThreadLocal.java#L84-L91).
++
++To Kotlin, this means that the type argument *can* be nullable but need not be
++so.
++
++If you want the Checker Framework interpretation, then keep your code as it is,
++and suppress this warning. If you want the "*can* be nullable" interpretation,
++change to `class Foo<T extends @Nullable Object>`.
++
++The effects of that change would be:
++
++-   It is a behavior change for the Checker Framework, one that could even
++    produce local or non-local the Checker Framework failures. As discussed
++    above, it may be a desirable change, and it's likely to be safe unless you
++    are using it with `ThreadLocal`.
++
++-   This is probably not a behavior change for Kotlin.
++
++#### `class Foo<@NonNull T>`
++
++To the Checker Framework, this means to allow *any* nullness for the type
++argument(!). (It
++[sets the *lower* bound](https://checkerframework.org/manual/#generics-bounds-syntax)
++to `@NonNull`, which is already the default there.)
++
++To Kotlin, this means that the type argument must be non-nullable.
++
++Users probably want `class Foo<T extends @NonNull Object>`. Or, if they're
++within the scope of `@NullMarked` and they are using tools that recognize it
++(such as Kotlin), they may prefer `class Foo<T>`, which is equivalent but
++shorter.
++
++The effects of that change would be:
++
++*   It is a behavior change for the Checker Framework, one that could produce
++    local or non-local the Checker Framework failures. But it's likely to be a
++    desirable change.
++*   It is probably not a behavior change for Kotlin.
++
++### JSpecify specification
++
++The JSpecify spec says that usages of their annotations on type parameters are
++unrecognized
++([Javadoc](https://jspecify.dev/docs/api/org/jspecify/annotations/Nullable.html#applicability),
++[spec](https://jspecify.dev/docs/spec/#recognized-locations-for-type-use-annotations)).
++This specification choice is motivated by the disagreement in tool behavior
++discussed above.
+diff --git a/docs/bugpattern/NullableWildcard.md b/docs/bugpattern/NullableWildcard.md
+new file mode 100644
+index 0000000000..d719d1fb31
+--- /dev/null
++++ b/docs/bugpattern/NullableWildcard.md
+@@ -0,0 +1,51 @@
++Nullness annotations directly on wildcard types are interpreted differently by
++different tools.
++— unless you are using the Checker Framework).
++
++### Tool interpretations and suggested alternatives
++
++#### `Foo<@Nullable ?>`
++
++To the Checker Framework, this means that the type argument *must* be nullable.
++They use this
++[in `ExecutorService`](https://github.com/typetools/jdk/blob/1973fa0811588dd0bb025fdc99345cdb887b3b52/src/java.base/share/classes/java/util/concurrent/ExecutorService.java#L269).
++
++To Kotlin, this means that the type argument *can* be nullable but need not be
++so.
++
++While Checker Framework users do sometimes want `Foo<@Nullable ?>`, we commonly
++see them use it in places where `Foo<?>` would also be correct and would be more
++flexible. To fully preserve Kotlin behavior, Kotlin users may wish to write
++"`Foo<? extends @Nullable Object>`" (unless they are within the scope of
++`@NullMarked`, in which case `Foo<?>` is equivalent).
++
++The effects of that change would be:
++
++*   It is a behavior change for the Checker Framework, one that could produce
++    local or non-local the Checker Framework failures. But it's likely to be a
++    desirable change except in the context of `ExecutorService` and the `Future`
++    objects that it produces.
++*   `Foo<?>` is probably not a behavior change for Kotlin except *outside* of
++    `@NullMarked`, in which case the way to preserve behavior is to change to
++    `Foo<? extends @Nullable Object>`.
++
++#### `Foo<@NonNull ?>`
++
++Both tools use this to mean that the type argument must be non-nullable. (See
++[the Checker Framework docs](https://checkerframework.org/manual/#annotations-on-wildcards).)
++
++We still recommend a no-op change to `Foo<? extends @NonNull Object>` (or,
++within the scope of `@NullMarked`, `Foo<? extends Object>`) for consistency
++reasons: In all other cases, an annotation directly on a wildcard or
++[type parameter](NullableTypeParameter.md) can lead to different behavior from
++different tools. (And even today, some lesser used tools treat `Foo<@NonNull ?>`
++differently.)
++
++### JSpecify specification
++
++The JSpecify spec says that usages of their annotations on wildcard types are
++unrecognized
++([Javadoc](https://jspecify.dev/docs/api/org/jspecify/annotations/Nullable.html#applicability),
++[spec](https://jspecify.dev/docs/spec/#recognized-locations-for-type-use-annotations)).
++This specification choice is motivated by the disagreement in tool behavior
++discussed above.
+diff --git a/pom.xml b/pom.xml
+index 31ef0ca951..3d3ead174d 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -37,7 +37,7 @@
+     <junit.version>4.13.2</junit.version>
+     <dataflow.version>3.39.0-eisop1</dataflow.version>
+     <mockito.version>4.9.0</mockito.version>
+-    <compile.testing.version>0.19</compile.testing.version>
++    <compile.testing.version>0.21.0</compile.testing.version>
+     <caffeine.version>3.0.5</caffeine.version>
+     <flogger.version>0.7.4</flogger.version>
+     <maven-javadoc-plugin.version>3.3.1</maven-javadoc-plugin.version>

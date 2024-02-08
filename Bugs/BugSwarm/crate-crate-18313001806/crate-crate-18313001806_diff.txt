@@ -1,0 +1,120 @@
+diff --git a/libs/sql-parser/src/main/antlr/io/crate/sql/parser/antlr/SqlBaseParser.g4 b/libs/sql-parser/src/main/antlr/io/crate/sql/parser/antlr/SqlBaseParser.g4
+index afe36fc360..d0f62f2f4d 100644
+--- a/libs/sql-parser/src/main/antlr/io/crate/sql/parser/antlr/SqlBaseParser.g4
++++ b/libs/sql-parser/src/main/antlr/io/crate/sql/parser/antlr/SqlBaseParser.g4
+@@ -127,6 +127,8 @@ alterStmt
+         | RESET (OPEN_ROUND_BRACKET ident (COMMA ident)* CLOSE_ROUND_BRACKET)?)      #alterBlobTableProperties
+     | ALTER (BLOB)? TABLE alterTableDefinition (OPEN | CLOSE)                        #alterTableOpenClose
+     | ALTER (BLOB)? TABLE alterTableDefinition RENAME TO qname                       #alterTableRenameTable
++    | ALTER (BLOB)? TABLE alterTableDefinition
++        RENAME COLUMN source=qname TO target=qname                                   #alterTableRenameColumn
+     | ALTER (BLOB)? TABLE alterTableDefinition REROUTE rerouteOption                 #alterTableReroute
+     | ALTER CLUSTER REROUTE RETRY FAILED                                             #alterClusterRerouteRetryFailed
+     | ALTER CLUSTER SWAP TABLE source=qname TO target=qname withProperties?          #alterClusterSwapTable
+diff --git a/libs/sql-parser/src/main/java/io/crate/sql/parser/AstBuilder.java b/libs/sql-parser/src/main/java/io/crate/sql/parser/AstBuilder.java
+index 445781af88..41d548bc82 100644
+--- a/libs/sql-parser/src/main/java/io/crate/sql/parser/AstBuilder.java
++++ b/libs/sql-parser/src/main/java/io/crate/sql/parser/AstBuilder.java
+@@ -71,6 +71,7 @@ import io.crate.sql.tree.AlterTable;
+ import io.crate.sql.tree.AlterTableAddColumn;
+ import io.crate.sql.tree.AlterTableDropColumn;
+ import io.crate.sql.tree.AlterTableOpenClose;
++import io.crate.sql.tree.AlterTableRenameColumn;
+ import io.crate.sql.tree.AlterTableRenameTable;
+ import io.crate.sql.tree.AlterTableReroute;
+ import io.crate.sql.tree.AlterUser;
+@@ -1130,7 +1131,7 @@ class AstBuilder extends SqlBaseParserBaseVisitor<Node> {
+         return new NotNullColumnConstraint<>();
+     }
+ 
+-    
++
+     @Override
+     public Node visitColumnConstraintNull(ColumnConstraintNullContext ctx) {
+         return new NullColumnConstraint<>();
+@@ -1337,7 +1338,7 @@ class AstBuilder extends SqlBaseParserBaseVisitor<Node> {
+     }
+ 
+     @Override
+-    public Node visitAlterTableRename(SqlBaseParser.AlterTableRenameContext context) {
++    public Node visitAlterTableRenameTable(SqlBaseParser.AlterTableRenameTableContext context) {
+         return new AlterTableRenameTable<>(
+             (Table<?>) visit(context.alterTableDefinition()),
+             context.BLOB() != null,
+@@ -1345,6 +1346,15 @@ class AstBuilder extends SqlBaseParserBaseVisitor<Node> {
+         );
+     }
+ 
++    @Override
++    public Node visitAlterTableRenameColumn(SqlBaseParser.AlterTableRenameColumnContext ctx) {
++        return new AlterTableRenameColumn<>(
++            (Table<?>) visit(ctx.alterTableDefinition()),
++            getQualifiedName(ctx.source),
++            getQualifiedName(ctx.target));
++
++    }
++
+     @SuppressWarnings({"rawtypes", "unchecked"})
+     @Override
+     public Node visitAlterTableReroute(SqlBaseParser.AlterTableRerouteContext context) {
+diff --git a/libs/sql-parser/src/main/java/io/crate/sql/tree/AlterTableRenameColumn.java b/libs/sql-parser/src/main/java/io/crate/sql/tree/AlterTableRenameColumn.java
+new file mode 100644
+index 0000000000..485b9ae33a
+--- /dev/null
++++ b/libs/sql-parser/src/main/java/io/crate/sql/tree/AlterTableRenameColumn.java
+@@ -0,0 +1,55 @@
++/*
++ * Licensed to Crate.io GmbH ("Crate") under one or more contributor
++ * license agreements.  See the NOTICE file distributed with this work for
++ * additional information regarding copyright ownership.  Crate licenses
++ * this file to you under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.  You may
++ * obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
++ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
++ * License for the specific language governing permissions and limitations
++ * under the License.
++ *
++ * However, if you have executed another commercial license agreement
++ * with Crate these terms will supersede the license and you may use the
++ * software solely pursuant to the terms of the relevant commercial agreement.
++ */
++
++package io.crate.sql.tree;
++
++import java.util.Objects;
++
++public class AlterTableRenameColumn<T> extends Statement {
++
++    private final Table<T> table;
++    private final QualifiedName source;
++    private final QualifiedName target;
++
++    public AlterTableRenameColumn(Table<T> table, QualifiedName source, QualifiedName target) {
++        this.table = table;
++        this.source = source;
++        this.target = target;
++    }
++
++    @Override
++    public boolean equals(Object o) {
++        if (this == o) return true;
++        if (o == null || getClass() != o.getClass()) return false;
++        AlterTableRenameColumn<?> that = (AlterTableRenameColumn<?>) o;
++        return table.equals(that.table) && source.equals(that.source) && target.equals(that.target);
++    }
++
++    @Override
++    public int hashCode() {
++        return Objects.hash(table, source, target);
++    }
++
++    @Override
++    public String toString() {
++        return null;
++    }
++}

@@ -1,0 +1,544 @@
+diff --git a/rules/cloud/azure/identity_protection/azure_identity_protection_malicious_ip_address.yml b/rules/cloud/azure/identity_protection/azure_identity_protection_malicious_ip_address.yml
+new file mode 100644
+index 000000000..11b942592
+--- /dev/null
++++ b/rules/cloud/azure/identity_protection/azure_identity_protection_malicious_ip_address.yml
+@@ -0,0 +1,22 @@
++title: Malicious IP Address Sign-In Failure Rate
++id: a3f55ebd-0c01-4ed6-adc0-8fb76d8cd3cd
++status: experimental
++description: Indicates sign-in from a malicious IP address based on high failure rates.
++references:
++    - https://learn.microsoft.com/en-us/azure/active-directory/identity-protection/concept-identity-protection-risks#malicious-ip-address
++    - https://learn.microsoft.com/en-us/azure/active-directory/architecture/security-operations-user-accounts#unusual-sign-ins
++author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
++date: 2023/09/07
++tags:
++    - attack.t1090
++    - attack.command_and_control
++logsource:
++    product: azure
++    service: riskdetection
++detection:
++    selection:
++        riskEventType: 'maliciousIPAddress'
++    condition: selection
++falsepositives:
++    - We recommend investigating the sessions flagged by this detection in the context of other sign-ins from the user.
++level: high
+diff --git a/rules/cloud/azure/identity_protection/azure_identity_protection_malicious_ip_address_suspicious.yml b/rules/cloud/azure/identity_protection/azure_identity_protection_malicious_ip_address_suspicious.yml
+new file mode 100644
+index 000000000..961202f93
+--- /dev/null
++++ b/rules/cloud/azure/identity_protection/azure_identity_protection_malicious_ip_address_suspicious.yml
+@@ -0,0 +1,22 @@
++title: Malicious IP Address Sign-In Suspicious
++id: 36440e1c-5c22-467a-889b-593e66498472
++status: experimental
++description: Indicates sign-in from a malicious IP address known to be malicious at time of sign-in.
++references:
++    - https://learn.microsoft.com/en-us/azure/active-directory/identity-protection/concept-identity-protection-risks#malicious-ip-address
++    - https://learn.microsoft.com/en-us/azure/active-directory/architecture/security-operations-user-accounts#unusual-sign-ins
++author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
++date: 2023/09/07
++tags:
++    - attack.t1090
++    - attack.command_and_control
++logsource:
++    product: azure
++    service: riskdetection
++detection:
++    selection:
++        riskEventType: 'suspiciousIPAddress'
++    condition: selection
++falsepositives:
++    - We recommend investigating the sessions flagged by this detection in the context of other sign-ins from the user.
++level: high
+diff --git a/rules/cloud/azure/identity_protection/azure_identity_protection_prt_access.yml b/rules/cloud/azure/identity_protection/azure_identity_protection_prt_access.yml
+new file mode 100644
+index 000000000..c2c1dbdb7
+--- /dev/null
++++ b/rules/cloud/azure/identity_protection/azure_identity_protection_prt_access.yml
+@@ -0,0 +1,22 @@
++title: Primary Refresh Token Access Attempt
++id: a84fc3b1-c9ce-4125-8e74-bdcdb24021f1
++status: experimental
++description: Indicates access attempt to the PRT resource which can be used to move laterally into an organization or perform credential theft
++references:
++    - https://learn.microsoft.com/en-us/azure/active-directory/identity-protection/concept-identity-protection-risks#possible-attempt-to-access-primary-refresh-token-prt
++    - https://learn.microsoft.com/en-us/azure/active-directory/architecture/security-operations-user-accounts#unusual-sign-ins
++author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
++date: 2023/09/07
++tags:
++    - attack.t1528
++    - attack.credential_access
++logsource:
++    product: azure
++    service: riskdetection
++detection:
++    selection:
++        riskEventType: 'attemptedPrtAccess'
++    condition: selection
++falsepositives:
++    - This detection is low-volume and is seen infrequently in most organizations. When this detection appears it's high risk, and users should be remediated.
++level: high
+diff --git a/rules/cloud/azure/identity_protection/azure_identity_protection_threat_intel.yml b/rules/cloud/azure/identity_protection/azure_identity_protection_threat_intel.yml
+new file mode 100644
+index 000000000..c094c3138
+--- /dev/null
++++ b/rules/cloud/azure/identity_protection/azure_identity_protection_threat_intel.yml
+@@ -0,0 +1,26 @@
++title: Azure AD Threat Intelligence
++id: a2cb56ff-4f46-437a-a0fa-ffa4d1303cba
++status: experimental
++description: Indicates user activity that is unusual for the user or consistent with known attack patterns.
++references:
++    - https://learn.microsoft.com/en-us/azure/active-directory/identity-protection/concept-identity-protection-risks#azure-ad-threat-intelligence-sign-in
++    - https://learn.microsoft.com/en-us/azure/active-directory/identity-protection/concept-identity-protection-risks#azure-ad-threat-intelligence-user
++    - https://learn.microsoft.com/en-us/azure/active-directory/architecture/security-operations-user-accounts#unusual-sign-ins
++author: Mark Morowczynski '@markmorow', Gloria Lee, '@gleeiamglo'
++date: 2023/09/07
++tags:
++    - attack.t1078
++    - attack.persistence
++    - attack.defense_evasion
++    - attack.privilege_escalation
++    - attack.initial_access
++logsource:
++    product: azure
++    service: riskdetection
++detection:
++    selection:
++        riskEventType: 'investigationsThreatIntelligence'
++    condition: selection
++falsepositives:
++    - We recommend investigating the sessions flagged by this detection in the context of other sign-ins from the user.
++level: high
+diff --git a/rules/cloud/okta/okta_identity_provider_created.yml b/rules/cloud/okta/okta_identity_provider_created.yml
+new file mode 100644
+index 000000000..c21a195a5
+--- /dev/null
++++ b/rules/cloud/okta/okta_identity_provider_created.yml
+@@ -0,0 +1,22 @@
++title: Okta Identity Provider Created
++id: 969c7590-8c19-4797-8c1b-23155de6e7ac
++status: experimental
++description: Detects when a new identity provider is created for Okta.
++references:
++    - https://developer.okta.com/docs/reference/api/system-log/
++    - https://sec.okta.com/articles/2023/08/cross-tenant-impersonation-prevention-and-detection
++author: kelnage
++date: 2023/09/07
++tags:
++    - attack.persistence
++    - attack.t1098.001
++logsource:
++    product: okta
++    service: okta
++detection:
++    selection:
++        eventtype: 'system.idp.lifecycle.create'
++    condition: selection
++falsepositives:
++    - When an admin creates a new, authorised identity provider.
++level: medium
+diff --git a/rules/cloud/okta/okta_new_behaviours_admin_console.yml b/rules/cloud/okta/okta_new_behaviours_admin_console.yml
+new file mode 100644
+index 000000000..35a03504f
+--- /dev/null
++++ b/rules/cloud/okta/okta_new_behaviours_admin_console.yml
+@@ -0,0 +1,25 @@
++title: Okta New Admin Console Behaviours
++id: a0b38b70-3cb5-484b-a4eb-c4d8e7bcc0a9
++status: experimental
++description: Detects when Okta identifies new activity in the Admin Console.
++references:
++    - https://developer.okta.com/docs/reference/api/system-log/
++    - https://sec.okta.com/articles/2023/08/cross-tenant-impersonation-prevention-and-detection
++author: kelnage
++date: 2023/09/07
++tags:
++    - attack.initial_access
++    - attack.t1078.004
++logsource:
++    product: okta
++    service: okta
++detection:
++    selection:
++        eventtype: 'policy.evaluate_sign_on'
++        target.displayname: 'Okta Admin Console'
++        debugcontext_debugdata_behaviors: 'POSITIVE'
++        debugcontext_debugdata_logonlysecuritydata: 'POSITIVE'
++    condition: selection
++falsepositives:
++    - Whenever an admin starts using new features of the admin console.
++level: low
+diff --git a/rules/cloud/okta/okta_suspicious_activity_enduser_report.yml b/rules/cloud/okta/okta_suspicious_activity_enduser_report.yml
+new file mode 100644
+index 000000000..6db72dea1
+--- /dev/null
++++ b/rules/cloud/okta/okta_suspicious_activity_enduser_report.yml
+@@ -0,0 +1,22 @@
++title: Okta Suspicious Activity Reported by End-user
++id: 07e97cc6-aed1-43ae-9081-b3470d2367f1
++status: experimental
++description: Detects when an Okta end-user reports activity by their account as being potentially suspicious.
++references:
++    - https://developer.okta.com/docs/reference/api/system-log/
++    - https://github.com/okta/workflows-templates/blob/master/workflows/suspicious_activity_reported/readme.md
++author: kelnage
++date: 2023/09/07
++tags:
++    - attack.resource_development
++    - attack.t1586.003
++logsource:
++    product: okta
++    service: okta
++detection:
++    selection:
++        eventtype: 'user.account.report_suspicious_activity_by_enduser'
++    condition: selection
++falsepositives:
++    - If an end-user incorrectly identifies normal activity as suspicious.
++level: high
+diff --git a/rules/cloud/okta/okta_user_session_start_via_anonymised_proxy.yml b/rules/cloud/okta/okta_user_session_start_via_anonymised_proxy.yml
+new file mode 100644
+index 000000000..8cf095fc7
+--- /dev/null
++++ b/rules/cloud/okta/okta_user_session_start_via_anonymised_proxy.yml
+@@ -0,0 +1,23 @@
++title: Okta User Session Start Via An Anonymising Proxy Service
++id: bde30855-5c53-4c18-ae90-1ff79ebc9578
++status: experimental
++description: Detects when an Okta user session starts where the user is behind an anonymising proxy service.
++references:
++    - https://developer.okta.com/docs/reference/api/system-log/
++    - https://sec.okta.com/articles/2023/08/cross-tenant-impersonation-prevention-and-detection
++author: kelnage
++date: 2023/09/07
++tags:
++    - attack.defense_evasion
++    - attack.t1562.006
++logsource:
++    product: okta
++    service: okta
++detection:
++    selection:
++        eventtype: 'user.session.start'
++        securitycontext.isproxy: 'true'
++    condition: selection
++falsepositives:
++    - If a user requires an anonymising proxy due to valid justifications.
++level: high
+diff --git a/rules/linux/process_creation/proc_creation_lnx_esxcli_syslog_config_change.yml b/rules/linux/process_creation/proc_creation_lnx_esxcli_syslog_config_change.yml
+new file mode 100644
+index 000000000..bdbb0d9b4
+--- /dev/null
++++ b/rules/linux/process_creation/proc_creation_lnx_esxcli_syslog_config_change.yml
+@@ -0,0 +1,28 @@
++title: ESXi Syslog Configuration Change Via ESXCLI
++id: 38eb1dbb-011f-40b1-a126-cf03a0210563
++status: experimental
++description: Detects changes to the ESXi syslog configuration via "esxcli"
++references:
++    - https://support.solarwinds.com/SuccessCenter/s/article/Configure-ESXi-Syslog-to-LEM?language=en_US
++    - https://developer.vmware.com/docs/11743/esxi-7-0-esxcli-command-reference/namespace/esxcli_system.html
++author: Cedric Maurugeon
++date: 2023/09/04
++tags:
++    - attack.defense_evasion
++    - attack.t1562.001
++    - attack.t1562.003
++logsource:
++    category: process_creation
++    product: linux
++detection:
++    selection:
++        Image|endswith: '/esxcli'
++        CommandLine|contains|all:
++            - 'system'
++            - 'syslog'
++            - 'config'
++        CommandLine|contains: ' set'
++    condition: selection
++falsepositives:
++    - Legitimate administrative activities
++level: medium
+diff --git a/rules/windows/builtin/firewall_as/win_firewall_as_add_rule.yml b/rules/windows/builtin/firewall_as/win_firewall_as_add_rule.yml
+index 1bd94c8fd..906adde5f 100644
+--- a/rules/windows/builtin/firewall_as/win_firewall_as_add_rule.yml
++++ b/rules/windows/builtin/firewall_as/win_firewall_as_add_rule.yml
+@@ -6,7 +6,7 @@ references:
+     - https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-r2-and-2008/dd364427(v=ws.10)
+ author: frack113
+ date: 2022/02/19
+-modified: 2023/04/21
++modified: 2023/09/09
+ tags:
+     - attack.defense_evasion
+     - attack.t1562.004
+@@ -24,9 +24,9 @@ detection:
+         - ApplicationPath|startswith:
+             - 'C:\Program Files\'
+             - 'C:\Program Files (x86)\'
+-        - ModifyingApplication: 'C:\Windows\System32\oobe\Setup.exe'
+         - ModifyingApplication|startswith: 'C:\Windows\WinSxS\'  # TiWorker.exe
+         - ModifyingApplication:
++            - 'C:\Windows\System32\oobe\Setup.exe'
+             - 'C:\Windows\SysWOW64\msiexec.exe'
+             - 'C:\Windows\System32\svchost.exe'
+             - 'C:\Windows\System32\dllhost.exe'
+diff --git a/rules/windows/dns_query/dns_query_win_remote_access_software_domains_non_browsers.yml b/rules/windows/dns_query/dns_query_win_remote_access_software_domains_non_browsers.yml
+index 0f567dc2c..15230ec48 100644
+--- a/rules/windows/dns_query/dns_query_win_remote_access_software_domains_non_browsers.yml
++++ b/rules/windows/dns_query/dns_query_win_remote_access_software_domains_non_browsers.yml
+@@ -53,7 +53,6 @@ detection:
+             - 'kickstart.jumpcloud.com'
+             - 'license.bomgar.com'
+             - 'logmein-gateway.com'
+-            - 'logmein-gateway.com'
+             - 'logmein.com'
+             - 'logmeincdn.http.internapcdn.net'
+             - 'n-able.com'
+diff --git a/rules/windows/network_connection/net_connection_win_dead_drop_resolvers.yml b/rules/windows/network_connection/net_connection_win_dead_drop_resolvers.yml
+index b67cfe6fe..c82d57401 100644
+--- a/rules/windows/network_connection/net_connection_win_dead_drop_resolvers.yml
++++ b/rules/windows/network_connection/net_connection_win_dead_drop_resolvers.yml
+@@ -8,7 +8,7 @@ references:
+     - https://blog.bushidotoken.net/2021/04/dead-drop-resolvers-espionage-inspired.html
+ author: Sorina Ionescu, X__Junior (Nextron Systems)
+ date: 2022/08/17
+-modified: 2023/08/17
++modified: 2023/09/12
+ tags:
+     - attack.command_and_control
+     - attack.t1102
+@@ -20,13 +20,13 @@ detection:
+     selection:
+         Initiated: 'true'
+         DestinationHostname|endswith:
+-            - '.cloudflare.com'
+-            - '.githubusercontent.com'
++            - '.t.me'
+             - '4shared.com'
+             - 'anonfiles.com'
+             - 'cdn.discordapp.com'
++            - 'cloudflare.com'
+             - 'ddns.net'
+-            - 'discord.com/api/webhooks/'
++            - 'discord.com'
+             - 'docs.google.com'
+             - 'drive.google.com'
+             - 'dropbox.com'
+@@ -35,6 +35,7 @@ detection:
+             - 'feeds.rapidfeeds.com'
+             - 'fotolog.com'
+             - 'ghostbin.co/'
++            - 'githubusercontent.com'
+             - 'gofile.io'
+             - 'hastebin.com'
+             - 'imgur.com'
+@@ -53,7 +54,6 @@ detection:
+             - 'sendspace.com'
+             - 'steamcommunity.com'
+             - 'storage.googleapis.com'
+-            - 't.me'
+             - 'technet.microsoft.com'
+             - 'temp.sh'
+             - 'transfer.sh'
+@@ -62,15 +62,22 @@ detection:
+             - 'vimeo.com'
+             - 'wetransfer.com'
+             - 'youtube.com'
+-    # Note: Add/Remove browsers that you don't use or those that have custom install locations
++    # Note: Add/Remove browsers/applications that you don't use or those that have custom install locations
++    # Note: To avoid complex conditions the filters for some apps are genric by name only. A custom tuning is recommended for best results
+     filter_main_chrome:
+         Image:
+             - 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+             - 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
++    filter_main_chrome_appdata:
++        Image|startswith: 'C:\Users\'
++        Image|endswith: '\AppData\Local\Google\Chrome\Application\chrome.exe'
+     filter_main_firefox:
+         Image:
+             - 'C:\Program Files\Mozilla Firefox\firefox.exe'
+             - 'C:\Program Files (x86)\Mozilla Firefox\firefox.exe'
++    filter_main_firefox_appdata:
++        Image|startswith: 'C:\Users\'
++        Image|endswith: '\AppData\Local\Mozilla Firefox\firefox.exe'
+     filter_main_ie:
+         Image:
+             - 'C:\Program Files (x86)\Internet Explorer\iexplore.exe'
+@@ -90,14 +97,15 @@ detection:
+             - '\msedgewebview2.exe'
+     filter_main_safari:
+         Image|endswith: '\safari.exe'
+-    filter_optional_defender:
++    filter_main_defender:
+         Image|endswith:
+             - '\MsMpEng.exe' #Microsoft Defender executable
+             - '\MsSense.exe' #Windows Defender Advanced Threat Protection Service Executable
+-    filter_optional_prtg:
+-        Image|endswith: '\PRTG Probe.exe' #Paessler's PRTG Network Monitor
+-    filter_optional_qlik:
+-        Image|endswith: '\Engine.exe' #Process from qlik.com app
++    filter_main_prtg:
++        #Paessler's PRTG Network Monitor
++        Image|endswith:
++            - 'C:\Program Files (x86)\PRTG Network Monitor\PRTG Probe.exe'
++            - 'C:\Program Files\PRTG Network Monitor\PRTG Probe.exe'
+     filter_main_brave:
+         Image|endswith: '\brave.exe'
+         Image|startswith: 'C:\Program Files\BraveSoftware\'
+@@ -164,26 +172,36 @@ detection:
+     filter_main_telegram:
+         Image|contains: '\AppData\Roaming\Telegram Desktop\'
+         Image|endswith: '\Telegram.exe'
++        DestinationHostname|endswith: '.t.me'
+     filter_main_onedrive:
+         Image|contains: '\AppData\Local\Microsoft\OneDrive\'
+         Image|endswith: '\OneDrive.exe'
++        DestinationHostname|endswith: 'onedrive.com'
+     filter_main_dropbox:
+         Image|startswith:
+             - 'C:\Program Files (x86)\Dropbox\Client\'
+             - 'C:\Program Files\Dropbox\Client\'
+         Image|endswith: '\Dropbox.exe'
++        DestinationHostname|endswith: 'dropbox.com'
+     filter_main_mega:
+         Image|contains: '\AppData\Local\MEGAsync\'
+         Image|endswith: 'MEGAsync.exe'
++        DestinationHostname|endswith: 'mega.nz'
+     filter_main_googledrive:
+         Image|startswith:
+             - 'C:\Program Files\Google\Drive File Stream\'
+             - 'C:\Program Files (x86)\Google\Drive File Stream\'
+         Image|endswith: 'GoogleDriveFS.exe'
++        DestinationHostname|endswith: 'drive.google.com'
+     filter_main_discord:
+             Image|contains: '\AppData\Local\Discord\'
+             Image|endswith: '\Discord.exe'
+-    condition: selection and not 1 of filter_main_* and not 1 of filter_optional_*
++            DestinationHostname|endswith:
++                - 'discord.com'
++                - 'cdn.discordapp.com'
++    #filter_optional_qlik:
++    #    Image|endswith: '\Engine.exe' #Process from qlik.com app
++    condition: selection and not 1 of filter_main_*
+ falsepositives:
+     - One might need to exclude other internet browsers found in it's network or other applications like ones mentioned above from Microsoft Defender.
+ level: high
+diff --git a/rules/windows/network_connection/net_connection_win_susp_epmap.yml b/rules/windows/network_connection/net_connection_win_susp_epmap.yml
+index 2a0164d74..98516b0ab 100644
+--- a/rules/windows/network_connection/net_connection_win_susp_epmap.yml
++++ b/rules/windows/network_connection/net_connection_win_susp_epmap.yml
+@@ -6,7 +6,7 @@ references:
+     - https://github.com/RiccardoAncarani/TaskShell/
+ author: frack113, Tim Shelton (fps)
+ date: 2022/07/14
+-modified: 2022/07/18
++modified: 2023/09/01
+ tags:
+     - attack.lateral_movement
+ logsource:
+@@ -18,11 +18,15 @@ detection:
+         Initiated: 'true'
+         DestinationPort: 135
+         #DestinationPortName: epmap
+-    filter:
++    filter_image:
+         Image|startswith:
+             - C:\Windows\
+             - C:\ProgramData\Amazon\SSM\Update\amazon-ssm-agent-updater
+-    condition: selection and not filter
++    filter_image_null1:
++        Image: null
++    filter_image_null2:
++        Image: ''
++    condition: selection and not 1 of filter_*
+ falsepositives:
+     - Unknown
+ level: high
+diff --git a/rules/windows/process_creation/proc_creation_win_fsutil_usage.yml b/rules/windows/process_creation/proc_creation_win_fsutil_usage.yml
+index db3159e90..80a23bb47 100644
+--- a/rules/windows/process_creation/proc_creation_win_fsutil_usage.yml
++++ b/rules/windows/process_creation/proc_creation_win_fsutil_usage.yml
+@@ -8,12 +8,16 @@ references:
+     - https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-usn
+     - https://github.com/redcanaryco/atomic-red-team/blob/f339e7da7d05f6057fdfcdd3742bfcf365fee2a9/atomics/T1070/T1070.md
+     - https://eqllib.readthedocs.io/en/latest/analytics/c91f422a-5214-4b17-8664-c5fcf115c0a2.html
++    - https://github.com/albertzsigovits/malware-notes/blob/558898932c1579ff589290092a2c8febefc3a4c9/Ransomware/Lockbit.md
++    - https://blog.cluster25.duskrise.com/2023/05/22/back-in-black-blackbyte-nt
+ author: Ecco, E.M. Anhaus, oscd.community
+ date: 2019/09/26
+-modified: 2022/07/11
++modified: 2023/09/09
+ tags:
+     - attack.defense_evasion
++    - attack.impact
+     - attack.t1070
++    - attack.t1485
+ logsource:
+     category: process_creation
+     product: windows
+@@ -25,6 +29,7 @@ detection:
+         CommandLine|contains:
+             - 'deletejournal'        # usn deletejournal ==> generally ransomware or attacker
+             - 'createjournal'        # usn createjournal ==> can modify config to set it to a tiny size
++            - 'setZeroData'          # file setZeroData  ==> empties a file with zeroes
+     condition: all of selection_*
+ falsepositives:
+     - Admin activity
+diff --git a/rules/windows/process_creation/proc_creation_win_susp_elevated_system_shell.yml b/rules/windows/process_creation/proc_creation_win_susp_elevated_system_shell.yml
+index 925543ec9..8fc085dbc 100644
+--- a/rules/windows/process_creation/proc_creation_win_susp_elevated_system_shell.yml
++++ b/rules/windows/process_creation/proc_creation_win_susp_elevated_system_shell.yml
+@@ -6,7 +6,7 @@ references:
+     - https://github.com/Wh04m1001/SysmonEoP
+ author: frack113, Tim Shelton (update fp)
+ date: 2022/12/05
+-modified: 2023/07/04
++modified: 2023/09/08
+ tags:
+     - attack.privilege_escalation
+     - attack.defense_evasion
+@@ -72,8 +72,11 @@ detection:
+         ParentImage: 'C:\Windows\SysWOW64\msiexec.exe'
+         ParentCommandLine|startswith: 'C:\Windows\syswow64\MsiExec.exe -Embedding'
+         CommandLine|contains: '\RegisterMicrosoftUpdate.ps1'
+-    filter_empty_parent_1:
++    filter_empty_parent_1a:
+         CommandLine: "powershell.exe -ExecutionPolicy Restricted -Command Write-Host 'Final result: 1';"  # Most probably SetupHost.exe during Windows updates/upgrades; See comment on rule id: f4bbd493-b796-416e-bbf2-121235348529
++    filter_empty_parent_2b:  # https://answers.microsoft.com/en-us/windows/forum/all/res-and-inf-powershell-commands/793736ee-94bd-424f-811c-35a425e28832
++        CommandLine|startswith: 'powershell.exe -ExecutionPolicy Restricted -Command $Res = 0;'
++        CommandLine|endswith: "Write-Host 'Final result:', $Res;"
+     filter_empty_parent_2:
+         Image|endswith: '\cmd.exe'
+         CommandLine|contains: '/d /c C:\Windows\system32\silcollector.cmd'
+diff --git a/rules/windows/wmi_event/sysmon_wmi_susp_scripting.yml b/rules/windows/wmi_event/sysmon_wmi_susp_scripting.yml
+index 73fafcc56..f84cb1ade 100644
+--- a/rules/windows/wmi_event/sysmon_wmi_susp_scripting.yml
++++ b/rules/windows/wmi_event/sysmon_wmi_susp_scripting.yml
+@@ -8,7 +8,7 @@ references:
+     - https://github.com/RiccardoAncarani/LiquidSnake
+ author: Florian Roth (Nextron Systems), Jonhnathan Ribeiro
+ date: 2019/04/15
+-modified: 2022/07/07
++modified: 2023/09/09
+ tags:
+     - attack.execution
+     - attack.t1059.005
+@@ -27,12 +27,10 @@ detection:
+             - '.downloadfile'
+         - Destination|contains:
+             - ' iex('
+-            - 'WScript.shell'
+             - ' -nop '
+             - ' -noprofile '
+             - ' -decode '
+             - ' -enc '
+-        - Destination|contains:
+             - 'WScript.Shell'
+             - 'System.Security.Cryptography.FromBase64Transform'
+     condition: selection_destination

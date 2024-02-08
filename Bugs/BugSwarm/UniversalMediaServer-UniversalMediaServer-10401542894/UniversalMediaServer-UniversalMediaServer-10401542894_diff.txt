@@ -1,0 +1,32 @@
+diff --git a/src/main/java/net/pms/configuration/sharedcontent/FileTypeAdapter.java b/src/main/java/net/pms/configuration/sharedcontent/FileTypeAdapter.java
+index bc6bdf123..8f55754dc 100644
+--- a/src/main/java/net/pms/configuration/sharedcontent/FileTypeAdapter.java
++++ b/src/main/java/net/pms/configuration/sharedcontent/FileTypeAdapter.java
+@@ -45,11 +45,10 @@ public class FileTypeAdapter implements JsonSerializer<File>, JsonDeserializer<F
+ 
+ 		try {
+ 			FilePermissions permissions = FileUtil.getFilePermissions(file);
+-			if (permissions.isBrowsable()) {
+-				return file;
++			if (!permissions.isBrowsable()) {
++				LOGGER.warn("Insufficient permission to read folder \"{}\": {}", file.getAbsolutePath(), permissions.getLastCause());
+ 			}
+-			LOGGER.warn("Insufficient permission to read folder \"{}\": {}", file.getAbsolutePath(), permissions.getLastCause());
+-			return null;
++			return file;
+ 		} catch (FileNotFoundException e) {
+ 			LOGGER.warn("Folder not found: {}", e.getMessage());
+ 			return null;
+diff --git a/src/main/java/net/pms/util/FilePermissions.java b/src/main/java/net/pms/util/FilePermissions.java
+index 65987cbb7..97a9b3119 100644
+--- a/src/main/java/net/pms/util/FilePermissions.java
++++ b/src/main/java/net/pms/util/FilePermissions.java
+@@ -322,7 +322,7 @@ public class FilePermissions {
+ 	 *         its content is permitted, {@code false} otherwise.
+ 	 */
+ 	public boolean isBrowsable() {
+-		checkPermissions(true, false, false);
++		checkPermissions(true, false, true);
+ 		lock.readLock().lock();
+ 		try {
+ 			return flags.contains(FileFlag.BROWSE);

@@ -1,0 +1,14 @@
+diff --git a/mjml/elements/mj_social.py b/mjml/elements/mj_social.py
+index ea8f264..d5b8458 100644
+--- a/mjml/elements/mj_social.py
++++ b/mjml/elements/mj_social.py
+@@ -61,7 +61,8 @@ class MjSocial(BodyComponent):
+ 
+     def getSocialElementAttributes(self):
+         base = {}
+-        if padding := self.getAttribute('inner-padding'):
++        padding = self.getAttribute('inner-padding')
++        if padding:
+             base['padding'] = padding
+ 
+         for attr_name in [

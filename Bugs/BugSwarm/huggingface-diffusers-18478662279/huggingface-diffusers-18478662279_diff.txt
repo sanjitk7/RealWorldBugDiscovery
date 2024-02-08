@@ -1,0 +1,536 @@
+diff --git a/docs/source/en/tutorials/using_peft_for_inference.md b/docs/source/en/tutorials/using_peft_for_inference.md
+index 2e333751..da69b712 100644
+--- a/docs/source/en/tutorials/using_peft_for_inference.md
++++ b/docs/source/en/tutorials/using_peft_for_inference.md
+@@ -12,9 +12,9 @@ specific language governing permissions and limitations under the License.
+ 
+ [[open-in-colab]]
+ 
+-# Inference with PEFT
++# Load LoRAs for inference
+ 
+-There are many adapters trained in different styles to achieve different effects. You can even combine multiple adapters to create new and unique images. With the 🤗 [PEFT](https://huggingface.co/docs/peft/index) integration in 🤗 Diffusers, it is really easy to load and manage adapters for inference. In this guide, you'll learn how to use different adapters with [Stable Diffusion XL (SDXL)](../api/pipelines/stable_diffusion/stable_diffusion_xl) for inference.
++There are many adapters (with LoRAs being the most common type) trained in different styles to achieve different effects. You can even combine multiple adapters to create new and unique images. With the 🤗 [PEFT](https://huggingface.co/docs/peft/index) integration in 🤗 Diffusers, it is really easy to load and manage adapters for inference. In this guide, you'll learn how to use different adapters with [Stable Diffusion XL (SDXL)](../api/pipelines/stable_diffusion/stable_diffusion_xl) for inference.
+ 
+ Throughout this guide, you'll use LoRA as the main adapter technique, so we'll use the terms LoRA and adapter interchangeably. You should have some familiarity with LoRA, and if you don't, we welcome you to check out the [LoRA guide](https://huggingface.co/docs/peft/conceptual_guides/lora).
+ 
+@@ -22,9 +22,8 @@ Let's first install all the required libraries.
+ 
+ ```bash
+ !pip install -q transformers accelerate
+-# Will be updated once the stable releases are done.
+-!pip install -q git+https://github.com/huggingface/peft.git
+-!pip install -q git+https://github.com/huggingface/diffusers.git
++!pip install peft
++!pip install diffusers
+ ```
+ 
+ Now, let's load a pipeline with a SDXL checkpoint:
+@@ -165,3 +164,22 @@ list_adapters_component_wise = pipe.get_list_adapters()
+ list_adapters_component_wise
+ {"text_encoder": ["toy", "pixel"], "unet": ["toy", "pixel"], "text_encoder_2": ["toy", "pixel"]}
+ ```
++
++## Fusing adapters into the model
++
++You can use PEFT to easily fuse/unfuse multiple adapters directly into the model weights (both UNet and text encoder) using the [`~diffusers.loaders.LoraLoaderMixin.fuse_lora`] method, which can lead to a speed-up in inference and lower VRAM usage.
++
++```py
++pipe.load_lora_weights("nerijs/pixel-art-xl", weight_name="pixel-art-xl.safetensors", adapter_name="pixel")
++pipe.load_lora_weights("CiroN2022/toy-face", weight_name="toy_face_sdxl.safetensors", adapter_name="toy")
++
++pipe.set_adapters(["pixel", "toy"], adapter_weights=[0.5, 1.0])
++# Fuses the LoRAs into the Unet
++pipe.fuse_lora()
++
++prompt = "toy_face of a hacker with a hoodie, pixel art"
++image = pipe(prompt, num_inference_steps=30, generator=torch.manual_seed(0)).images[0]
++
++# Gets the Unet back to the original state
++pipe.unfuse_lora()
++```
+diff --git a/src/diffusers/models/attention_processor.py b/src/diffusers/models/attention_processor.py
+index eefb0289..1234dbd2 100644
+--- a/src/diffusers/models/attention_processor.py
++++ b/src/diffusers/models/attention_processor.py
+@@ -378,7 +378,7 @@ class Attention(nn.Module):
+             _remove_lora (`bool`, *optional*, defaults to `False`):
+                 Set to `True` to remove LoRA layers from the model.
+         """
+-        if hasattr(self, "processor") and _remove_lora and self.to_q.lora_layer is not None:
++        if not USE_PEFT_BACKEND and hasattr(self, "processor") and _remove_lora and self.to_q.lora_layer is not None:
+             deprecate(
+                 "set_processor to offload LoRA",
+                 "0.26.0",
+diff --git a/src/diffusers/pipelines/animatediff/pipeline_animatediff.py b/src/diffusers/pipelines/animatediff/pipeline_animatediff.py
+index 49947f9d..b63acb9a 100644
+--- a/src/diffusers/pipelines/animatediff/pipeline_animatediff.py
++++ b/src/diffusers/pipelines/animatediff/pipeline_animatediff.py
+@@ -498,7 +498,7 @@ class AnimateDiffPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraLo
+     @torch.no_grad()
+     def __call__(
+         self,
+-        prompt: Union[str, List[str]],
++        prompt: Union[str, List[str]] = None,
+         num_frames: Optional[int] = 16,
+         height: Optional[int] = None,
+         width: Optional[int] = None,
+diff --git a/src/diffusers/pipelines/latent_consistency_models/pipeline_latent_consistency_img2img.py b/src/diffusers/pipelines/latent_consistency_models/pipeline_latent_consistency_img2img.py
+index ccc84e22..679415db 100644
+--- a/src/diffusers/pipelines/latent_consistency_models/pipeline_latent_consistency_img2img.py
++++ b/src/diffusers/pipelines/latent_consistency_models/pipeline_latent_consistency_img2img.py
+@@ -60,7 +60,7 @@ EXAMPLE_DOC_STRING = """
+         >>> import torch
+         >>> import PIL
+ 
+-        >>> pipe = DiffusionPipeline.from_pretrained("SimianLuo/LCM_Dreamshaper_v7")
++        >>> pipe = AutoPipelineForImage2Image.from_pretrained("SimianLuo/LCM_Dreamshaper_v7")
+         >>> # To save GPU memory, torch.float16 can be used, but it may compromise image quality.
+         >>> pipe.to(torch_device="cuda", torch_dtype=torch.float32)
+ 
+@@ -738,7 +738,7 @@ class LatentConsistencyModelImg2ImgPipeline(
+             if original_inference_steps is not None
+             else self.scheduler.config.original_inference_steps
+         )
+-        latent_timestep = torch.tensor(int(strength * original_inference_steps))
++        latent_timestep = timesteps[:1]
+         latents = self.prepare_latents(
+             image, latent_timestep, batch_size, num_images_per_prompt, prompt_embeds.dtype, device, generator
+         )
+diff --git a/src/diffusers/pipelines/pipeline_utils.py b/src/diffusers/pipelines/pipeline_utils.py
+index 9e019794..6437732d 100644
+--- a/src/diffusers/pipelines/pipeline_utils.py
++++ b/src/diffusers/pipelines/pipeline_utils.py
+@@ -158,9 +158,9 @@ def is_safetensors_compatible(filenames, variant=None, passed_components=None) -
+             continue
+ 
+         if extension == ".bin":
+-            pt_filenames.append(filename)
++            pt_filenames.append(os.path.normpath(filename))
+         elif extension == ".safetensors":
+-            sf_filenames.add(filename)
++            sf_filenames.add(os.path.normpath(filename))
+ 
+     for filename in pt_filenames:
+         #  filename = 'foo/bar/baz.bam' -> path = 'foo/bar', filename = 'baz', extention = '.bam'
+@@ -172,9 +172,8 @@ def is_safetensors_compatible(filenames, variant=None, passed_components=None) -
+         else:
+             filename = filename
+ 
+-        expected_sf_filename = os.path.join(path, filename)
++        expected_sf_filename = os.path.normpath(os.path.join(path, filename))
+         expected_sf_filename = f"{expected_sf_filename}.safetensors"
+-
+         if expected_sf_filename not in sf_filenames:
+             logger.warning(f"{expected_sf_filename} not found")
+             return False
+@@ -1774,7 +1773,7 @@ class DiffusionPipeline(ConfigMixin, PushToHubMixin):
+                 )
+             ):
+                 raise EnvironmentError(
+-                    f"Could not found the necessary `safetensors` weights in {model_filenames} (variant={variant})"
++                    f"Could not find the necessary `safetensors` weights in {model_filenames} (variant={variant})"
+                 )
+             if from_flax:
+                 ignore_patterns = ["*.bin", "*.safetensors", "*.onnx", "*.pb"]
+diff --git a/src/diffusers/pipelines/pixart_alpha/pipeline_pixart_alpha.py b/src/diffusers/pipelines/pixart_alpha/pipeline_pixart_alpha.py
+index 6f2bed9c..147e2b76 100644
+--- a/src/diffusers/pipelines/pixart_alpha/pipeline_pixart_alpha.py
++++ b/src/diffusers/pipelines/pixart_alpha/pipeline_pixart_alpha.py
+@@ -156,6 +156,8 @@ class PixArtAlphaPipeline(DiffusionPipeline):
+             mask_feature: (bool, defaults to `True`):
+                 If `True`, the function will mask the text embeddings.
+         """
++        embeds_initially_provided = prompt_embeds is not None and negative_prompt_embeds is not None
++
+         if device is None:
+             device = self._execution_device
+ 
+@@ -253,7 +255,7 @@ class PixArtAlphaPipeline(DiffusionPipeline):
+             negative_prompt_embeds = None
+ 
+         # Perform additional masking.
+-        if mask_feature and prompt_embeds is None and negative_prompt_embeds is None:
++        if mask_feature and not embeds_initially_provided:
+             prompt_embeds = prompt_embeds.unsqueeze(1)
+             masked_prompt_embeds, keep_indices = self.mask_text_embeddings(prompt_embeds, prompt_embeds_attention_mask)
+             masked_prompt_embeds = masked_prompt_embeds.squeeze(1)
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_unclip.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_unclip.py
+index c81dd85f..eb454288 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_unclip.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_unclip.py
+@@ -206,17 +206,15 @@ class StableUnCLIPPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+             prior_text_encoder_output = self.prior_text_encoder(text_input_ids.to(device))
+ 
+             prompt_embeds = prior_text_encoder_output.text_embeds
+-            prior_text_encoder_hidden_states = prior_text_encoder_output.last_hidden_state
++            text_enc_hid_states = prior_text_encoder_output.last_hidden_state
+ 
+         else:
+             batch_size = text_model_output[0].shape[0]
+-            prompt_embeds, prior_text_encoder_hidden_states = text_model_output[0], text_model_output[1]
++            prompt_embeds, text_enc_hid_states = text_model_output[0], text_model_output[1]
+             text_mask = text_attention_mask
+ 
+         prompt_embeds = prompt_embeds.repeat_interleave(num_images_per_prompt, dim=0)
+-        prior_text_encoder_hidden_states = prior_text_encoder_hidden_states.repeat_interleave(
+-            num_images_per_prompt, dim=0
+-        )
++        text_enc_hid_states = text_enc_hid_states.repeat_interleave(num_images_per_prompt, dim=0)
+         text_mask = text_mask.repeat_interleave(num_images_per_prompt, dim=0)
+ 
+         if do_classifier_free_guidance:
+@@ -235,9 +233,7 @@ class StableUnCLIPPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+             )
+ 
+             negative_prompt_embeds = negative_prompt_embeds_prior_text_encoder_output.text_embeds
+-            uncond_prior_text_encoder_hidden_states = (
+-                negative_prompt_embeds_prior_text_encoder_output.last_hidden_state
+-            )
++            uncond_text_enc_hid_states = negative_prompt_embeds_prior_text_encoder_output.last_hidden_state
+ 
+             # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
+ 
+@@ -245,11 +241,9 @@ class StableUnCLIPPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+             negative_prompt_embeds = negative_prompt_embeds.repeat(1, num_images_per_prompt)
+             negative_prompt_embeds = negative_prompt_embeds.view(batch_size * num_images_per_prompt, seq_len)
+ 
+-            seq_len = uncond_prior_text_encoder_hidden_states.shape[1]
+-            uncond_prior_text_encoder_hidden_states = uncond_prior_text_encoder_hidden_states.repeat(
+-                1, num_images_per_prompt, 1
+-            )
+-            uncond_prior_text_encoder_hidden_states = uncond_prior_text_encoder_hidden_states.view(
++            seq_len = uncond_text_enc_hid_states.shape[1]
++            uncond_text_enc_hid_states = uncond_text_enc_hid_states.repeat(1, num_images_per_prompt, 1)
++            uncond_text_enc_hid_states = uncond_text_enc_hid_states.view(
+                 batch_size * num_images_per_prompt, seq_len, -1
+             )
+             uncond_text_mask = uncond_text_mask.repeat_interleave(num_images_per_prompt, dim=0)
+@@ -260,13 +254,11 @@ class StableUnCLIPPipeline(DiffusionPipeline, TextualInversionLoaderMixin, LoraL
+             # Here we concatenate the unconditional and text embeddings into a single batch
+             # to avoid doing two forward passes
+             prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds])
+-            prior_text_encoder_hidden_states = torch.cat(
+-                [uncond_prior_text_encoder_hidden_states, prior_text_encoder_hidden_states]
+-            )
++            text_enc_hid_states = torch.cat([uncond_text_enc_hid_states, text_enc_hid_states])
+ 
+             text_mask = torch.cat([uncond_text_mask, text_mask])
+ 
+-        return prompt_embeds, prior_text_encoder_hidden_states, text_mask
++        return prompt_embeds, text_enc_hid_states, text_mask
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline._encode_prompt
+     def _encode_prompt(
+diff --git a/src/diffusers/pipelines/unclip/pipeline_unclip.py b/src/diffusers/pipelines/unclip/pipeline_unclip.py
+index c4a25c86..7bebed73 100644
+--- a/src/diffusers/pipelines/unclip/pipeline_unclip.py
++++ b/src/diffusers/pipelines/unclip/pipeline_unclip.py
+@@ -156,15 +156,15 @@ class UnCLIPPipeline(DiffusionPipeline):
+             text_encoder_output = self.text_encoder(text_input_ids.to(device))
+ 
+             prompt_embeds = text_encoder_output.text_embeds
+-            text_encoder_hidden_states = text_encoder_output.last_hidden_state
++            text_enc_hid_states = text_encoder_output.last_hidden_state
+ 
+         else:
+             batch_size = text_model_output[0].shape[0]
+-            prompt_embeds, text_encoder_hidden_states = text_model_output[0], text_model_output[1]
++            prompt_embeds, text_enc_hid_states = text_model_output[0], text_model_output[1]
+             text_mask = text_attention_mask
+ 
+         prompt_embeds = prompt_embeds.repeat_interleave(num_images_per_prompt, dim=0)
+-        text_encoder_hidden_states = text_encoder_hidden_states.repeat_interleave(num_images_per_prompt, dim=0)
++        text_enc_hid_states = text_enc_hid_states.repeat_interleave(num_images_per_prompt, dim=0)
+         text_mask = text_mask.repeat_interleave(num_images_per_prompt, dim=0)
+ 
+         if do_classifier_free_guidance:
+@@ -181,7 +181,7 @@ class UnCLIPPipeline(DiffusionPipeline):
+             negative_prompt_embeds_text_encoder_output = self.text_encoder(uncond_input.input_ids.to(device))
+ 
+             negative_prompt_embeds = negative_prompt_embeds_text_encoder_output.text_embeds
+-            uncond_text_encoder_hidden_states = negative_prompt_embeds_text_encoder_output.last_hidden_state
++            uncond_text_enc_hid_states = negative_prompt_embeds_text_encoder_output.last_hidden_state
+ 
+             # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
+ 
+@@ -189,9 +189,9 @@ class UnCLIPPipeline(DiffusionPipeline):
+             negative_prompt_embeds = negative_prompt_embeds.repeat(1, num_images_per_prompt)
+             negative_prompt_embeds = negative_prompt_embeds.view(batch_size * num_images_per_prompt, seq_len)
+ 
+-            seq_len = uncond_text_encoder_hidden_states.shape[1]
+-            uncond_text_encoder_hidden_states = uncond_text_encoder_hidden_states.repeat(1, num_images_per_prompt, 1)
+-            uncond_text_encoder_hidden_states = uncond_text_encoder_hidden_states.view(
++            seq_len = uncond_text_enc_hid_states.shape[1]
++            uncond_text_enc_hid_states = uncond_text_enc_hid_states.repeat(1, num_images_per_prompt, 1)
++            uncond_text_enc_hid_states = uncond_text_enc_hid_states.view(
+                 batch_size * num_images_per_prompt, seq_len, -1
+             )
+             uncond_text_mask = uncond_text_mask.repeat_interleave(num_images_per_prompt, dim=0)
+@@ -202,11 +202,11 @@ class UnCLIPPipeline(DiffusionPipeline):
+             # Here we concatenate the unconditional and text embeddings into a single batch
+             # to avoid doing two forward passes
+             prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds])
+-            text_encoder_hidden_states = torch.cat([uncond_text_encoder_hidden_states, text_encoder_hidden_states])
++            text_enc_hid_states = torch.cat([uncond_text_enc_hid_states, text_enc_hid_states])
+ 
+             text_mask = torch.cat([uncond_text_mask, text_mask])
+ 
+-        return prompt_embeds, text_encoder_hidden_states, text_mask
++        return prompt_embeds, text_enc_hid_states, text_mask
+ 
+     @torch.no_grad()
+     def __call__(
+@@ -293,7 +293,7 @@ class UnCLIPPipeline(DiffusionPipeline):
+ 
+         do_classifier_free_guidance = prior_guidance_scale > 1.0 or decoder_guidance_scale > 1.0
+ 
+-        prompt_embeds, text_encoder_hidden_states, text_mask = self._encode_prompt(
++        prompt_embeds, text_enc_hid_states, text_mask = self._encode_prompt(
+             prompt, device, num_images_per_prompt, do_classifier_free_guidance, text_model_output, text_attention_mask
+         )
+ 
+@@ -321,7 +321,7 @@ class UnCLIPPipeline(DiffusionPipeline):
+                 latent_model_input,
+                 timestep=t,
+                 proj_embedding=prompt_embeds,
+-                encoder_hidden_states=text_encoder_hidden_states,
++                encoder_hidden_states=text_enc_hid_states,
+                 attention_mask=text_mask,
+             ).predicted_image_embedding
+ 
+@@ -352,10 +352,10 @@ class UnCLIPPipeline(DiffusionPipeline):
+ 
+         # decoder
+ 
+-        text_encoder_hidden_states, additive_clip_time_embeddings = self.text_proj(
++        text_enc_hid_states, additive_clip_time_embeddings = self.text_proj(
+             image_embeddings=image_embeddings,
+             prompt_embeds=prompt_embeds,
+-            text_encoder_hidden_states=text_encoder_hidden_states,
++            text_encoder_hidden_states=text_enc_hid_states,
+             do_classifier_free_guidance=do_classifier_free_guidance,
+         )
+ 
+@@ -377,7 +377,7 @@ class UnCLIPPipeline(DiffusionPipeline):
+ 
+         decoder_latents = self.prepare_latents(
+             (batch_size, num_channels_latents, height, width),
+-            text_encoder_hidden_states.dtype,
++            text_enc_hid_states.dtype,
+             device,
+             generator,
+             decoder_latents,
+@@ -391,7 +391,7 @@ class UnCLIPPipeline(DiffusionPipeline):
+             noise_pred = self.decoder(
+                 sample=latent_model_input,
+                 timestep=t,
+-                encoder_hidden_states=text_encoder_hidden_states,
++                encoder_hidden_states=text_enc_hid_states,
+                 class_labels=additive_clip_time_embeddings,
+                 attention_mask=decoder_text_mask,
+             ).sample
+diff --git a/src/diffusers/pipelines/versatile_diffusion/modeling_text_unet.py b/src/diffusers/pipelines/versatile_diffusion/modeling_text_unet.py
+index 32147ffa..60ea3d81 100644
+--- a/src/diffusers/pipelines/versatile_diffusion/modeling_text_unet.py
++++ b/src/diffusers/pipelines/versatile_diffusion/modeling_text_unet.py
+@@ -1494,7 +1494,6 @@ class ResnetBlockFlat(nn.Module):
+         return output_tensor
+ 
+ 
+-# Copied from diffusers.models.unet_2d_blocks.DownBlock2D with DownBlock2D->DownBlockFlat, ResnetBlock2D->ResnetBlockFlat, Downsample2D->LinearMultiDim
+ class DownBlockFlat(nn.Module):
+     def __init__(
+         self,
+@@ -1583,7 +1582,6 @@ class DownBlockFlat(nn.Module):
+         return hidden_states, output_states
+ 
+ 
+-# Copied from diffusers.models.unet_2d_blocks.CrossAttnDownBlock2D with CrossAttnDownBlock2D->CrossAttnDownBlockFlat, ResnetBlock2D->ResnetBlockFlat, Downsample2D->LinearMultiDim
+ class CrossAttnDownBlockFlat(nn.Module):
+     def __init__(
+         self,
+diff --git a/tests/pipelines/animatediff/test_animatediff.py b/tests/pipelines/animatediff/test_animatediff.py
+index baba8ba4..3c9390f2 100644
+--- a/tests/pipelines/animatediff/test_animatediff.py
++++ b/tests/pipelines/animatediff/test_animatediff.py
+@@ -220,6 +220,17 @@ class AnimateDiffPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
+         model_dtypes = [component.dtype for component in pipe.components.values() if hasattr(component, "dtype")]
+         self.assertTrue(all(dtype == torch.float16 for dtype in model_dtypes))
+ 
++    def test_prompt_embeds(self):
++        components = self.get_dummy_components()
++        pipe = self.pipeline_class(**components)
++        pipe.set_progress_bar_config(disable=None)
++        pipe.to(torch_device)
++
++        inputs = self.get_dummy_inputs(torch_device)
++        inputs.pop("prompt")
++        inputs["prompt_embeds"] = torch.randn((1, 4, 32), device=torch_device)
++        pipe(**inputs)
++
+ 
+ @slow
+ @require_torch_gpu
+diff --git a/tests/pipelines/latent_consistency_models/test_latent_consistency_models_img2img.py b/tests/pipelines/latent_consistency_models/test_latent_consistency_models_img2img.py
+index 82a2944a..53702925 100644
+--- a/tests/pipelines/latent_consistency_models/test_latent_consistency_models_img2img.py
++++ b/tests/pipelines/latent_consistency_models/test_latent_consistency_models_img2img.py
+@@ -133,7 +133,7 @@ class LatentConsistencyModelImg2ImgPipelineFastTests(
+         assert image.shape == (1, 32, 32, 3)
+ 
+         image_slice = image[0, -3:, -3:, -1]
+-        expected_slice = np.array([0.5865, 0.2854, 0.2828, 0.7473, 0.6006, 0.4580, 0.4397, 0.6415, 0.6069])
++        expected_slice = np.array([0.4388, 0.3717, 0.2202, 0.7213, 0.6370, 0.3664, 0.5815, 0.6080, 0.4977])
+         assert np.abs(image_slice.flatten() - expected_slice).max() < 1e-3
+ 
+     def test_lcm_multistep(self):
+@@ -150,7 +150,7 @@ class LatentConsistencyModelImg2ImgPipelineFastTests(
+         assert image.shape == (1, 32, 32, 3)
+ 
+         image_slice = image[0, -3:, -3:, -1]
+-        expected_slice = np.array([0.4903, 0.3304, 0.3503, 0.5241, 0.5153, 0.4585, 0.3222, 0.4764, 0.4891])
++        expected_slice = np.array([0.4150, 0.3719, 0.2479, 0.6333, 0.6024, 0.3778, 0.5036, 0.5420, 0.4678])
+         assert np.abs(image_slice.flatten() - expected_slice).max() < 1e-3
+ 
+     def test_inference_batch_single_identical(self):
+@@ -237,7 +237,7 @@ class LatentConsistencyModelImg2ImgPipelineSlowTests(unittest.TestCase):
+         assert image.shape == (1, 512, 512, 3)
+ 
+         image_slice = image[0, -3:, -3:, -1].flatten()
+-        expected_slice = np.array([0.1025, 0.0911, 0.0984, 0.0981, 0.0901, 0.0918, 0.1055, 0.0940, 0.0730])
++        expected_slice = np.array([0.1950, 0.1961, 0.2308, 0.1786, 0.1837, 0.2320, 0.1898, 0.1885, 0.2309])
+         assert np.abs(image_slice - expected_slice).max() < 1e-3
+ 
+     def test_lcm_multistep(self):
+@@ -253,5 +253,5 @@ class LatentConsistencyModelImg2ImgPipelineSlowTests(unittest.TestCase):
+         assert image.shape == (1, 512, 512, 3)
+ 
+         image_slice = image[0, -3:, -3:, -1].flatten()
+-        expected_slice = np.array([0.01855, 0.01855, 0.01489, 0.01392, 0.01782, 0.01465, 0.01831, 0.02539, 0.0])
++        expected_slice = np.array([0.3756, 0.3816, 0.3767, 0.3718, 0.3739, 0.3735, 0.3863, 0.3803, 0.3563])
+         assert np.abs(image_slice - expected_slice).max() < 1e-3
+diff --git a/tests/pipelines/pixart/test_pixart.py b/tests/pipelines/pixart/test_pixart.py
+index 70548092..a04f4e1a 100644
+--- a/tests/pipelines/pixart/test_pixart.py
++++ b/tests/pipelines/pixart/test_pixart.py
+@@ -120,7 +120,6 @@ class PixArtAlphaPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
+             "generator": generator,
+             "num_inference_steps": num_inference_steps,
+             "output_type": output_type,
+-            "mask_feature": False,
+         }
+ 
+         # set all optional components to None
+@@ -155,7 +154,6 @@ class PixArtAlphaPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
+             "generator": generator,
+             "num_inference_steps": num_inference_steps,
+             "output_type": output_type,
+-            "mask_feature": False,
+         }
+ 
+         output_loaded = pipe_loaded(**inputs)[0]
+diff --git a/tests/pipelines/shap_e/test_shap_e.py b/tests/pipelines/shap_e/test_shap_e.py
+index 7b95fdd9..c7792f09 100644
+--- a/tests/pipelines/shap_e/test_shap_e.py
++++ b/tests/pipelines/shap_e/test_shap_e.py
+@@ -160,7 +160,7 @@ class ShapEPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
+             "generator": generator,
+             "num_inference_steps": 1,
+             "frame_size": 32,
+-            "output_type": "np",
++            "output_type": "latent",
+         }
+         return inputs
+ 
+@@ -176,24 +176,12 @@ class ShapEPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
+ 
+         output = pipe(**self.get_dummy_inputs(device))
+         image = output.images[0]
+-        image_slice = image[0, -3:, -3:, -1]
+-
+-        assert image.shape == (20, 32, 32, 3)
+-
+-        expected_slice = np.array(
+-            [
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-            ]
+-        )
++        image = image.cpu().numpy()
++        image_slice = image[-3:, -3:]
++
++        assert image.shape == (32, 16)
+ 
++        expected_slice = np.array([-1.0000, -0.6241, 1.0000, -0.8978, -0.6866, 0.7876, -0.7473, -0.2874, 0.6103])
+         assert np.abs(image_slice.flatten() - expected_slice).max() < 1e-2
+ 
+     def test_inference_batch_consistent(self):
+diff --git a/tests/pipelines/shap_e/test_shap_e_img2img.py b/tests/pipelines/shap_e/test_shap_e_img2img.py
+index 055dbe7a..ee8d9d07 100644
+--- a/tests/pipelines/shap_e/test_shap_e_img2img.py
++++ b/tests/pipelines/shap_e/test_shap_e_img2img.py
+@@ -181,7 +181,7 @@ class ShapEImg2ImgPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
+             "generator": generator,
+             "num_inference_steps": 1,
+             "frame_size": 32,
+-            "output_type": "np",
++            "output_type": "latent",
+         }
+         return inputs
+ 
+@@ -197,22 +197,12 @@ class ShapEImg2ImgPipelineFastTests(PipelineTesterMixin, unittest.TestCase):
+ 
+         output = pipe(**self.get_dummy_inputs(device))
+         image = output.images[0]
+-        image_slice = image[0, -3:, -3:, -1]
++        image_slice = image[-3:, -3:].cpu().numpy()
+ 
+-        assert image.shape == (20, 32, 32, 3)
++        assert image.shape == (32, 16)
+ 
+         expected_slice = np.array(
+-            [
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-                0.00039216,
+-            ]
++            [-1.0, 0.40668195, 0.57322013, -0.9469888, 0.4283227, 0.30348337, -0.81094897, 0.74555075, 0.15342723]
+         )
+ 
+         assert np.abs(image_slice.flatten() - expected_slice).max() < 1e-2
+diff --git a/tests/pipelines/test_pipelines_common.py b/tests/pipelines/test_pipelines_common.py
+index 1795c83b..b9fe4d19 100644
+--- a/tests/pipelines/test_pipelines_common.py
++++ b/tests/pipelines/test_pipelines_common.py
+@@ -493,7 +493,7 @@ class PipelineTesterMixin:
+ 
+         assert output_batch[0].shape[0] == batch_size
+ 
+-        max_diff = np.abs(output_batch[0][0] - output[0][0]).max()
++        max_diff = np.abs(to_np(output_batch[0][0]) - to_np(output[0][0])).max()
+         assert max_diff < expected_max_diff
+ 
+     def test_dict_tuple_outputs_equivalent(self, expected_max_difference=1e-4):
+@@ -702,7 +702,7 @@ class PipelineTesterMixin:
+             self.assertLess(max_diff, expected_max_diff, "Attention slicing should not affect the inference results")
+ 
+         if test_mean_pixel_difference:
+-            assert_mean_pixel_difference(output_with_slicing[0], output_without_slicing[0])
++            assert_mean_pixel_difference(to_np(output_with_slicing[0]), to_np(output_without_slicing[0]))
+ 
+     @unittest.skipIf(
+         torch_device != "cuda" or not is_accelerate_available() or is_accelerate_version("<", "0.14.0"),

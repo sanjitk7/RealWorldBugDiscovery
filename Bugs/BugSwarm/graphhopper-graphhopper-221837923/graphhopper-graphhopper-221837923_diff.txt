@@ -1,0 +1,57 @@
+diff --git a/reader-gtfs/src/main/java/com/graphhopper/reader/gtfs/GraphHopperGtfs.java b/reader-gtfs/src/main/java/com/graphhopper/reader/gtfs/GraphHopperGtfs.java
+index 4ed420d42..6c84dd81e 100644
+--- a/reader-gtfs/src/main/java/com/graphhopper/reader/gtfs/GraphHopperGtfs.java
++++ b/reader-gtfs/src/main/java/com/graphhopper/reader/gtfs/GraphHopperGtfs.java
+@@ -69,13 +69,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
+         return new Factory(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
+     }
+ 
+-    public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
+-    public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
+-    public static final String ARRIVE_BY = "arriveBy";
+-    public static final String IGNORE_TRANSFERS = "ignoreTransfers";
+-    public static final String WALK_SPEED_KM_H = "walkSpeedKmH";
+-    public static final String MAX_WALK_DISTANCE_PER_LEG = "maxWalkDistancePerLeg";
+-    public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "maxTransferDistancePerLeg";
++    public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliest_departure_time";
++    public static final String RANGE_QUERY_END_TIME = "range_query_end_time";
++    public static final String ARRIVE_BY = "arrive_by";
++    public static final String IGNORE_TRANSFERS = "ignore_transfers";
++    public static final String WALK_SPEED_KM_H = "walk_speed";
++    public static final String MAX_WALK_DISTANCE_PER_LEG = "max_walk_distance_per_leg";
++    public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "max_transfer_distance_per_leg";
+ 
+     private final TranslationMap translationMap;
+     private final PtFlagEncoder flagEncoder;
+@@ -102,22 +102,20 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
+         private final QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
+ 
+         RequestHandler(GHRequest request) {
+-            final HintsMap hintsMap = request.getHints();
+-            final Map<String, String> map = hintsMap.toMap();
+-            maxVisitedNodesForRequest = hintsMap.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
+-            final String departureTimeString = map.get(EARLIEST_DEPARTURE_TIME_HINT);
++            maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
++            final String departureTimeString = request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, "");
+             try {
+                 final LocalDateTime earliestDepartureTime = LocalDateTime.parse(departureTimeString);
+                 initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), earliestDepartureTime).getSeconds();
+             } catch (DateTimeParseException e) {
+-                throw new IllegalArgumentException(String.format("Illegal value for required parameter %s: %s", EARLIEST_DEPARTURE_TIME_HINT, departureTimeString));
++                throw new IllegalArgumentException(String.format("Illegal value for required parameter %s: [%s]", EARLIEST_DEPARTURE_TIME_HINT, departureTimeString));
+             }
+-            rangeQueryEndTime = hintsMap.has(RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(hintsMap.get(RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
+-            arriveBy = hintsMap.getBool(ARRIVE_BY, false);
+-            ignoreTransfers = hintsMap.getBool(IGNORE_TRANSFERS, false);
+-            walkSpeedKmH = hintsMap.getDouble(WALK_SPEED_KM_H, 5.0);
+-            maxWalkDistancePerLeg = hintsMap.getDouble(MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
+-            maxTransferDistancePerLeg = hintsMap.getDouble(MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
++            rangeQueryEndTime = request.getHints().has(RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
++            arriveBy = request.getHints().getBool(ARRIVE_BY, false);
++            ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
++            walkSpeedKmH = request.getHints().getDouble(WALK_SPEED_KM_H, 5.0);
++            maxWalkDistancePerLeg = request.getHints().getDouble(MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
++            maxTransferDistancePerLeg = request.getHints().getDouble(MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
+             weighting = createPtTravelTimeWeighting(flagEncoder, arriveBy, walkSpeedKmH);
+             translation = translationMap.getWithFallBack(request.getLocale());
+             if (request.getPoints().size() != 2) {

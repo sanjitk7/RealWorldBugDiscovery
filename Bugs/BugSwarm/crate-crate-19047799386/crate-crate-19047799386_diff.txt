@@ -1,0 +1,88 @@
+diff --git a/server/src/main/java/io/crate/metadata/GeneratedReference.java b/server/src/main/java/io/crate/metadata/GeneratedReference.java
+index f927b99502..5ccdd8f7dc 100644
+--- a/server/src/main/java/io/crate/metadata/GeneratedReference.java
++++ b/server/src/main/java/io/crate/metadata/GeneratedReference.java
+@@ -61,20 +61,7 @@ public class GeneratedReference implements Reference {
+                               @Nullable Symbol generatedExpression) {
+         this.ref = ref;
+         this.formattedGeneratedExpression = formattedGeneratedExpression;
+-<<<<<<< HEAD
+         generatedExpression(generatedExpression);
+-=======
+-        if (SymbolVisitors.any(Symbols::isAggregate, generatedExpression)) {
+-            throw new UnsupportedOperationException(
+-                "Aggregation functions are not allowed in generated columns: " + generatedExpression);
+-        }
+-        if (SymbolVisitors.any(Symbols::isTableFunction, generatedExpression)) {
+-            throw new UnsupportedOperationException(
+-                "Cannot use table function in generated expression of column `" + ref.column().fqn() + "`");
+-        }
+-        this.referencedReferences = new ArrayList<>();
+-        RefVisitor.visitRefs(generatedExpression, referencedReferences::add);
+->>>>>>> 7b68387694 (Raise an error if using table functions in generated or default expressions)
+     }
+ 
+     public GeneratedReference(StreamInput in) throws IOException {
+@@ -145,8 +132,14 @@ public class GeneratedReference implements Reference {
+         assert generatedExpression == null || generatedExpression.valueType().equals(valueType())
+             : "The type of the generated expression must match the valueType of the `GeneratedReference`";
+         this.generatedExpression = generatedExpression;
+-        if (generatedExpression != null && SymbolVisitors.any(Symbols::isAggregate, generatedExpression)) {
+-            throw new UnsupportedOperationException("Aggregation functions are not allowed in generated columns: " + generatedExpression);
++        if (generatedExpression != null) {
++            if (SymbolVisitors.any(Symbols::isAggregate, generatedExpression)) {
++                throw new UnsupportedOperationException("Aggregation functions are not allowed in generated columns: " + generatedExpression);
++            }
++            if (SymbolVisitors.any(Symbols::isTableFunction, generatedExpression)) {
++                throw new UnsupportedOperationException(
++                    "Cannot use table function in generated expression of column `" + ref.column().fqn() + "`");
++            }
+         }
+     }
+ 
+diff --git a/server/src/test/java/io/crate/analyze/CreateAlterTableStatementAnalyzerTest.java b/server/src/test/java/io/crate/analyze/CreateAlterTableStatementAnalyzerTest.java
+index 806e9fcacd..ae22239fb5 100644
+--- a/server/src/test/java/io/crate/analyze/CreateAlterTableStatementAnalyzerTest.java
++++ b/server/src/test/java/io/crate/analyze/CreateAlterTableStatementAnalyzerTest.java
+@@ -1760,35 +1760,6 @@ public class CreateAlterTableStatementAnalyzerTest extends CrateDummyClusterServ
+             .isExactlyInstanceOf(UnsupportedOperationException.class)
+             .hasMessage("Arrays of float_vector are not supported");
+     }
+-<<<<<<< HEAD
+-=======
+-
+-    @Test
+-    public void test_named_primary_key_constraints() {
+-        BoundCreateTable createTable = analyze("create table tbl (a int constraint c_1 check (a > 10) constraint c_2 primary key constraint c_3 check (a < 20))");
+-        assertThat(createTable.pkConstraintName()).isEqualTo("c_2");
+-
+-        analyze("create table tbl (a int constraint c_1 check (a > 10) constraint c_3 check (a < 20), constraint c_2 primary key (a))");
+-        assertThat(createTable.pkConstraintName()).isEqualTo("c_2");
+-    }
+-
+-    @Test
+-    public void test_cannot_define_more_than_one_name_for_primary_key_constraint() {
+-        assertThatThrownBy(() -> analyze("create table tbl (a int constraint c_1 primary key, b int constraint c_2 primary key)"))
+-            .isExactlyInstanceOf(IllegalArgumentException.class)
+-            .hasMessage("More than one name for PRIMARY KEY constraint provided: c_1,c_2");
+-
+-        assertThatThrownBy(() -> analyze("create table tbl (a int primary key, b int constraint c_2 primary key)"))
+-            .isExactlyInstanceOf(IllegalArgumentException.class)
+-            .hasMessage("More than one name for PRIMARY KEY constraint provided: null,c_2");
+-    }
+-
+-    @Test
+-    public void test_empty_string_cannot_be_name_for_primary_key_constraints() {
+-        assertThatThrownBy(() -> analyze("create table tbl (a int constraint \"\" primary key)"))
+-            .isExactlyInstanceOf(IllegalArgumentException.class)
+-            .hasMessage("The name of primary key constraint must not be empty, please either use a name or remove the CONSTRAINT keyword");
+-    }
+ 
+     @Test
+     public void test_cannot_use_table_functions_in_generated_columns() throws Exception {
+@@ -1803,5 +1774,4 @@ public class CreateAlterTableStatementAnalyzerTest extends CrateDummyClusterServ
+             .isExactlyInstanceOf(UnsupportedOperationException.class)
+             .hasMessage("Cannot use table function in default expression of column `x`");
+     }
+->>>>>>> 7b68387694 (Raise an error if using table functions in generated or default expressions)
+ }

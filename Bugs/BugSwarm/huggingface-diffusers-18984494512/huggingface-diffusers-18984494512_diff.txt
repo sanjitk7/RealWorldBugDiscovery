@@ -1,0 +1,1176 @@
+diff --git a/src/diffusers/models/__init__.py b/src/diffusers/models/__init__.py
+index bf7cc7dd..7dc945bf 100644
+--- a/src/diffusers/models/__init__.py
++++ b/src/diffusers/models/__init__.py
+@@ -14,12 +14,7 @@
+ 
+ from typing import TYPE_CHECKING
+ 
+-from ..utils import (
+-    DIFFUSERS_SLOW_IMPORT,
+-    _LazyModule,
+-    is_flax_available,
+-    is_torch_available,
+-)
++from ..utils import DIFFUSERS_SLOW_IMPORT, _LazyModule, is_flax_available, is_torch_available
+ 
+ 
+ _import_structure = {}
+diff --git a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
+index 7069d453..212ef2d5 100644
+--- a/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
++++ b/src/diffusers/pipelines/alt_diffusion/pipeline_alt_diffusion_img2img.py
+@@ -19,20 +19,11 @@ import numpy as np
+ import PIL.Image
+ import torch
+ from packaging import version
+-from transformers import (
+-    CLIPImageProcessor,
+-    CLIPVisionModelWithProjection,
+-    XLMRobertaTokenizer,
+-)
++from transformers import CLIPImageProcessor, CLIPVisionModelWithProjection, XLMRobertaTokenizer
+ 
+ from ...configuration_utils import FrozenDict
+ from ...image_processor import PipelineImageInput, VaeImageProcessor
+-from ...loaders import (
+-    FromSingleFileMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    TextualInversionLoaderMixin,
+-)
++from ...loaders import FromSingleFileMixin, IPAdapterMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+ from ...models import AutoencoderKL, ImageProjection, UNet2DConditionModel
+ from ...models.lora import adjust_lora_scale_text_encoder
+ from ...schedulers import KarrasDiffusionSchedulers
+@@ -120,11 +111,7 @@ def preprocess(image):
+ 
+ # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_img2img.StableDiffusionImg2ImgPipeline with Stable->Alt, CLIPTextModel->RobertaSeriesModelWithTransformation, CLIPTokenizer->XLMRobertaTokenizer, AltDiffusionSafetyChecker->StableDiffusionSafetyChecker
+ class AltDiffusionImg2ImgPipeline(
+-    DiffusionPipeline,
+-    TextualInversionLoaderMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    FromSingleFileMixin,
++    DiffusionPipeline, TextualInversionLoaderMixin, IPAdapterMixin, LoraLoaderMixin, FromSingleFileMixin
+ ):
+     r"""
+     Pipeline for text-guided image-to-image generation using Alt Diffusion.
+@@ -383,9 +370,7 @@ class AltDiffusionImg2ImgPipeline(
+                 prompt_embeds = prompt_embeds[0]
+             else:
+                 prompt_embeds = self.text_encoder(
+-                    text_input_ids.to(device),
+-                    attention_mask=attention_mask,
+-                    output_hidden_states=True,
++                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
+                 )
+                 # Access the `hidden_states` first, that contains a tuple of
+                 # all the hidden states from the encoder layers. Then index into
+@@ -595,16 +580,7 @@ class AltDiffusionImg2ImgPipeline(
+ 
+         return timesteps, num_inference_steps - t_start
+ 
+-    def prepare_latents(
+-        self,
+-        image,
+-        timestep,
+-        batch_size,
+-        num_images_per_prompt,
+-        dtype,
+-        device,
+-        generator=None,
+-    ):
++    def prepare_latents(self, image, timestep, batch_size, num_images_per_prompt, dtype, device, generator=None):
+         if not isinstance(image, (torch.Tensor, PIL.Image.Image, list)):
+             raise ValueError(
+                 f"`image` has to be of type `torch.Tensor`, `PIL.Image.Image` or list but is {type(image)}"
+@@ -643,12 +619,7 @@ class AltDiffusionImg2ImgPipeline(
+                 " that this behavior is deprecated and will be removed in a version 1.0.0. Please make sure to update"
+                 " your script to pass as many initial images as text prompts to suppress this warning."
+             )
+-            deprecate(
+-                "len(prompt) != len(image)",
+-                "1.0.0",
+-                deprecation_message,
+-                standard_warn=False,
+-            )
++            deprecate("len(prompt) != len(image)", "1.0.0", deprecation_message, standard_warn=False)
+             additional_image_per_prompt = batch_size // init_latents.shape[0]
+             init_latents = torch.cat([init_latents] * additional_image_per_prompt, dim=0)
+         elif batch_size > init_latents.shape[0] and batch_size % init_latents.shape[0] != 0:
+@@ -986,11 +957,9 @@ class AltDiffusionImg2ImgPipeline(
+                         callback(step_idx, t, latents)
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(
+-                latents / self.vae.config.scaling_factor,
+-                return_dict=False,
+-                generator=generator,
+-            )[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/animatediff/pipeline_animatediff.py b/src/diffusers/pipelines/animatediff/pipeline_animatediff.py
+index 5b1c34fd..b6d1bf63 100644
+--- a/src/diffusers/pipelines/animatediff/pipeline_animatediff.py
++++ b/src/diffusers/pipelines/animatediff/pipeline_animatediff.py
+@@ -18,21 +18,11 @@ from typing import Any, Callable, Dict, List, Optional, Union
+ 
+ import numpy as np
+ import torch
+-from transformers import (
+-    CLIPImageProcessor,
+-    CLIPTextModel,
+-    CLIPTokenizer,
+-    CLIPVisionModelWithProjection,
+-)
++from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
+ 
+ from ...image_processor import PipelineImageInput, VaeImageProcessor
+ from ...loaders import IPAdapterMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+-from ...models import (
+-    AutoencoderKL,
+-    ImageProjection,
+-    UNet2DConditionModel,
+-    UNetMotionModel,
+-)
++from ...models import AutoencoderKL, ImageProjection, UNet2DConditionModel, UNetMotionModel
+ from ...models.lora import adjust_lora_scale_text_encoder
+ from ...models.unet_motion_model import MotionAdapter
+ from ...schedulers import (
+@@ -43,13 +33,7 @@ from ...schedulers import (
+     LMSDiscreteScheduler,
+     PNDMScheduler,
+ )
+-from ...utils import (
+-    USE_PEFT_BACKEND,
+-    BaseOutput,
+-    logging,
+-    scale_lora_layers,
+-    unscale_lora_layers,
+-)
++from ...utils import USE_PEFT_BACKEND, BaseOutput, logging, scale_lora_layers, unscale_lora_layers
+ from ...utils.torch_utils import randn_tensor
+ from ..pipeline_utils import DiffusionPipeline
+ 
+@@ -249,9 +233,7 @@ class AnimateDiffPipeline(DiffusionPipeline, TextualInversionLoaderMixin, IPAdap
+                 prompt_embeds = prompt_embeds[0]
+             else:
+                 prompt_embeds = self.text_encoder(
+-                    text_input_ids.to(device),
+-                    attention_mask=attention_mask,
+-                    output_hidden_states=True,
++                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
+                 )
+                 # Access the `hidden_states` first, that contains a tuple of
+                 # all the hidden states from the encoder layers. Then index into
+@@ -518,16 +500,7 @@ class AnimateDiffPipeline(DiffusionPipeline, TextualInversionLoaderMixin, IPAdap
+ 
+     # Copied from diffusers.pipelines.text_to_video_synthesis.pipeline_text_to_video_synth.TextToVideoSDPipeline.prepare_latents
+     def prepare_latents(
+-        self,
+-        batch_size,
+-        num_channels_latents,
+-        num_frames,
+-        height,
+-        width,
+-        dtype,
+-        device,
+-        generator,
+-        latents=None,
++        self, batch_size, num_channels_latents, num_frames, height, width, dtype, device, generator, latents=None
+     ):
+         shape = (
+             batch_size,
+@@ -648,13 +621,7 @@ class AnimateDiffPipeline(DiffusionPipeline, TextualInversionLoaderMixin, IPAdap
+ 
+         # 1. Check inputs. Raise error if not correct
+         self.check_inputs(
+-            prompt,
+-            height,
+-            width,
+-            callback_steps,
+-            negative_prompt,
+-            prompt_embeds,
+-            negative_prompt_embeds,
++            prompt, height, width, callback_steps, negative_prompt, prompt_embeds, negative_prompt_embeds
+         )
+ 
+         # 2. Define call parameters
+diff --git a/src/diffusers/pipelines/controlnet/pipeline_controlnet.py b/src/diffusers/pipelines/controlnet/pipeline_controlnet.py
+index 95093b27..e7a2145b 100644
+--- a/src/diffusers/pipelines/controlnet/pipeline_controlnet.py
++++ b/src/diffusers/pipelines/controlnet/pipeline_controlnet.py
+@@ -20,26 +20,11 @@ import numpy as np
+ import PIL.Image
+ import torch
+ import torch.nn.functional as F
+-from transformers import (
+-    CLIPImageProcessor,
+-    CLIPTextModel,
+-    CLIPTokenizer,
+-    CLIPVisionModelWithProjection,
+-)
++from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
+ 
+ from ...image_processor import PipelineImageInput, VaeImageProcessor
+-from ...loaders import (
+-    FromSingleFileMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    TextualInversionLoaderMixin,
+-)
+-from ...models import (
+-    AutoencoderKL,
+-    ControlNetModel,
+-    ImageProjection,
+-    UNet2DConditionModel,
+-)
++from ...loaders import FromSingleFileMixin, IPAdapterMixin, LoraLoaderMixin, TextualInversionLoaderMixin
++from ...models import AutoencoderKL, ControlNetModel, ImageProjection, UNet2DConditionModel
+ from ...models.lora import adjust_lora_scale_text_encoder
+ from ...schedulers import KarrasDiffusionSchedulers
+ from ...utils import (
+@@ -107,11 +92,7 @@ EXAMPLE_DOC_STRING = """
+ 
+ 
+ class StableDiffusionControlNetPipeline(
+-    DiffusionPipeline,
+-    TextualInversionLoaderMixin,
+-    LoraLoaderMixin,
+-    IPAdapterMixin,
+-    FromSingleFileMixin,
++    DiffusionPipeline, TextualInversionLoaderMixin, LoraLoaderMixin, IPAdapterMixin, FromSingleFileMixin
+ ):
+     r"""
+     Pipeline for text-to-image generation using Stable Diffusion with ControlNet guidance.
+@@ -158,12 +139,7 @@ class StableDiffusionControlNetPipeline(
+         text_encoder: CLIPTextModel,
+         tokenizer: CLIPTokenizer,
+         unet: UNet2DConditionModel,
+-        controlnet: Union[
+-            ControlNetModel,
+-            List[ControlNetModel],
+-            Tuple[ControlNetModel],
+-            MultiControlNetModel,
+-        ],
++        controlnet: Union[ControlNetModel, List[ControlNetModel], Tuple[ControlNetModel], MultiControlNetModel],
+         scheduler: KarrasDiffusionSchedulers,
+         safety_checker: StableDiffusionSafetyChecker,
+         feature_extractor: CLIPImageProcessor,
+@@ -205,9 +181,7 @@ class StableDiffusionControlNetPipeline(
+         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True)
+         self.control_image_processor = VaeImageProcessor(
+-            vae_scale_factor=self.vae_scale_factor,
+-            do_convert_rgb=True,
+-            do_normalize=False,
++            vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True, do_normalize=False
+         )
+         self.register_to_config(requires_safety_checker=requires_safety_checker)
+ 
+@@ -373,9 +347,7 @@ class StableDiffusionControlNetPipeline(
+                 prompt_embeds = prompt_embeds[0]
+             else:
+                 prompt_embeds = self.text_encoder(
+-                    text_input_ids.to(device),
+-                    attention_mask=attention_mask,
+-                    output_hidden_states=True,
++                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
+                 )
+                 # Access the `hidden_states` first, that contains a tuple of
+                 # all the hidden states from the encoder layers. Then index into
+@@ -743,23 +715,8 @@ class StableDiffusionControlNetPipeline(
+         return image
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_latents
+-    def prepare_latents(
+-        self,
+-        batch_size,
+-        num_channels_latents,
+-        height,
+-        width,
+-        dtype,
+-        device,
+-        generator,
+-        latents=None,
+-    ):
+-        shape = (
+-            batch_size,
+-            num_channels_latents,
+-            height // self.vae_scale_factor,
+-            width // self.vae_scale_factor,
+-        )
++    def prepare_latents(self, batch_size, num_channels_latents, height, width, dtype, device, generator, latents=None):
++        shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
+         if isinstance(generator, list) and len(generator) != batch_size:
+             raise ValueError(
+                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
+@@ -1247,11 +1204,9 @@ class StableDiffusionControlNetPipeline(
+             torch.cuda.empty_cache()
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(
+-                latents / self.vae.config.scaling_factor,
+-                return_dict=False,
+-                generator=generator,
+-            )[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/controlnet/pipeline_controlnet_sd_xl.py b/src/diffusers/pipelines/controlnet/pipeline_controlnet_sd_xl.py
+index 9ebc3577..5a1e2b6e 100644
+--- a/src/diffusers/pipelines/controlnet/pipeline_controlnet_sd_xl.py
++++ b/src/diffusers/pipelines/controlnet/pipeline_controlnet_sd_xl.py
+@@ -37,12 +37,7 @@ from ...loaders import (
+     StableDiffusionXLLoraLoaderMixin,
+     TextualInversionLoaderMixin,
+ )
+-from ...models import (
+-    AutoencoderKL,
+-    ControlNetModel,
+-    ImageProjection,
+-    UNet2DConditionModel,
+-)
++from ...models import AutoencoderKL, ControlNetModel, ImageProjection, UNet2DConditionModel
+ from ...models.attention_processor import (
+     AttnProcessor2_0,
+     LoRAAttnProcessor2_0,
+@@ -187,12 +182,7 @@ class StableDiffusionXLControlNetPipeline(
+         tokenizer: CLIPTokenizer,
+         tokenizer_2: CLIPTokenizer,
+         unet: UNet2DConditionModel,
+-        controlnet: Union[
+-            ControlNetModel,
+-            List[ControlNetModel],
+-            Tuple[ControlNetModel],
+-            MultiControlNetModel,
+-        ],
++        controlnet: Union[ControlNetModel, List[ControlNetModel], Tuple[ControlNetModel], MultiControlNetModel],
+         scheduler: KarrasDiffusionSchedulers,
+         force_zeros_for_empty_prompt: bool = True,
+         add_watermarker: Optional[bool] = None,
+@@ -219,9 +209,7 @@ class StableDiffusionXLControlNetPipeline(
+         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True)
+         self.control_image_processor = VaeImageProcessor(
+-            vae_scale_factor=self.vae_scale_factor,
+-            do_convert_rgb=True,
+-            do_normalize=False,
++            vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True, do_normalize=False
+         )
+         add_watermarker = add_watermarker if add_watermarker is not None else is_invisible_watermark_available()
+ 
+@@ -498,12 +486,7 @@ class StableDiffusionXLControlNetPipeline(
+                 # Retrieve the original scale by scaling back the LoRA layers
+                 unscale_lora_layers(self.text_encoder_2, lora_scale)
+ 
+-        return (
+-            prompt_embeds,
+-            negative_prompt_embeds,
+-            pooled_prompt_embeds,
+-            negative_pooled_prompt_embeds,
+-        )
++        return prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.encode_image
+     def encode_image(self, image, device, num_images_per_prompt):
+@@ -788,23 +771,8 @@ class StableDiffusionXLControlNetPipeline(
+         return image
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_latents
+-    def prepare_latents(
+-        self,
+-        batch_size,
+-        num_channels_latents,
+-        height,
+-        width,
+-        dtype,
+-        device,
+-        generator,
+-        latents=None,
+-    ):
+-        shape = (
+-            batch_size,
+-            num_channels_latents,
+-            height // self.vae_scale_factor,
+-            width // self.vae_scale_factor,
+-        )
++    def prepare_latents(self, batch_size, num_channels_latents, height, width, dtype, device, generator, latents=None):
++        shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
+         if isinstance(generator, list) and len(generator) != batch_size:
+             raise ValueError(
+                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
+@@ -822,12 +790,7 @@ class StableDiffusionXLControlNetPipeline(
+ 
+     # Copied from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl.StableDiffusionXLPipeline._get_add_time_ids
+     def _get_add_time_ids(
+-        self,
+-        original_size,
+-        crops_coords_top_left,
+-        target_size,
+-        dtype,
+-        text_encoder_projection_dim=None,
++        self, original_size, crops_coords_top_left, target_size, dtype, text_encoder_projection_dim=None
+     ):
+         add_time_ids = list(original_size + crops_coords_top_left + target_size)
+ 
+@@ -1350,10 +1313,7 @@ class StableDiffusionXLControlNetPipeline(
+                 latent_model_input = torch.cat([latents] * 2) if self.do_classifier_free_guidance else latents
+                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+ 
+-                added_cond_kwargs = {
+-                    "text_embeds": add_text_embeds,
+-                    "time_ids": add_time_ids,
+-                }
++                added_cond_kwargs = {"text_embeds": add_text_embeds, "time_ids": add_time_ids}
+ 
+                 # controlnet(s) inference
+                 if guess_mode and self.do_classifier_free_guidance:
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
+index 6e7a867f..f6332a5c 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
+@@ -17,21 +17,11 @@ from typing import Any, Callable, Dict, List, Optional, Union
+ 
+ import torch
+ from packaging import version
+-from transformers import (
+-    CLIPImageProcessor,
+-    CLIPTextModel,
+-    CLIPTokenizer,
+-    CLIPVisionModelWithProjection,
+-)
++from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
+ 
+ from ...configuration_utils import FrozenDict
+ from ...image_processor import PipelineImageInput, VaeImageProcessor
+-from ...loaders import (
+-    FromSingleFileMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    TextualInversionLoaderMixin,
+-)
++from ...loaders import FromSingleFileMixin, IPAdapterMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+ from ...models import AutoencoderKL, ImageProjection, UNet2DConditionModel
+ from ...models.lora import adjust_lora_scale_text_encoder
+ from ...schedulers import KarrasDiffusionSchedulers
+@@ -81,11 +71,7 @@ def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
+ 
+ 
+ class StableDiffusionPipeline(
+-    DiffusionPipeline,
+-    TextualInversionLoaderMixin,
+-    LoraLoaderMixin,
+-    IPAdapterMixin,
+-    FromSingleFileMixin,
++    DiffusionPipeline, TextualInversionLoaderMixin, LoraLoaderMixin, IPAdapterMixin, FromSingleFileMixin
+ ):
+     r"""
+     Pipeline for text-to-image generation using Stable Diffusion.
+@@ -373,9 +359,7 @@ class StableDiffusionPipeline(
+                 prompt_embeds = prompt_embeds[0]
+             else:
+                 prompt_embeds = self.text_encoder(
+-                    text_input_ids.to(device),
+-                    attention_mask=attention_mask,
+-                    output_hidden_states=True,
++                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
+                 )
+                 # Access the `hidden_states` first, that contains a tuple of
+                 # all the hidden states from the encoder layers. Then index into
+@@ -577,23 +561,8 @@ class StableDiffusionPipeline(
+                     f" {negative_prompt_embeds.shape}."
+                 )
+ 
+-    def prepare_latents(
+-        self,
+-        batch_size,
+-        num_channels_latents,
+-        height,
+-        width,
+-        dtype,
+-        device,
+-        generator,
+-        latents=None,
+-    ):
+-        shape = (
+-            batch_size,
+-            num_channels_latents,
+-            height // self.vae_scale_factor,
+-            width // self.vae_scale_factor,
+-        )
++    def prepare_latents(self, batch_size, num_channels_latents, height, width, dtype, device, generator, latents=None):
++        shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
+         if isinstance(generator, list) and len(generator) != batch_size:
+             raise ValueError(
+                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
+@@ -924,11 +893,7 @@ class StableDiffusionPipeline(
+ 
+                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
+                     # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
+-                    noise_pred = rescale_noise_cfg(
+-                        noise_pred,
+-                        noise_pred_text,
+-                        guidance_rescale=self.guidance_rescale,
+-                    )
++                    noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=self.guidance_rescale)
+ 
+                 # compute the previous noisy sample x_t -> x_t-1
+                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+@@ -951,11 +916,9 @@ class StableDiffusionPipeline(
+                         callback(step_idx, t, latents)
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(
+-                latents / self.vae.config.scaling_factor,
+-                return_dict=False,
+-                generator=generator,
+-            )[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
+index ad45ba2b..3062df00 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py
+@@ -19,21 +19,11 @@ import numpy as np
+ import PIL.Image
+ import torch
+ from packaging import version
+-from transformers import (
+-    CLIPImageProcessor,
+-    CLIPTextModel,
+-    CLIPTokenizer,
+-    CLIPVisionModelWithProjection,
+-)
++from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
+ 
+ from ...configuration_utils import FrozenDict
+ from ...image_processor import PipelineImageInput, VaeImageProcessor
+-from ...loaders import (
+-    FromSingleFileMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    TextualInversionLoaderMixin,
+-)
++from ...loaders import FromSingleFileMixin, IPAdapterMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+ from ...models import AutoencoderKL, ImageProjection, UNet2DConditionModel
+ from ...models.lora import adjust_lora_scale_text_encoder
+ from ...schedulers import KarrasDiffusionSchedulers
+@@ -116,11 +106,7 @@ def preprocess(image):
+ 
+ 
+ class StableDiffusionImg2ImgPipeline(
+-    DiffusionPipeline,
+-    TextualInversionLoaderMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    FromSingleFileMixin,
++    DiffusionPipeline, TextualInversionLoaderMixin, IPAdapterMixin, LoraLoaderMixin, FromSingleFileMixin
+ ):
+     r"""
+     Pipeline for text-guided image-to-image generation using Stable Diffusion.
+@@ -381,9 +367,7 @@ class StableDiffusionImg2ImgPipeline(
+                 prompt_embeds = prompt_embeds[0]
+             else:
+                 prompt_embeds = self.text_encoder(
+-                    text_input_ids.to(device),
+-                    attention_mask=attention_mask,
+-                    output_hidden_states=True,
++                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
+                 )
+                 # Access the `hidden_states` first, that contains a tuple of
+                 # all the hidden states from the encoder layers. Then index into
+@@ -597,16 +581,7 @@ class StableDiffusionImg2ImgPipeline(
+ 
+         return timesteps, num_inference_steps - t_start
+ 
+-    def prepare_latents(
+-        self,
+-        image,
+-        timestep,
+-        batch_size,
+-        num_images_per_prompt,
+-        dtype,
+-        device,
+-        generator=None,
+-    ):
++    def prepare_latents(self, image, timestep, batch_size, num_images_per_prompt, dtype, device, generator=None):
+         if not isinstance(image, (torch.Tensor, PIL.Image.Image, list)):
+             raise ValueError(
+                 f"`image` has to be of type `torch.Tensor`, `PIL.Image.Image` or list but is {type(image)}"
+@@ -645,12 +620,7 @@ class StableDiffusionImg2ImgPipeline(
+                 " that this behavior is deprecated and will be removed in a version 1.0.0. Please make sure to update"
+                 " your script to pass as many initial images as text prompts to suppress this warning."
+             )
+-            deprecate(
+-                "len(prompt) != len(image)",
+-                "1.0.0",
+-                deprecation_message,
+-                standard_warn=False,
+-            )
++            deprecate("len(prompt) != len(image)", "1.0.0", deprecation_message, standard_warn=False)
+             additional_image_per_prompt = batch_size // init_latents.shape[0]
+             init_latents = torch.cat([init_latents] * additional_image_per_prompt, dim=0)
+         elif batch_size > init_latents.shape[0] and batch_size % init_latents.shape[0] != 0:
+@@ -991,11 +961,9 @@ class StableDiffusionImg2ImgPipeline(
+                         callback(step_idx, t, latents)
+ 
+         if not output_type == "latent":
+-            image = self.vae.decode(
+-                latents / self.vae.config.scaling_factor,
+-                return_dict=False,
+-                generator=generator,
+-            )[0]
++            image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False, generator=generator)[
++                0
++            ]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+             image = latents
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
+index 78de0b69..d1d1b6bf 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py
+@@ -19,36 +19,15 @@ import numpy as np
+ import PIL.Image
+ import torch
+ from packaging import version
+-from transformers import (
+-    CLIPImageProcessor,
+-    CLIPTextModel,
+-    CLIPTokenizer,
+-    CLIPVisionModelWithProjection,
+-)
++from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
+ 
+ from ...configuration_utils import FrozenDict
+ from ...image_processor import PipelineImageInput, VaeImageProcessor
+-from ...loaders import (
+-    FromSingleFileMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    TextualInversionLoaderMixin,
+-)
+-from ...models import (
+-    AsymmetricAutoencoderKL,
+-    AutoencoderKL,
+-    ImageProjection,
+-    UNet2DConditionModel,
+-)
++from ...loaders import FromSingleFileMixin, IPAdapterMixin, LoraLoaderMixin, TextualInversionLoaderMixin
++from ...models import AsymmetricAutoencoderKL, AutoencoderKL, ImageProjection, UNet2DConditionModel
+ from ...models.lora import adjust_lora_scale_text_encoder
+ from ...schedulers import KarrasDiffusionSchedulers
+-from ...utils import (
+-    USE_PEFT_BACKEND,
+-    deprecate,
+-    logging,
+-    scale_lora_layers,
+-    unscale_lora_layers,
+-)
++from ...utils import USE_PEFT_BACKEND, deprecate, logging, scale_lora_layers, unscale_lora_layers
+ from ...utils.torch_utils import randn_tensor
+ from ..pipeline_utils import DiffusionPipeline
+ from . import StableDiffusionPipelineOutput
+@@ -191,11 +170,7 @@ def retrieve_latents(encoder_output, generator):
+ 
+ 
+ class StableDiffusionInpaintPipeline(
+-    DiffusionPipeline,
+-    TextualInversionLoaderMixin,
+-    IPAdapterMixin,
+-    LoraLoaderMixin,
+-    FromSingleFileMixin,
++    DiffusionPipeline, TextualInversionLoaderMixin, IPAdapterMixin, LoraLoaderMixin, FromSingleFileMixin
+ ):
+     r"""
+     Pipeline for text-guided image inpainting using Stable Diffusion.
+@@ -232,13 +207,7 @@ class StableDiffusionInpaintPipeline(
+     model_cpu_offload_seq = "text_encoder->unet->vae"
+     _optional_components = ["safety_checker", "feature_extractor", "image_encoder"]
+     _exclude_from_cpu_offload = ["safety_checker"]
+-    _callback_tensor_inputs = [
+-        "latents",
+-        "prompt_embeds",
+-        "negative_prompt_embeds",
+-        "mask",
+-        "masked_image_latents",
+-    ]
++    _callback_tensor_inputs = ["latents", "prompt_embeds", "negative_prompt_embeds", "mask", "masked_image_latents"]
+ 
+     def __init__(
+         self,
+@@ -277,12 +246,7 @@ class StableDiffusionInpaintPipeline(
+                 " Hub, it would be very nice if you could open a Pull request for the"
+                 " `scheduler/scheduler_config.json` file"
+             )
+-            deprecate(
+-                "skip_prk_steps not set",
+-                "1.0.0",
+-                deprecation_message,
+-                standard_warn=False,
+-            )
++            deprecate("skip_prk_steps not set", "1.0.0", deprecation_message, standard_warn=False)
+             new_config = dict(scheduler.config)
+             new_config["skip_prk_steps"] = True
+             scheduler._internal_dict = FrozenDict(new_config)
+@@ -341,10 +305,7 @@ class StableDiffusionInpaintPipeline(
+         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor)
+         self.mask_processor = VaeImageProcessor(
+-            vae_scale_factor=self.vae_scale_factor,
+-            do_normalize=False,
+-            do_binarize=True,
+-            do_convert_grayscale=True,
++            vae_scale_factor=self.vae_scale_factor, do_normalize=False, do_binarize=True, do_convert_grayscale=True
+         )
+         self.register_to_config(requires_safety_checker=requires_safety_checker)
+ 
+@@ -477,9 +438,7 @@ class StableDiffusionInpaintPipeline(
+                 prompt_embeds = prompt_embeds[0]
+             else:
+                 prompt_embeds = self.text_encoder(
+-                    text_input_ids.to(device),
+-                    attention_mask=attention_mask,
+-                    output_hidden_states=True,
++                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
+                 )
+                 # Access the `hidden_states` first, that contains a tuple of
+                 # all the hidden states from the encoder layers. Then index into
+@@ -694,12 +653,7 @@ class StableDiffusionInpaintPipeline(
+         return_noise=False,
+         return_image_latents=False,
+     ):
+-        shape = (
+-            batch_size,
+-            num_channels_latents,
+-            height // self.vae_scale_factor,
+-            width // self.vae_scale_factor,
+-        )
++        shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
+         if isinstance(generator, list) and len(generator) != batch_size:
+             raise ValueError(
+                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
+@@ -756,16 +710,7 @@ class StableDiffusionInpaintPipeline(
+         return image_latents
+ 
+     def prepare_mask_latents(
+-        self,
+-        mask,
+-        masked_image,
+-        batch_size,
+-        height,
+-        width,
+-        dtype,
+-        device,
+-        generator,
+-        do_classifier_free_guidance,
++        self, mask, masked_image, batch_size, height, width, dtype, device, generator, do_classifier_free_guidance
+     ):
+         # resize the mask to latents shape as we concatenate the mask to the latents
+         # we do that before converting to dtype to avoid breaking in case we're using cpu_offload
+@@ -1289,15 +1234,9 @@ class StableDiffusionInpaintPipeline(
+                 init_image_condition = init_image.clone()
+                 init_image = self._encode_vae_image(init_image, generator=generator)
+                 mask_condition = mask_condition.to(device=device, dtype=masked_image_latents.dtype)
+-                condition_kwargs = {
+-                    "image": init_image_condition,
+-                    "mask": mask_condition,
+-                }
++                condition_kwargs = {"image": init_image_condition, "mask": mask_condition}
+             image = self.vae.decode(
+-                latents / self.vae.config.scaling_factor,
+-                return_dict=False,
+-                generator=generator,
+-                **condition_kwargs,
++                latents / self.vae.config.scaling_factor, return_dict=False, generator=generator, **condition_kwargs
+             )[0]
+             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
+         else:
+diff --git a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py
+index e742d800..7a4772ef 100644
+--- a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py
++++ b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py
+@@ -476,12 +476,7 @@ class StableDiffusionXLPipeline(
+                 # Retrieve the original scale by scaling back the LoRA layers
+                 unscale_lora_layers(self.text_encoder_2, lora_scale)
+ 
+-        return (
+-            prompt_embeds,
+-            negative_prompt_embeds,
+-            pooled_prompt_embeds,
+-            negative_pooled_prompt_embeds,
+-        )
++        return prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.encode_image
+     def encode_image(self, image, device, num_images_per_prompt):
+@@ -604,23 +599,8 @@ class StableDiffusionXLPipeline(
+             )
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_latents
+-    def prepare_latents(
+-        self,
+-        batch_size,
+-        num_channels_latents,
+-        height,
+-        width,
+-        dtype,
+-        device,
+-        generator,
+-        latents=None,
+-    ):
+-        shape = (
+-            batch_size,
+-            num_channels_latents,
+-            height // self.vae_scale_factor,
+-            width // self.vae_scale_factor,
+-        )
++    def prepare_latents(self, batch_size, num_channels_latents, height, width, dtype, device, generator, latents=None):
++        shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
+         if isinstance(generator, list) and len(generator) != batch_size:
+             raise ValueError(
+                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
+@@ -637,12 +617,7 @@ class StableDiffusionXLPipeline(
+         return latents
+ 
+     def _get_add_time_ids(
+-        self,
+-        original_size,
+-        crops_coords_top_left,
+-        target_size,
+-        dtype,
+-        text_encoder_projection_dim=None,
++        self, original_size, crops_coords_top_left, target_size, dtype, text_encoder_projection_dim=None
+     ):
+         add_time_ids = list(original_size + crops_coords_top_left + target_size)
+ 
+@@ -1114,10 +1089,7 @@ class StableDiffusionXLPipeline(
+                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+ 
+                 # predict the noise residual
+-                added_cond_kwargs = {
+-                    "text_embeds": add_text_embeds,
+-                    "time_ids": add_time_ids,
+-                }
++                added_cond_kwargs = {"text_embeds": add_text_embeds, "time_ids": add_time_ids}
+                 if ip_adapter_image is not None:
+                     added_cond_kwargs["image_embeds"] = image_embeds
+                 noise_pred = self.unet(
+@@ -1137,11 +1109,7 @@ class StableDiffusionXLPipeline(
+ 
+                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
+                     # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
+-                    noise_pred = rescale_noise_cfg(
+-                        noise_pred,
+-                        noise_pred_text,
+-                        guidance_rescale=self.guidance_rescale,
+-                    )
++                    noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=self.guidance_rescale)
+ 
+                 # compute the previous noisy sample x_t -> x_t-1
+                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+diff --git a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py
+index 9b2b3541..760e0c3e 100644
+--- a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py
++++ b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_img2img.py
+@@ -494,12 +494,7 @@ class StableDiffusionXLImg2ImgPipeline(
+                 # Retrieve the original scale by scaling back the LoRA layers
+                 unscale_lora_layers(self.text_encoder_2, lora_scale)
+ 
+-        return (
+-            prompt_embeds,
+-            negative_prompt_embeds,
+-            pooled_prompt_embeds,
+-            negative_pooled_prompt_embeds,
+-        )
++        return prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_extra_step_kwargs
+     def prepare_extra_step_kwargs(self, generator, eta):
+@@ -629,15 +624,7 @@ class StableDiffusionXLImg2ImgPipeline(
+         return timesteps, num_inference_steps - t_start
+ 
+     def prepare_latents(
+-        self,
+-        image,
+-        timestep,
+-        batch_size,
+-        num_images_per_prompt,
+-        dtype,
+-        device,
+-        generator=None,
+-        add_noise=True,
++        self, image, timestep, batch_size, num_images_per_prompt, dtype, device, generator=None, add_noise=True
+     ):
+         if not isinstance(image, (torch.Tensor, PIL.Image.Image, list)):
+             raise ValueError(
+@@ -1274,10 +1261,7 @@ class StableDiffusionXLImg2ImgPipeline(
+                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+ 
+                 # predict the noise residual
+-                added_cond_kwargs = {
+-                    "text_embeds": add_text_embeds,
+-                    "time_ids": add_time_ids,
+-                }
++                added_cond_kwargs = {"text_embeds": add_text_embeds, "time_ids": add_time_ids}
+                 if ip_adapter_image is not None:
+                     added_cond_kwargs["image_embeds"] = image_embeds
+                 noise_pred = self.unet(
+@@ -1297,11 +1281,7 @@ class StableDiffusionXLImg2ImgPipeline(
+ 
+                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
+                     # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
+-                    noise_pred = rescale_noise_cfg(
+-                        noise_pred,
+-                        noise_pred_text,
+-                        guidance_rescale=self.guidance_rescale,
+-                    )
++                    noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=self.guidance_rescale)
+ 
+                 # compute the previous noisy sample x_t -> x_t-1
+                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+diff --git a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py
+index 6c7443e5..5a388e5e 100644
+--- a/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py
++++ b/src/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl_inpaint.py
+@@ -369,10 +369,7 @@ class StableDiffusionXLInpaintPipeline(
+         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor)
+         self.mask_processor = VaeImageProcessor(
+-            vae_scale_factor=self.vae_scale_factor,
+-            do_normalize=False,
+-            do_binarize=True,
+-            do_convert_grayscale=True,
++            vae_scale_factor=self.vae_scale_factor, do_normalize=False, do_binarize=True, do_convert_grayscale=True
+         )
+ 
+         add_watermarker = add_watermarker if add_watermarker is not None else is_invisible_watermark_available()
+@@ -671,12 +668,7 @@ class StableDiffusionXLInpaintPipeline(
+                 # Retrieve the original scale by scaling back the LoRA layers
+                 unscale_lora_layers(self.text_encoder_2, lora_scale)
+ 
+-        return (
+-            prompt_embeds,
+-            negative_prompt_embeds,
+-            pooled_prompt_embeds,
+-            negative_pooled_prompt_embeds,
+-        )
++        return prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
+ 
+     # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_extra_step_kwargs
+     def prepare_extra_step_kwargs(self, generator, eta):
+@@ -784,12 +776,7 @@ class StableDiffusionXLInpaintPipeline(
+         return_noise=False,
+         return_image_latents=False,
+     ):
+-        shape = (
+-            batch_size,
+-            num_channels_latents,
+-            height // self.vae_scale_factor,
+-            width // self.vae_scale_factor,
+-        )
++        shape = (batch_size, num_channels_latents, height // self.vae_scale_factor, width // self.vae_scale_factor)
+         if isinstance(generator, list) and len(generator) != batch_size:
+             raise ValueError(
+                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
+@@ -857,16 +844,7 @@ class StableDiffusionXLInpaintPipeline(
+         return image_latents
+ 
+     def prepare_mask_latents(
+-        self,
+-        mask,
+-        masked_image,
+-        batch_size,
+-        height,
+-        width,
+-        dtype,
+-        device,
+-        generator,
+-        do_classifier_free_guidance,
++        self, mask, masked_image, batch_size, height, width, dtype, device, generator, do_classifier_free_guidance
+     ):
+         # resize the mask to latents shape as we concatenate the mask to the latents
+         # we do that before converting to dtype to avoid breaking in case we're using cpu_offload
+@@ -1595,10 +1573,7 @@ class StableDiffusionXLInpaintPipeline(
+                     latent_model_input = torch.cat([latent_model_input, mask, masked_image_latents], dim=1)
+ 
+                 # predict the noise residual
+-                added_cond_kwargs = {
+-                    "text_embeds": add_text_embeds,
+-                    "time_ids": add_time_ids,
+-                }
++                added_cond_kwargs = {"text_embeds": add_text_embeds, "time_ids": add_time_ids}
+                 if ip_adapter_image is not None:
+                     added_cond_kwargs["image_embeds"] = image_embeds
+                 noise_pred = self.unet(
+@@ -1618,11 +1593,7 @@ class StableDiffusionXLInpaintPipeline(
+ 
+                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
+                     # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
+-                    noise_pred = rescale_noise_cfg(
+-                        noise_pred,
+-                        noise_pred_text,
+-                        guidance_rescale=self.guidance_rescale,
+-                    )
++                    noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=self.guidance_rescale)
+ 
+                 # compute the previous noisy sample x_t -> x_t-1
+                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+diff --git a/tests/models/test_models_unet_2d_condition.py b/tests/models/test_models_unet_2d_condition.py
+index 25f4b801..62699ba8 100644
+--- a/tests/models/test_models_unet_2d_condition.py
++++ b/tests/models/test_models_unet_2d_condition.py
+@@ -24,10 +24,7 @@ from parameterized import parameterized
+ from pytest import mark
+ 
+ from diffusers import UNet2DConditionModel
+-from diffusers.models.attention_processor import (
+-    CustomDiffusionAttnProcessor,
+-    IPAdapterAttnProcessor,
+-)
++from diffusers.models.attention_processor import CustomDiffusionAttnProcessor, IPAdapterAttnProcessor
+ from diffusers.models.embeddings import ImageProjection, Resampler
+ from diffusers.utils import logging
+ from diffusers.utils.import_utils import is_xformers_available
+@@ -66,9 +63,7 @@ def create_ip_adapter_state_dict(model):
+             hidden_size = model.config.block_out_channels[block_id]
+         if cross_attention_dim is not None:
+             sd = IPAdapterAttnProcessor(
+-                hidden_size=hidden_size,
+-                cross_attention_dim=cross_attention_dim,
+-                scale=1.0,
++                hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, scale=1.0
+             ).state_dict()
+             ip_cross_attn_state_dict.update(
+                 {
+@@ -82,9 +77,7 @@ def create_ip_adapter_state_dict(model):
+     # "image_proj" (ImageProjection layer weights)
+     cross_attention_dim = model.config["cross_attention_dim"]
+     image_projection = ImageProjection(
+-        cross_attention_dim=cross_attention_dim,
+-        image_embed_dim=cross_attention_dim,
+-        num_image_text_embeds=4,
++        cross_attention_dim=cross_attention_dim, image_embed_dim=cross_attention_dim, num_image_text_embeds=4
+     )
+ 
+     ip_image_projection_state_dict = {}
+@@ -100,12 +93,7 @@ def create_ip_adapter_state_dict(model):
+ 
+     del sd
+     ip_state_dict = {}
+-    ip_state_dict.update(
+-        {
+-            "image_proj": ip_image_projection_state_dict,
+-            "ip_adapter": ip_cross_attn_state_dict,
+-        }
+-    )
++    ip_state_dict.update({"image_proj": ip_image_projection_state_dict, "ip_adapter": ip_cross_attn_state_dict})
+     return ip_state_dict
+ 
+ 
+@@ -126,9 +114,7 @@ def create_ip_adapter_plus_state_dict(model):
+             hidden_size = model.config.block_out_channels[block_id]
+         if cross_attention_dim is not None:
+             sd = IPAdapterAttnProcessor(
+-                hidden_size=hidden_size,
+-                cross_attention_dim=cross_attention_dim,
+-                scale=1.0,
++                hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, scale=1.0
+             ).state_dict()
+             ip_cross_attn_state_dict.update(
+                 {
+@@ -142,22 +128,13 @@ def create_ip_adapter_plus_state_dict(model):
+     # "image_proj" (ImageProjection layer weights)
+     cross_attention_dim = model.config["cross_attention_dim"]
+     image_projection = Resampler(
+-        embed_dims=cross_attention_dim,
+-        output_dims=cross_attention_dim,
+-        hidden_dims=32,
+-        num_heads=2,
+-        num_queries=4,
++        embed_dims=cross_attention_dim, output_dims=cross_attention_dim, hidden_dims=32, num_heads=2, num_queries=4
+     )
+ 
+     ip_image_projection_state_dict = image_projection.state_dict()
+ 
+     ip_state_dict = {}
+-    ip_state_dict.update(
+-        {
+-            "image_proj": ip_image_projection_state_dict,
+-            "ip_adapter": ip_cross_attn_state_dict,
+-        }
+-    )
++    ip_state_dict.update({"image_proj": ip_image_projection_state_dict, "ip_adapter": ip_cross_attn_state_dict})
+     return ip_state_dict
+ 
+ 
+@@ -224,11 +201,7 @@ class UNet2DConditionModelTests(ModelTesterMixin, UNetTesterMixin, unittest.Test
+         time_step = torch.tensor([10]).to(torch_device)
+         encoder_hidden_states = floats_tensor((batch_size, 4, 32)).to(torch_device)
+ 
+-        return {
+-            "sample": noise,
+-            "timestep": time_step,
+-            "encoder_hidden_states": encoder_hidden_states,
+-        }
++        return {"sample": noise, "timestep": time_step, "encoder_hidden_states": encoder_hidden_states}
+ 
+     @property
+     def input_shape(self):
+@@ -502,14 +475,7 @@ class UNet2DConditionModelTests(ModelTesterMixin, UNetTesterMixin, unittest.Test
+                 self.number = 0
+                 self.counter = 0
+ 
+-            def __call__(
+-                self,
+-                attn,
+-                hidden_states,
+-                encoder_hidden_states=None,
+-                attention_mask=None,
+-                number=None,
+-            ):
++            def __call__(self, attn, hidden_states, encoder_hidden_states=None, attention_mask=None, number=None):
+                 batch_size, sequence_length, _ = hidden_states.shape
+                 attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
+ 
+@@ -772,12 +738,7 @@ class UNet2DConditionModelTests(ModelTesterMixin, UNetTesterMixin, unittest.Test
+         image_proj_state_dict_2 = {k: w + 1.0 for k, w in ip_adapter_1["image_proj"].items()}
+         cross_attn_state_dict_2 = {k: w + 1.0 for k, w in ip_adapter_1["ip_adapter"].items()}
+         ip_adapter_2 = {}
+-        ip_adapter_2.update(
+-            {
+-                "image_proj": image_proj_state_dict_2,
+-                "ip_adapter": cross_attn_state_dict_2,
+-            }
+-        )
++        ip_adapter_2.update({"image_proj": image_proj_state_dict_2, "ip_adapter": cross_attn_state_dict_2})
+ 
+         # forward pass ip_adapter_1
+         model._load_ip_adapter_weights(ip_adapter_1)
+@@ -827,12 +788,7 @@ class UNet2DConditionModelTests(ModelTesterMixin, UNetTesterMixin, unittest.Test
+         image_proj_state_dict_2 = {k: w + 1.0 for k, w in ip_adapter_1["image_proj"].items()}
+         cross_attn_state_dict_2 = {k: w + 1.0 for k, w in ip_adapter_1["ip_adapter"].items()}
+         ip_adapter_2 = {}
+-        ip_adapter_2.update(
+-            {
+-                "image_proj": image_proj_state_dict_2,
+-                "ip_adapter": cross_attn_state_dict_2,
+-            }
+-        )
++        ip_adapter_2.update({"image_proj": image_proj_state_dict_2, "ip_adapter": cross_attn_state_dict_2})
+ 
+         # forward pass ip_adapter_1
+         model._load_ip_adapter_weights(ip_adapter_1)

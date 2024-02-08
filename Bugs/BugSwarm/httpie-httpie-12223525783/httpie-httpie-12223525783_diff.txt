@@ -1,0 +1,27 @@
+diff --git a/httpie/cli/definition.py b/httpie/cli/definition.py
+index b0d4ddc..3d5650c 100644
+--- a/httpie/cli/definition.py
++++ b/httpie/cli/definition.py
+@@ -617,6 +617,7 @@ sessions.add_argument(
+ # Authentication
+ #######################################################################
+ 
++
+ def format_auth_help(auth_plugins_mapping, *, isolation_mode: bool = False):
+     text = """
+     The authentication mechanism to be used. Defaults to "{default}".
+diff --git a/setup.py b/setup.py
+index b81a6af..f430a6a 100644
+--- a/setup.py
++++ b/setup.py
+@@ -40,8 +40,8 @@ install_requires = [
+     'multidict>=4.7.0',
+     'setuptools',
+     'importlib-metadata>=1.4.0; python_version < "3.8"',
+-    'rich>=9.10.0'
+-    'argcomplete',
++    'rich>=9.10.0',
++    'argcomplete'
+ ]
+ install_requires_win_only = [
+     'colorama>=0.2.4',

@@ -1,0 +1,34 @@
+diff --git a/README.md b/README.md
+index 258eb11..868c45b 100644
+--- a/README.md
++++ b/README.md
+@@ -94,6 +94,7 @@ To generate your local documentation, first install everything in `sphinx-docs/r
+ generate and make all doc files for you. Finally, you can open the docs locall by runnint `open sphinx-docs/build/html/index.html`.
+ 
+ ## Resources:
++  * RISC-V Programmers Handbook: https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md
+   * Pseudo ops: https://www.codetd.com/article/8981522
+   * detailed instruction definition: https://msyksphinz-self.github.io/riscv-isadoc/html/rvi.html#add
+   * RISC-V reference card: https://www.cl.cam.ac.uk/teaching/1617/ECAD+Arch/files/docs/RISCVGreenCardv8-20151013.pdf
+diff --git a/riscemu/__main__.py b/riscemu/__main__.py
+index 9320767..efcec20 100644
+--- a/riscemu/__main__.py
++++ b/riscemu/__main__.py
+@@ -134,7 +134,7 @@ unlimited_regs:       Allow an unlimited number of registers""",
+         "--ignore-exit-code",
+         help="Ignore exit code of the program and always return 0 if the program ran to completion.",
+         action="store_true",
+-        default=False
++        default=False,
+     )
+ 
+     args = parser.parse_args()
+diff --git a/riscemu/types/binary_data_memory_section.py b/riscemu/types/binary_data_memory_section.py
+index 301d39c..31bf0f2 100644
+--- a/riscemu/types/binary_data_memory_section.py
++++ b/riscemu/types/binary_data_memory_section.py
+@@ -1,3 +1,4 @@
++from typing import Optional
+ from . import (
+     MemorySection,
+     InstructionContext,

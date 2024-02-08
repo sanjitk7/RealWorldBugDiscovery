@@ -1,0 +1,13 @@
+diff --git a/samcli/local/apigw/local_apigw_service.py b/samcli/local/apigw/local_apigw_service.py
+index c5db95a3..0044e4c8 100644
+--- a/samcli/local/apigw/local_apigw_service.py
++++ b/samcli/local/apigw/local_apigw_service.py
+@@ -706,7 +706,7 @@ class LocalApigwService(BaseLocalService):
+             )
+ 
+             if lambda_authorizer_exception:
+-                LOG.error("Lambda authorizer failed to invoke successfully: %s", lambda_authorizer_exception.message)
++                LOG.error("Lambda authorizer failed to invoke successfully: %s", str(lambda_authorizer_exception))
+ 
+             if auth_service_error:
+                 return auth_service_error

@@ -1,0 +1,645 @@
+diff --git a/src/main/config/messages_template.xml b/src/main/config/messages_template.xml
+index e7ceaab6a..405146ef7 100644
+--- a/src/main/config/messages_template.xml
++++ b/src/main/config/messages_template.xml
+@@ -207,7 +207,7 @@ See the accompanying LICENSE file for applicable license.
+   </message>
+   
+   <message id="DOTJ045I" type="INFO">
+-    <reason>The key "%1" is defined more than once in the same map file.</reason>
++    <reason>The key "%1" is defined more than once in the same map file. The reference href="%2" is ignored.</reason>
+     <response></response>
+   </message>
+   
+@@ -363,6 +363,11 @@ See the accompanying LICENSE file for applicable license.
+     <response>Using 'scope' attribute value 'external'.</response>
+   </message>
+ 
++  <message id="DOTJ076W" type="WARN">
++    <reason>Absolute link '%1' without correct 'scope' attribute.</reason>
++    <response></response>
++  </message>
++
+   <!-- End of Java Messages -->
+     
+   <!-- Start of XSL Messages -->  
+diff --git a/src/main/java/org/dita/dost/module/MaprefModule.java b/src/main/java/org/dita/dost/module/MaprefModule.java
+deleted file mode 100644
+index 23b4b2620..000000000
+--- a/src/main/java/org/dita/dost/module/MaprefModule.java
++++ /dev/null
+@@ -1,159 +0,0 @@
+-/*
+- * This file is part of the DITA Open Toolkit project.
+- *
+- * Copyright 2018 Jarno Elovirta
+- *
+- * See the accompanying LICENSE file for applicable license.
+- */
+-package org.dita.dost.module;
+-
+-import com.google.common.io.Files;
+-import org.dita.dost.exception.DITAOTException;
+-import org.dita.dost.pipeline.AbstractPipelineInput;
+-import org.dita.dost.pipeline.AbstractPipelineOutput;
+-import org.dita.dost.util.CatalogUtils;
+-import org.dita.dost.util.Job.FileInfo;
+-import org.dita.dost.util.XMLUtils;
+-import org.w3c.dom.Document;
+-import org.w3c.dom.Element;
+-
+-import javax.xml.transform.*;
+-import javax.xml.transform.dom.DOMResult;
+-import javax.xml.transform.dom.DOMSource;
+-import javax.xml.transform.sax.SAXTransformerFactory;
+-import javax.xml.transform.stream.StreamResult;
+-import javax.xml.transform.stream.StreamSource;
+-import java.io.*;
+-import java.util.Collection;
+-import java.util.List;
+-
+-import static org.dita.dost.reader.GenListModuleReader.KEYREF_ATTRS;
+-import static org.dita.dost.util.Constants.*;
+-import static org.dita.dost.util.XMLUtils.withLogger;
+-
+-/**
+- * Recursively inline map references in maps.
+- *
+- * @since 3.1
+- */
+-final class MaprefModule extends AbstractPipelineModuleImpl {
+-
+-    private final SAXTransformerFactory transformerFactory;
+-
+-    private Templates templates;
+-    private Transformer serializer;
+-
+-    public MaprefModule() {
+-        transformerFactory = (SAXTransformerFactory) TransformerFactory.newInstance();
+-        transformerFactory.setURIResolver(CatalogUtils.getCatalogResolver());
+-    }
+-
+-    private void init(final AbstractPipelineInput input) {
+-        try {
+-            final File styleFile = new File(input.getAttribute(ANT_INVOKER_EXT_PARAM_STYLE));
+-            templates = transformerFactory.newTemplates(new StreamSource(styleFile));
+-            serializer = transformerFactory.newTransformer();
+-        } catch (TransformerConfigurationException e) {
+-            throw new RuntimeException(e);
+-        }
+-
+-        if (fileInfoFilter == null) {
+-            fileInfoFilter = fileInfo -> fileInfo.format != null && fileInfo.format.equals(ATTR_FORMAT_VALUE_DITAMAP);
+-        }
+-    }
+-
+-    /**
+-     * @param input input parameters and resources
+-     * @return always {@code null}
+-     * @throws DITAOTException if process fails
+-     */
+-    @Override
+-    public AbstractPipelineOutput execute(final AbstractPipelineInput input) throws DITAOTException {
+-        init(input);
+-
+-        final Collection<FileInfo> fileInfos = job.getFileInfo(fileInfoFilter);
+-        for (FileInfo fileInfo : fileInfos) {
+-            processMap(fileInfo);
+-        }
+-        for (FileInfo fileInfo : fileInfos) {
+-            replace(fileInfo);
+-        }
+-
+-        try {
+-            job.write();
+-        } catch (IOException e) {
+-            throw new DITAOTException("Failed to serialize job configuration: " + e.getMessage(), e);
+-        }
+-
+-        return null;
+-    }
+-
+-    private void processMap(final FileInfo input) throws DITAOTException {
+-        final File inputFile = new File(job.tempDir, input.file.getPath());
+-        final File outputFile = new File(inputFile.getAbsolutePath() + FILE_EXTENSION_TEMP);
+-
+-        logger.info("Processing " + inputFile.toURI());
+-        Document doc;
+-        try (InputStream in = new BufferedInputStream(new FileInputStream(inputFile))) {
+-            doc = XMLUtils.getDocumentBuilder().newDocument();
+-            final Source source = new StreamSource(in, inputFile.toURI().toString());
+-            final Result result = new DOMResult(doc);
+-            final Transformer transformer = withLogger(templates.newTransformer(), logger);
+-            transformer.setURIResolver(CatalogUtils.getCatalogResolver());
+-            transformer.transform(source, result);
+-        } catch (final RuntimeException e) {
+-            throw e;
+-        } catch (final Exception e) {
+-            throw new DITAOTException("Failed to merge map " + inputFile + ": " + e.getMessage(), e);
+-        }
+-
+-        final FileInfo updated = collectJobInfo(input, doc);
+-        job.add(updated);
+-
+-        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(outputFile))) {
+-            final Source source = new DOMSource(doc);
+-            final Result result = new StreamResult(out);
+-            serializer.transform(source, result);
+-        } catch (final RuntimeException e) {
+-            throw e;
+-        } catch (final Exception e) {
+-            throw new DITAOTException("Failed to serialize map " + inputFile + ": " + e.getMessage(), e);
+-        }
+-    }
+-
+-    private FileInfo collectJobInfo(FileInfo fileInfo, Document doc) {
+-        final FileInfo.Builder builder = new FileInfo.Builder(fileInfo);
+-        final List<Element> elements = XMLUtils.toList(doc.getElementsByTagName("*"));
+-        if (!fileInfo.hasConref) {
+-            builder.hasConref(elements.stream()
+-                    .anyMatch(e -> e.hasAttribute(ATTRIBUTE_NAME_CONREF) || e.hasAttribute(ATTRIBUTE_NAME_CONKEYREF)));
+-        }
+-        if (!fileInfo.hasKeyref) {
+-            builder.hasKeyref(elements.stream()
+-                    .anyMatch(e -> {
+-                        if (SUBJECTSCHEME_SUBJECTDEF.matches(e)) {
+-                            return false;
+-                        }
+-                        for (final String attr : KEYREF_ATTRS) {
+-                            if (e.hasAttribute(attr)) {
+-                                return true;
+-                            }
+-                        }
+-                        return false;
+-                    }));
+-        }
+-
+-        return builder.build();
+-    }
+-
+-    private void replace(final FileInfo input) throws DITAOTException {
+-        final File inputFile = new File(job.tempDir, input.file.getPath() + FILE_EXTENSION_TEMP);
+-        final File outputFile = new File(job.tempDir, input.file.getPath());
+-        try {
+-            Files.move(inputFile, outputFile);
+-        } catch (final IOException e) {
+-            throw new DITAOTException("Failed to replace temporary file " + inputFile + ": " + e.getMessage(), e);
+-        }
+-    }
+-
+-}
+diff --git a/src/main/java/org/dita/dost/reader/GenListModuleReader.java b/src/main/java/org/dita/dost/reader/GenListModuleReader.java
+index 8aeded04e..6aaa75f85 100644
+--- a/src/main/java/org/dita/dost/reader/GenListModuleReader.java
++++ b/src/main/java/org/dita/dost/reader/GenListModuleReader.java
+@@ -670,7 +670,7 @@ public final class GenListModuleReader extends AbstractXMLFilter {
+         }
+     }
+ 
+-    public final static String[] KEYREF_ATTRS = new String[] {
++    private final static String[] KEYREF_ATTRS = new String[] {
+             ATTRIBUTE_NAME_KEYREF,
+             ATTRIBUTE_NAME_CONKEYREF,
+             ATTRIBUTE_NAME_ARCHIVEKEYREFS,
+diff --git a/src/main/java/org/dita/dost/reader/KeydefFilter.java b/src/main/java/org/dita/dost/reader/KeydefFilter.java
+index 7de302cb7..c41e4a798 100644
+--- a/src/main/java/org/dita/dost/reader/KeydefFilter.java
++++ b/src/main/java/org/dita/dost/reader/KeydefFilter.java
+@@ -144,7 +144,7 @@ public final class KeydefFilter extends AbstractXMLFilter {
+                         keysDefMap.put(key, new KeyDef(key, null, null, null, null,null));
+                     }
+                 } else {
+-                    logger.info(MessageUtils.getMessage("DOTJ045I", key).toString());
++                    logger.info(MessageUtils.getMessage("DOTJ045I", key, target != null ? target.toString() : null).toString());
+                 }
+             }
+         }
+diff --git a/src/main/java/org/dita/dost/writer/ValidationFilter.java b/src/main/java/org/dita/dost/writer/ValidationFilter.java
+index 19082f550..3ee56d5da 100644
+--- a/src/main/java/org/dita/dost/writer/ValidationFilter.java
++++ b/src/main/java/org/dita/dost/writer/ValidationFilter.java
+@@ -225,11 +225,6 @@ public final class ValidationFilter extends AbstractXMLFilter {
+             final boolean sameAuthority = Objects.equals(currentFile.getRawAuthority(), href.getRawAuthority());
+             if (!(sameScheme && sameAuthority)) {
+                 switch (processingMode) {
+-//                        case STRICT:
+-//                            throw new RuntimeException(MessageUtils.getMessage("DOTJ054E", ATTRIBUTE_NAME_HREF, href).setLocation(locator) + ": " + e.getMessage(), e);
+-//                        case SKIP:
+-//                            logger.error(MessageUtils.getMessage("DOTJ054E", ATTRIBUTE_NAME_HREF, href).setLocation(locator) + ", using invalid value.");
+-//                            break;
+                     case LAX:
+                         if (res == null) {
+                             res = new AttributesImpl(atts);
+@@ -237,6 +232,9 @@ public final class ValidationFilter extends AbstractXMLFilter {
+                         addOrSetAttribute(res, ATTRIBUTE_NAME_SCOPE, ATTR_SCOPE_VALUE_EXTERNAL);
+                         logger.warn(MessageUtils.getMessage("DOTJ075W", href.toString()).setLocation(locator).toString());
+                         break;
++                    default:
++                        logger.warn(MessageUtils.getMessage("DOTJ076W", href.toString()).setLocation(locator) + ", using invalid value.");
++                        break;
+                 }
+             }
+         }
+diff --git a/src/main/plugins/org.dita.base/build_preprocess2_template.xml b/src/main/plugins/org.dita.base/build_preprocess2_template.xml
+index a5fc16eae..d7269c013 100644
+--- a/src/main/plugins/org.dita.base/build_preprocess2_template.xml
++++ b/src/main/plugins/org.dita.base/build_preprocess2_template.xml
+@@ -18,34 +18,15 @@ See the accompanying LICENSE file for applicable license.
+                   preprocess2.init,
+                   ditaval-merge,
+                   
+-                  preprocess2.maps,
+-                  preprocess2.topics,
+-                  
+-                  map-clean-map,
+-                  clean-preprocess,
+-                  copy-files2,
+-                  {depend.preprocess.post}">
+-    <dirname property="_dita.map.output.dir" file="${dita.output.dir}/${user.input.file}" />
+-    <dirname property="_dita.map.temp.dir" file="${dita.temp.dir}/${user.input.file}" />
+-    <condition property="uplevels" value="">
+-      <not><isset property="uplevels"/></not>
+-    </condition>
+-    <property name="dita.map.output.dir" location="${_dita.map.output.dir}/${uplevels}"/>
+-    <!-- Deprecated since 2.4 -->
+-    <property name="user.input.file.listfile" value="usr.input.file.list"/>
+-  </target>
+-
+-  <target name="preprocess2.maps"
+-          depends="map-reader,
++                  map-reader,
+                   map-mapref,
+                   map-branch-filter,
+                   map-keyref,
+                   map-conrefpush,
+                   map-conref,
+-                  map-profile"/>
+-
+-  <target name="preprocess2.topics"
+-          depends="topic-reader,
++                  map-profile,
++    
++                  topic-reader,
+                   topic-branch-filter,
+                   topic-keyref,
+                   topic-copy-to,
+@@ -56,7 +37,21 @@ See the accompanying LICENSE file for applicable license.
+                   topic-chunk,
+                   topic-move-meta-entries,
+                   topic-maplink,
+-                  topic-topicpull"/>
++                  topic-topicpull,
++                  
++                  map-clean-map,
++                  clean-preprocess,
++                  copy-files2,
++                  {depend.preprocess.post}">
++    <dirname property="_dita.map.output.dir" file="${dita.output.dir}/${user.input.file}" />
++    <dirname property="_dita.map.temp.dir" file="${dita.temp.dir}/${user.input.file}" />
++    <condition property="uplevels" value="">
++      <not><isset property="uplevels"/></not>
++    </condition>
++    <property name="dita.map.output.dir" location="${_dita.map.output.dir}/${uplevels}"/>
++    <!-- Deprecated since 2.4 -->
++    <property name="user.input.file.listfile" value="usr.input.file.list"/>
++  </target>
+ 
+   <target name="preprocess2-topic"
+           dita:extension="depends org.dita.dost.platform.InsertDependsAction"
+@@ -160,11 +155,15 @@ See the accompanying LICENSE file for applicable license.
+     </condition>
+     <dirname property="mapref.workdir" file="${dita.temp.dir}/${user.input.file}" />
+     <pipeline message="Resolve mapref in ditamap" taskname="mapref">
+-      <module class="org.dita.dost.module.MaprefModule">
+-        <param name="style" location="${dita.plugin.org.dita.base.dir}/xsl/preprocess/mapref.xsl"/>
++      <xslt basedir="${dita.temp.dir}"
++        reloadstylesheet="${dita.preprocess.reloadstylesheet.mapref}"
++        style="${dita.plugin.org.dita.base.dir}/xsl/preprocess/mapref.xsl"
++        filenameparameter="file-being-processed">
++        <!-- TODO only merge start map -->
+         <ditafileset format="ditamap"/>
+         <dita:extension id="dita.preprocess.mapref.param" behavior="org.dita.dost.platform.InsertAction"/>
+-      </module>
++        <xmlcatalog refid="dita.catalog"/>
++      </xslt>
+     </pipeline>
+   </target>
+ 
+@@ -186,11 +185,18 @@ See the accompanying LICENSE file for applicable license.
+       </module>
+     </pipeline>
+     <pipeline message="Resolve mapref in ditamap" taskname="mapref">
+-      <module class="org.dita.dost.module.MaprefModule">
+-        <param name="style" location="${dita.plugin.org.dita.base.dir}/xsl/preprocess/mapref.xsl"/>
+-        <ditafileset format="ditamap"/>
++      <xslt basedir="${dita.temp.dir}"
++        reloadstylesheet="${dita.preprocess.reloadstylesheet.mapref}"
++        style="${dita.plugin.org.dita.base.dir}/xsl/preprocess/mapref.xsl"
++        filenameparameter="file-being-processed">
++        <!-- TODO only merge start map -->
++        <ditaFileset format="ditamap"/>
++        <!--param name="TRANSTYPE" expression="${transtype}" /-->
++        <param name="child-topicref-warning" expression="false"/>
++        <param name="keep-submap-href" expression="false"/>
+         <dita:extension id="dita.preprocess.mapref.param" behavior="org.dita.dost.platform.InsertAction"/>
+-      </module>
++        <xmlcatalog refid="dita.catalog"/>
++      </xslt>
+     </pipeline>
+   </target>
+   
+diff --git a/src/main/plugins/org.dita.base/build_preprocess_template.xml b/src/main/plugins/org.dita.base/build_preprocess_template.xml
+index 34446913f..19d1338d9 100644
+--- a/src/main/plugins/org.dita.base/build_preprocess_template.xml
++++ b/src/main/plugins/org.dita.base/build_preprocess_template.xml
+@@ -327,11 +327,13 @@ See the accompanying LICENSE file for applicable license.
+     </condition>
+     <dirname property="mapref.workdir" file="${dita.temp.dir}/${user.input.file}" />
+     <pipeline message="Resolve mapref in ditamap" taskname="mapref">
+-      <module class="org.dita.dost.module.MaprefModule">
+-        <param name="style" location="${dita.plugin.org.dita.base.dir}/xsl/preprocess/mapref.xsl"/>
++      <xslt basedir="${dita.temp.dir}"
++          reloadstylesheet="${dita.preprocess.reloadstylesheet.mapref}"
++        style="${dita.plugin.org.dita.base.dir}/xsl/preprocess/mapref.xsl" filenameparameter="file-being-processed">
+         <ditafileset format="ditamap"/>
+         <dita:extension id="dita.preprocess.mapref.param" behavior="org.dita.dost.platform.InsertAction"/>
+-      </module>
++        <xmlcatalog refid="dita.catalog"/>
++      </xslt>
+     </pipeline>
+   </target>
+ 
+diff --git a/src/test/java/org/dita/dost/writer/ValidationFilterTest.java b/src/test/java/org/dita/dost/writer/ValidationFilterTest.java
+index 3ac8880fc..b1be0ac14 100644
+--- a/src/test/java/org/dita/dost/writer/ValidationFilterTest.java
++++ b/src/test/java/org/dita/dost/writer/ValidationFilterTest.java
+@@ -12,6 +12,7 @@ import static org.dita.dost.util.Constants.*;
+ import static org.junit.Assert.*;
+ import static org.dita.dost.util.XMLUtils.AttributesBuilder;
+ 
++import java.net.URI;
+ import java.net.URISyntaxException;
+ import java.util.ArrayList;
+ import java.util.Collections;
+@@ -20,6 +21,7 @@ import java.util.List;
+ import org.dita.dost.TestUtils;
+ import org.dita.dost.TestUtils.CachingLogger.Message;
+ import org.dita.dost.util.Configuration;
++import org.junit.Before;
+ import org.junit.Test;
+ import org.xml.sax.Attributes;
+ import org.xml.sax.SAXException;
+@@ -27,12 +29,19 @@ import org.xml.sax.helpers.DefaultHandler;
+ 
+ public class ValidationFilterTest {
+ 
++    private ValidationFilter f;
++
++    @Before
++    public void setUp() {
++        f = new ValidationFilter();
++        f.setValidateMap(Collections.emptyMap());
++        f.setProcessingMode(Configuration.Mode.LAX);
++        f.setCurrentFile(URI.create("file:/foo/bar.dita"));
++    }
++
+     @Test
+     public void testXMLLang() throws SAXException {
+         final List<String> res = new ArrayList<String>();
+-        final ValidationFilter f = new ValidationFilter();
+-        f.setValidateMap(Collections.EMPTY_MAP);
+-        f.setProcessingMode(Configuration.Mode.LAX);
+         f.setContentHandler(new DefaultHandler() {
+             @Override
+             public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
+@@ -58,9 +67,6 @@ public class ValidationFilterTest {
+     @Test
+     public void testHref() throws SAXException, URISyntaxException {
+         final List<String> res = new ArrayList<String>();
+-        final ValidationFilter f = new ValidationFilter();
+-        f.setValidateMap(Collections.EMPTY_MAP);
+-        f.setProcessingMode(Configuration.Mode.LAX);
+         f.setContentHandler(new DefaultHandler() {
+             @Override
+             public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
+@@ -72,9 +78,11 @@ public class ValidationFilterTest {
+ 
+         f.startElement(NULL_NS_URI, TOPIC_XREF.localName, TOPIC_XREF.localName, new AttributesBuilder()
+                 .add(ATTRIBUTE_NAME_HREF, "http://example.com/foo\\bar baz:qux")
++                .add(ATTRIBUTE_NAME_SCOPE, ATTR_SCOPE_VALUE_EXTERNAL)
+                 .build());
+         f.startElement(NULL_NS_URI, TOPIC_XREF.localName, TOPIC_XREF.localName, new AttributesBuilder()
+                 .add(ATTRIBUTE_NAME_HREF, "http://example.com/valid/bar+baz:qux")
++                .add(ATTRIBUTE_NAME_SCOPE, ATTR_SCOPE_VALUE_EXTERNAL)
+                 .build());
+ 
+         assertEquals(1, l.getMessages().size());
+@@ -83,10 +91,33 @@ public class ValidationFilterTest {
+         assertEquals("http://example.com/valid/bar+baz:qux", res.get(1));
+     }
+ 
++    @Test
++    public void testScope() throws SAXException, URISyntaxException {
++        final List<String> res = new ArrayList<String>();
++        f.setContentHandler(new DefaultHandler() {
++            @Override
++            public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
++                res.add(atts.getValue(ATTRIBUTE_NAME_HREF));
++            }
++        });
++        final TestUtils.CachingLogger l = new TestUtils.CachingLogger();
++        f.setLogger(l);
++
++        f.startElement(NULL_NS_URI, TOPIC_XREF.localName, TOPIC_XREF.localName, new AttributesBuilder()
++                .add(ATTRIBUTE_NAME_HREF, "http://example.com/broken")
++                .build());
++        f.startElement(NULL_NS_URI, TOPIC_XREF.localName, TOPIC_XREF.localName, new AttributesBuilder()
++                .add(ATTRIBUTE_NAME_HREF, "http://example.com/valid")
++                .add(ATTRIBUTE_NAME_SCOPE, ATTR_SCOPE_VALUE_EXTERNAL)
++                .build());
++
++        assertEquals(1, l.getMessages().size());
++        assertEquals(TestUtils.CachingLogger.Message.Level.WARN, l.getMessages().get(0).level);
++        assertEquals("http://example.com/broken", res.get(0));
++    }
++
+     @Test
+     public void testId() throws SAXException, URISyntaxException {
+-        final ValidationFilter f = new ValidationFilter();
+-        f.setValidateMap(Collections.EMPTY_MAP);
+         f.setContentHandler(new DefaultHandler());
+         final TestUtils.CachingLogger l = new TestUtils.CachingLogger();
+         f.setLogger(l);
+@@ -123,8 +154,6 @@ public class ValidationFilterTest {
+ 
+     @Test
+     public void testKeys() throws SAXException, URISyntaxException {
+-        final ValidationFilter f = new ValidationFilter();
+-        f.setValidateMap(Collections.EMPTY_MAP);
+         f.setContentHandler(new DefaultHandler());
+         final TestUtils.CachingLogger l = new TestUtils.CachingLogger();
+         f.setLogger(l);
+@@ -155,8 +184,6 @@ public class ValidationFilterTest {
+ 
+        @Test
+         public void testKeyscope() throws SAXException, URISyntaxException {
+-            final ValidationFilter f = new ValidationFilter();
+-            f.setValidateMap(Collections.EMPTY_MAP);
+             f.setContentHandler(new DefaultHandler());
+             final TestUtils.CachingLogger l = new TestUtils.CachingLogger();
+             f.setLogger(l);
+@@ -187,8 +214,6 @@ public class ValidationFilterTest {
+ 
+     @Test
+     public void testAttributeGeneralization() throws SAXException {
+-        final ValidationFilter f = new ValidationFilter();
+-        f.setValidateMap(Collections.EMPTY_MAP);
+         f.setContentHandler(new DefaultHandler());
+         final TestUtils.CachingLogger l = new TestUtils.CachingLogger();
+         f.setLogger(l);
+diff --git a/src/test/resources/conref/exp/preprocess/lang-common0.dita b/src/test/resources/conref/exp/preprocess/lang-common0.dita
+index 3ea139f76..f7d1c733d 100644
+--- a/src/test/resources/conref/exp/preprocess/lang-common0.dita
++++ b/src/test/resources/conref/exp/preprocess/lang-common0.dita
+@@ -79,12 +79,12 @@
+           class="- topic/xref " type="table"><?ditaot gentext?>Table 1</xref>. Now do it again,
+           <xref href="#topic/table" class="- topic/xref " type="table"><?ditaot usertext?>with link
+           text</xref>.</p>
+-      <p class="- topic/p ">Xref to an external website: <xref href="http://www.ibm.com"
+-          format="html" class="- topic/xref "/>. Now do it again, <xref href="http://www.ibm.com"
++      <p class="- topic/p ">Xref to an external website: <xref scope="external" href="http://www.ibm.com"
++          format="html" class="- topic/xref "/>. Now do it again, <xref scope="external" href="http://www.ibm.com"
+           format="html" class="- topic/xref "><?ditaot usertext?>with link text</xref>.</p>
+       <p class="- topic/p ">Xref to an external website with an anchor: <xref
+-          href="http://www.ibm.com/index.html#anchor" format="html" class="- topic/xref "/>. Now do
+-        it again, <xref href="http://www.ibm.com/index.html#anchor" format="html"
++          scope="external" href="http://www.ibm.com/index.html#anchor" format="html" class="- topic/xref "/>. Now do
++        it again, <xref scope="external" href="http://www.ibm.com/index.html#anchor" format="html"
+           class="- topic/xref "><?ditaot usertext?>with link text</xref>.</p>
+       <fig id="fig" class="- topic/fig ">
+         <title class="- topic/title ">figure title</title>
+diff --git a/src/test/resources/conref/exp/preprocess/lang-common1.dita b/src/test/resources/conref/exp/preprocess/lang-common1.dita
+index b075de4c9..42bb741ee 100644
+--- a/src/test/resources/conref/exp/preprocess/lang-common1.dita
++++ b/src/test/resources/conref/exp/preprocess/lang-common1.dita
+@@ -79,11 +79,11 @@
+           class="- topic/xref " href="#topic/d7e179" type="table"><?ditaot usertext?>with link
+           text</xref>.</p>
+       <p class="- topic/p ">Xref to an external website: <xref class="- topic/xref " format="html"
+-          href="http://www.ibm.com"/>. Now do it again, <xref class="- topic/xref " format="html"
+-          href="http://www.ibm.com"><?ditaot usertext?>with link text</xref>.</p>
++          scope="external" href="http://www.ibm.com"/>. Now do it again, <xref class="- topic/xref " format="html"
++          scope="external" href="http://www.ibm.com"><?ditaot usertext?>with link text</xref>.</p>
+       <p class="- topic/p ">Xref to an external website with an anchor: <xref class="- topic/xref "
+-          format="html" href="http://www.ibm.com/index.html#anchor"/>. Now do it again, <xref
+-          class="- topic/xref " format="html" href="http://www.ibm.com/index.html#anchor"
++          format="html" scope="external" href="http://www.ibm.com/index.html#anchor"/>. Now do it again, <xref
++          class="- topic/xref " format="html" scope="external" href="http://www.ibm.com/index.html#anchor"
+           ><?ditaot usertext?>with link text</xref>.</p>
+       <fig class="- topic/fig " id="d7e168">
+         <title class="- topic/title ">figure title</title>
+diff --git a/src/test/resources/conref/src/lang-common0.dita b/src/test/resources/conref/src/lang-common0.dita
+index c817391d2..999772b9d 100644
+--- a/src/test/resources/conref/src/lang-common0.dita
++++ b/src/test/resources/conref/src/lang-common0.dita
+@@ -63,11 +63,11 @@
+           href="#topic/table"/>. Now do it again, <xref class="- topic/xref " href="#topic/table"
+           >with link text</xref>.</p>
+       <p class="- topic/p ">Xref to an external website: <xref class="- topic/xref " format="html"
+-          href="http://www.ibm.com"/>. Now do it again, <xref class="- topic/xref " format="html"
+-          href="http://www.ibm.com">with link text</xref>.</p>
++         scope="external" href="http://www.ibm.com"/>. Now do it again, <xref class="- topic/xref " format="html"
++         scope="external" href="http://www.ibm.com">with link text</xref>.</p>
+       <p class="- topic/p ">Xref to an external website with an anchor: <xref class="- topic/xref "
+-          format="html" href="http://www.ibm.com/index.html#anchor"/>. Now do it again, <xref
+-          class="- topic/xref " format="html" href="http://www.ibm.com/index.html#anchor">with link
++          format="html" scope="external" href="http://www.ibm.com/index.html#anchor"/>. Now do it again, <xref
++          class="- topic/xref " format="html" scope="external" href="http://www.ibm.com/index.html#anchor">with link
+           text</xref>.</p>
+       <fig class="- topic/fig " id="fig">
+         <title class="- topic/title ">figure title</title>
+diff --git a/src/test/resources/messages.xml b/src/test/resources/messages.xml
+index 4640ce478..068ad2c36 100644
+--- a/src/test/resources/messages.xml
++++ b/src/test/resources/messages.xml
+@@ -326,7 +326,7 @@
+   </message>-->
+   
+   <message id="DOTJ045I" type="INFO">
+-    <reason>The key &quot;%1&quot; is defined more than once in the same map file.</reason>
++    <reason>The key &quot;%1&quot; is defined more than once in the same map file. The reference href=&quot;%2&quot; is ignored.</reason>
+     <response></response>
+   </message>
+   
+diff --git a/src/test/resources/messages_en_US.properties b/src/test/resources/messages_en_US.properties
+index eec5d059d..1e95069ec 100644
+--- a/src/test/resources/messages_en_US.properties
++++ b/src/test/resources/messages_en_US.properties
+@@ -4,6 +4,7 @@ XXX234E=Error {0} reason {1}. Error {0} response {1}.
+ PDFX008W=Font definition not found for the logical name or alias ''{0}''.
+ DOTX064W=The copy-to attribute [copy-to\="{0}"] uses the name of a file that already exists, so this attribute is ignored.
+ DOTX025E=Missing linktext and navtitle for non-DITA resource "{0}". References must provide a local navigation title when the target is not a local DITA resource.
++PDFX012E=Found a table row with more entries than allowed.
+ DOTX005E=Unable to find navigation title for reference to ''{0}''. The build will use ''{0}'' as the title in the Eclipse Table of Contents.
+ DOTJ043W=The conref push function is trying to replace an element that does not exist (element "{0}" in file "{1}").
+ DOTX044E=The area element in an image map does not specify a link target. Please add an xref element with a link target to the area element.
+@@ -46,8 +47,8 @@ DOTA067W=Ignoring index-see ''{0}'' inside parent index entry ''{1}'' because th
+ DOTX061W=ID ''{0}'' was used in topicref tag but did not reference a topic element. The href attribute on a topicref element should only reference topic level elements.
+ DOTJ041E=The attribute conref\="{0}" uses invalid syntax. The value should contain ''\#'' followed by a topic or map ID, optionally followed by ''/elemID'' for a sub-topic element.
+ DOTX018I=The type attribute on a topicref was set to ''{0}'', but the topicref references a more specific ''{1}'' topic. Note that the type attribute cascades in maps, so the value ''{0}'' may come from an ancestor topicref.
+-DOTX041W=Found more than one title element in a {0} element. Using the first one for the {0}''s title.
+ XEPJ003E={0}
++DOTX041W=Found more than one title element in a {0} element. Using the first one for the {0}''s title.
+ DOTJ057E=The id attribute value "{0}" is not unique within the topic that contains it.
+ DOTA008E=Cannot find the running-header file "{0}". Please double check the value to ensure it is specified correctly.
+ DOTX057W=The link or cross reference target ''{0}'' cannot be found, which may cause errors creating links or cross references in your output file.
+@@ -67,6 +68,8 @@ DOTA007E=Cannot find the running-footer file "{0}". Please double check the valu
+ DOTX056W=The file ''{0}'' is not available to resolve link information.
+ DOTX017E=Found a link or cross reference with an empty href attribute (href\=""). Remove the empty href attribute or provide a value.
+ PDFX004F=A topic reference was found with href\="". Please specify a target or remove the href attribute.
++DOTJ075W=Absolute link ''{0}'' without correct ''scope'' attribute. Using ''scope'' attribute value ''external''.
++DOTJ076W=Absolute link ''{0}'' without correct ''scope'' attribute.
+ DOTA066F=Cannot find the user specified XSLT stylesheet ''{0}''.
+ XEPJ001W={0}
+ PDFJ003I=Index entry ''{0}'' will be sorted under the "Special characters" heading.
+@@ -79,6 +82,7 @@ DOTX036E=Unable to generate link text for a cross reference to a dlentry (the dl
+ DOTJ055E=Invalid key name "{0}".
+ DOTX055W=Customized stylesheet uses deprecated template "flagit". Conditional processing is no longer supported using this template. Please update your stylesheet to use template "start-flagit" instead of deprecated template "flagit".
+ DOTJ035F=The file "{0}" is outside the scope of the input dita/map directory. If you want to lower the severity level, please use the Ant parameter ''outer.control'', and set the value to "warn" or "quiet". Otherwise, move the referenced file "{0}" into the input dita/map directory.
++DOTJ074W=Rev attribute cannot be used with prop filter.
+ PDFJ002E=The build failed due to problems encountered when sorting the PDF index. Please address any messages located earlier in the log.
+ PDFX002W=There are multiple index terms specified with start\="{0}", but there is only one term to end this range, or the ranges for this term overlap. Ensure that each term with this start value has a matching end value, and that the specified ranges for this value do not overlap
+ DOTX035E=Unable to generate the correct number for a cross reference to a footnote\: ''{0}''
+@@ -91,6 +95,7 @@ DOTJ053W=Input file ''{0}'' is not valid DITA file name. Please check ''{0}'' to
+ PDFJ001E=The PDF indexing process could not find the proper sort location for ''{0}'', so the term has been dropped from the index.
+ PDFX001W=There is an index term specified with start\="{0}", but there is no matching end for this term. Add an index term in a valid location with end\="{0}".
+ DOTJ049W=The attribute value {0}\="{2}" on element "{1}" does not comply with the specified subject scheme. According to the subject scheme map, the following values are valid for the {0} attribute\: {3}
++DOTJ073E=Email link without correct ''scope'' attribute. Using ''scope'' attribute value ''external''.
+ DOTX034E=Unable to generate link text for a cross reference to an undered list item\: ''{0}''
+ DOTA004F=Invalid DITA topic extension ''{0}''. Supported values are ''.dita'' and ''.xml''.
+ DOTJ069E=Circular key definition {0}.
+@@ -102,6 +107,7 @@ DOTJ029I=No ''domains'' attribute was found for element ''<{0}>''. This generall
+ DOTJ013E=Failed to parse the referenced file ''{0}''.
+ DOTX053E=A element that references another map indirectly includes itself, which results in an infinite loop. The original map reference is to ''{0}''.
+ DOTJ009E=Cannot overwrite file ''{0}'' with file ''{1}''. The modified result may not be consumed by the following steps in the transform pipeline. Check to see whether the file is locked by some other application during the transformation process.
++DOTJ072E=Email link without correct ''format'' attribute. Using ''format'' attribute value ''email''.
+ DOTX009W=Could not retrieve a title from ''{0}''. Using ''{1}'' instead.
+ DOTX049I=References to non-dita files will be ignored by the PDF, ODT, and RTF output transforms.
+ DOTX033E=Unable to generate link text for a cross reference to a list item\: ''{0}''
+@@ -118,7 +124,6 @@ DOTJ012F=Failed to parse the input file ''{0}''.
+ DOTX012W=When you conref another topic or an item in another topic, the domains attribute of the target topic must be equal to or a subset of the current topic''s domains attribute. Put your target under an appropriate domain. You can see the messages guide for more help.
+ DOTJ028E=No format attribute was found on a reference to file ''{0}'', which does not appear to be a DITA file. If this is not a DITA file, set the format attribute to an appropriate value, otherwise set the format attribute to "dita".
+ DOTJ071E=Cannot find the specified DITAVAL ''{0}''.
+-DOTJ074W=Rev attribute cannot be used with prop filter.
+ DOTX048I=In order to include peer or external topic ''{0}'' in your help file, you may need to recompile the CHM file after making the file available.
+ DOTX008W=File ''{0}'' cannot be loaded, and no navigation title is specified for the table of contents.
+ DOTX071W=Parameter "{0}" on template "{1}" is deprecated. Use parameter "{2}" instead.
+@@ -140,7 +145,7 @@ DOTX067E=No string named ''{0}'' was found for language ''{1}''. Add a mapping f
+ DOTJ007E=Duplicate condition in filter file for rule ''{0}''. The first encountered condition will be used.
+ DOTX070W=Target "{0}" is deprecated. Remove references to this target from your custom Ant files.
+ DOTX031E=The file {0} is not available to resolve link information.
+-DOTA001F="{0}" is not a recognized transformation type. Supported transformation types are docx, eclipsehelp, html5, htmlhelp, markdown, markdown_gitbook, markdown_github, org.dita-ot.html, pdf, pdf2, tocjs, troff, xhtml.
++DOTA001F="{0}" is not a recognized transformation type. Supported transformation types are docx, eclipsehelp, html5, htmlhelp, kuhnuri, markdown, markdown_gitbook, markdown_github, org.dita-ot.html, pdf, pdf2, xhtml, xxx.
+ DOTX050W=Default id "org.sample.help.doc" is used for Eclipse plug-in. If you want to use your own plug-in id, please specify it using the id attribute on your map.
+ DOTJ066E=No id attribute on topic type element {0}. Using generated id {1}.
+ DOTJ030I=No ''class'' attribute for was found for element ''<{0}>''. The element will be processed as an unknown or non-DITA element.

@@ -1,0 +1,86 @@
+diff --git a/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptTableSubscriber.java b/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptTableSubscriber.java
+index 174ea08aee4..8fca3ccb9a6 100644
+--- a/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptTableSubscriber.java
++++ b/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptTableSubscriber.java
+@@ -18,6 +18,7 @@
+ package org.apache.shardingsphere.encrypt.subscriber.compatible;
+ 
+ import com.google.common.eventbus.Subscribe;
++import lombok.Setter;
+ import org.apache.shardingsphere.encrypt.api.config.CompatibleEncryptRuleConfiguration;
+ import org.apache.shardingsphere.encrypt.api.config.rule.EncryptTableRuleConfiguration;
+ import org.apache.shardingsphere.encrypt.event.compatible.table.AddCompatibleEncryptTableEvent;
+@@ -28,7 +29,7 @@ import org.apache.shardingsphere.encrypt.yaml.config.rule.YamlEncryptTableRuleCo
+ import org.apache.shardingsphere.encrypt.yaml.swapper.rule.YamlEncryptTableRuleConfigurationSwapper;
+ import org.apache.shardingsphere.infra.instance.InstanceContext;
+ import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
+-import org.apache.shardingsphere.infra.rule.RuleConfigurationSubscribeCoordinator;
++import org.apache.shardingsphere.infra.rule.RuleChangedSubscriber;
+ import org.apache.shardingsphere.infra.util.yaml.YamlEngine;
+ import org.apache.shardingsphere.mode.event.config.DatabaseRuleConfigurationChangedEvent;
+ 
+@@ -42,19 +43,13 @@ import java.util.Optional;
+  */
+ @Deprecated
+ @SuppressWarnings("UnstableApiUsage")
+-public final class CompatibleEncryptTableSubscriber implements RuleConfigurationSubscribeCoordinator {
++@Setter
++public final class CompatibleEncryptTableSubscriber implements RuleChangedSubscriber {
+     
+     private Map<String, ShardingSphereDatabase> databases;
+     
+     private InstanceContext instanceContext;
+     
+-    @Override
+-    public void registerRuleConfigurationSubscriber(final Map<String, ShardingSphereDatabase> databases, final InstanceContext instanceContext) {
+-        this.databases = databases;
+-        this.instanceContext = instanceContext;
+-        instanceContext.getEventBusContext().register(this);
+-    }
+-    
+     /**
+      * Renew with add encrypt configuration.
+      *
+diff --git a/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptorSubscriber.java b/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptorSubscriber.java
+index 956274de1d3..5bf08d9722d 100644
+--- a/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptorSubscriber.java
++++ b/features/encrypt/core/src/main/java/org/apache/shardingsphere/encrypt/subscriber/compatible/CompatibleEncryptorSubscriber.java
+@@ -18,6 +18,7 @@
+ package org.apache.shardingsphere.encrypt.subscriber.compatible;
+ 
+ import com.google.common.eventbus.Subscribe;
++import lombok.Setter;
+ import org.apache.shardingsphere.encrypt.api.config.CompatibleEncryptRuleConfiguration;
+ import org.apache.shardingsphere.encrypt.event.compatible.encryptor.AlterCompatibleEncryptorEvent;
+ import org.apache.shardingsphere.encrypt.event.compatible.encryptor.DeleteCompatibleEncryptorEvent;
+@@ -25,7 +26,7 @@ import org.apache.shardingsphere.encrypt.rule.EncryptRule;
+ import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
+ import org.apache.shardingsphere.infra.instance.InstanceContext;
+ import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
+-import org.apache.shardingsphere.infra.rule.RuleConfigurationSubscribeCoordinator;
++import org.apache.shardingsphere.infra.rule.RuleChangedSubscriber;
+ import org.apache.shardingsphere.infra.util.yaml.YamlEngine;
+ import org.apache.shardingsphere.infra.yaml.config.pojo.algorithm.YamlAlgorithmConfiguration;
+ import org.apache.shardingsphere.infra.yaml.config.swapper.algorithm.YamlAlgorithmConfigurationSwapper;
+@@ -39,19 +40,13 @@ import java.util.Map;
+  */
+ @Deprecated
+ @SuppressWarnings("UnstableApiUsage")
+-public final class CompatibleEncryptorSubscriber implements RuleConfigurationSubscribeCoordinator {
++@Setter
++public final class CompatibleEncryptorSubscriber implements RuleChangedSubscriber {
+     
+     private Map<String, ShardingSphereDatabase> databases;
+     
+     private InstanceContext instanceContext;
+     
+-    @Override
+-    public void registerRuleConfigurationSubscriber(final Map<String, ShardingSphereDatabase> databases, final InstanceContext instanceContext) {
+-        this.databases = databases;
+-        this.instanceContext = instanceContext;
+-        instanceContext.getEventBusContext().register(this);
+-    }
+-    
+     /**
+      * Renew with alter encryptor.
+      *

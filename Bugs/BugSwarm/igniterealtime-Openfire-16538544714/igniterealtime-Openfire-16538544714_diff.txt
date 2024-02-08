@@ -1,0 +1,22 @@
+diff --git a/xmppserver/src/main/java/org/jivesoftware/openfire/net/ServerStanzaHandler.java b/xmppserver/src/main/java/org/jivesoftware/openfire/net/ServerStanzaHandler.java
+index 7c49ed635..f62155d56 100644
+--- a/xmppserver/src/main/java/org/jivesoftware/openfire/net/ServerStanzaHandler.java
++++ b/xmppserver/src/main/java/org/jivesoftware/openfire/net/ServerStanzaHandler.java
+@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.PacketRouter;
+ import org.jivesoftware.openfire.SessionManager;
+ import org.jivesoftware.openfire.XMPPServer;
+ import org.jivesoftware.openfire.auth.UnauthorizedException;
++import org.jivesoftware.openfire.server.ServerDialback;
+ import org.jivesoftware.openfire.session.ConnectionSettings;
+ import org.jivesoftware.openfire.session.DomainPair;
+ import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+@@ -147,6 +148,9 @@ public class ServerStanzaHandler extends StanzaHandler {
+         sb.append("'?>");
+         sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
+         sb.append(getNamespace()).append("\"");
++        if (ServerDialback.isEnabled() && (this.session != null && !this.session.isAuthenticated())) {
++            sb.append(" xmlns:db=\"jabber:server:dialback\"");
++        }
+         sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
+         sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
+         sb.append(" id=\"").append(session.getStreamID()).append("\"");

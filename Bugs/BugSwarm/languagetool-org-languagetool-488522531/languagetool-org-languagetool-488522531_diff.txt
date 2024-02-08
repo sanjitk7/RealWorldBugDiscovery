@@ -1,0 +1,37 @@
+diff --git a/languagetool-language-modules/en/src/main/resources/org/languagetool/resource/en/disambiguation.xml b/languagetool-language-modules/en/src/main/resources/org/languagetool/resource/en/disambiguation.xml
+index ace6f3b76a4..90e936fd2e0 100644
+--- a/languagetool-language-modules/en/src/main/resources/org/languagetool/resource/en/disambiguation.xml
++++ b/languagetool-language-modules/en/src/main/resources/org/languagetool/resource/en/disambiguation.xml
+@@ -938,12 +938,13 @@
+             <marker>
+                 <and>
+                 <token postag="VBZ"/>
+-                <token postag="NNS"/>
++                <token postag="NNS"><exception postag_regexp="yes" postag="NNPS?"/></token>
+                 </and>
+             </marker>
+             <token regexp="yes">weren?|aren?|couldn?|might|may|shouldn?|haven?|don?|wouldn?</token>
+         </pattern>
+         <disambig postag="NNS"/>
++        <example type="untouched">These tests of <marker>Peters</marker> are interesting. Incorrect grammar: missing apostrophe in a double genitive (www.merriam-webster.com/dictionary/double%20genitive).</example>
+         <example type="ambiguous" inputform="forces[force/NNS,force/VBZ]"
+                  outputform="forces[force/NNS]">The armed <marker>forces</marker> are here.</example>
+     </rule>
+diff --git a/languagetool-language-modules/en/src/test/java/org/languagetool/JLanguageToolTest.java b/languagetool-language-modules/en/src/test/java/org/languagetool/JLanguageToolTest.java
+index d98ad97a14c..fc31da7574f 100644
+--- a/languagetool-language-modules/en/src/test/java/org/languagetool/JLanguageToolTest.java
++++ b/languagetool-language-modules/en/src/test/java/org/languagetool/JLanguageToolTest.java
+@@ -264,11 +264,11 @@ public class JLanguageToolTest {
+     }
+     @Override
+     public String getId() {
+-      return null;
++      return "MyTextLevelRule";
+     }
+     @Override
+     public String getDescription() {
+-      return null;
++      return "Test rule";
+     }
+   }
+ }

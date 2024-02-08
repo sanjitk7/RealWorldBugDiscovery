@@ -1,0 +1,99 @@
+diff --git a/.markdownlintrc b/.markdownlintrc
+index aa9fc26c..c0e8a9b3 100644
+--- a/.markdownlintrc
++++ b/.markdownlintrc
+@@ -20,5 +20,8 @@
+   "MD024": { "siblings_only": true },
+ 
+   // Allow inline HTML
+-  "MD033": false
++  "MD033": false,
++
++  // Disable named references validation
++  "MD052": false
+ }
+diff --git a/docs/dev-guide/plugins.md b/docs/dev-guide/plugins.md
+index 8d4a8c63..118bae24 100644
+--- a/docs/dev-guide/plugins.md
++++ b/docs/dev-guide/plugins.md
+@@ -473,7 +473,7 @@ class MyPlugin(BasePlugin):
+             # some code that could throw a KeyError
+             ...
+         except KeyError as error:
+-            raise PluginError(str(error))
++            raise PluginError(f"Failed to find the item by key: '{error}'")
+ 
+     def on_build_error(self, error, **kwargs):
+         # some code to clean things up
+@@ -482,10 +482,31 @@ class MyPlugin(BasePlugin):
+ 
+ ### Logging in plugins
+ 
+-MkDocs provides a `get_plugin_logger` function which returns
+-a logger that can be used to log messages.
++To ensure that your plugins' log messages adhere with MkDocs' formatting and `--verbose`/`--debug` flags, please write the logs to a logger under the `mkdocs.plugins.` namespace.
+ 
+-#### ::: mkdocs.plugins.get_plugin_logger
++> EXAMPLE:
++>
++> ```python
++> import logging
++>
++> log = logging.getLogger(f"mkdocs.plugins.{__name__}")
++>
++> log.warning("File '%s' not found. Breaks the build if --strict is passed", my_file_name)
++> log.info("Shown normally")
++> log.debug("Shown only with `--verbose`")
++>
++> if log.getEffectiveLevel() <= logging.DEBUG:
++>     log.debug("Very expensive calculation only for debugging: %s", get_my_diagnostics())
++> ```
++
++`log.error()` is another logging level that is differentiated by its look, but in all other ways it functions the same as `warning`, so it's strange to use it. If your plugin encounters an actual error, it is best to just interrupt the build by raising [`mkdocs.exceptions.PluginError`][] (which will also log an ERROR message).
++
++<!-- -->
++> NEW: New in MkDocs 1.5
++>
++> MkDocs now provides a `get_plugin_logger()` convenience function that returns a logger like the above that is also prefixed with the plugin's name.
++>
++> #### ::: mkdocs.plugins.get_plugin_logger
+ 
+ ### Entry Point
+ 
+diff --git a/mkdocs/tests/cli_tests.py b/mkdocs/tests/cli_tests.py
+index 6ce03db1..d8f97322 100644
+--- a/mkdocs/tests/cli_tests.py
++++ b/mkdocs/tests/cli_tests.py
+@@ -222,8 +222,8 @@ class CLITests(unittest.TestCase):
+             use_directory_urls=None,
+             site_dir=None,
+         )
+-        handler = logging._handlers.get('MkDocsStreamHandler')
+-        self.assertEqual(handler.level, logging.INFO)
++        for log_name in 'mkdocs', 'mkdocs.structure.pages', 'mkdocs.plugins.foo':
++            self.assertEqual(logging.getLogger(log_name).getEffectiveLevel(), logging.INFO)
+ 
+     @mock.patch('mkdocs.config.load_config', autospec=True)
+     @mock.patch('mkdocs.commands.build.build', autospec=True)
+@@ -352,8 +352,8 @@ class CLITests(unittest.TestCase):
+ 
+         self.assertEqual(result.exit_code, 0)
+         self.assertEqual(mock_build.call_count, 1)
+-        handler = logging._handlers.get('MkDocsStreamHandler')
+-        self.assertEqual(handler.level, logging.DEBUG)
++        for log_name in 'mkdocs', 'mkdocs.structure.pages', 'mkdocs.plugins.foo':
++            self.assertEqual(logging.getLogger(log_name).getEffectiveLevel(), logging.DEBUG)
+ 
+     @mock.patch('mkdocs.config.load_config', autospec=True)
+     @mock.patch('mkdocs.commands.build.build', autospec=True)
+@@ -362,8 +362,8 @@ class CLITests(unittest.TestCase):
+ 
+         self.assertEqual(result.exit_code, 0)
+         self.assertEqual(mock_build.call_count, 1)
+-        handler = logging._handlers.get('MkDocsStreamHandler')
+-        self.assertEqual(handler.level, logging.ERROR)
++        for log_name in 'mkdocs', 'mkdocs.structure.pages', 'mkdocs.plugins.foo':
++            self.assertEqual(logging.getLogger(log_name).getEffectiveLevel(), logging.ERROR)
+ 
+     @mock.patch('mkdocs.commands.new.new', autospec=True)
+     def test_new(self, mock_new):

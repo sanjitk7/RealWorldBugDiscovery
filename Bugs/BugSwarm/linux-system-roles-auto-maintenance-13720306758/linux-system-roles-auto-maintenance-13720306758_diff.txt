@@ -1,0 +1,13 @@
+diff --git a/role-make-version-changelog.sh b/role-make-version-changelog.sh
+index 1df5eb8..ae72270 100755
+--- a/role-make-version-changelog.sh
++++ b/role-make-version-changelog.sh
+@@ -166,7 +166,7 @@ if [ "$skip" = false ]; then
+         echo $ git checkout main
+         echo $ git rebase -i "$latest_tag"
+         echo Reword the commits that did not pass by marking them with "r"
+-        echo Then do a force push
++        echo Then perform a force push
+         exit 1
+     else
+         echo Success

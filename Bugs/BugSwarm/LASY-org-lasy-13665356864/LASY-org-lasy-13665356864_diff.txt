@@ -1,0 +1,13 @@
+diff --git a/lasy/profiles/gaussian_profile.py b/lasy/profiles/gaussian_profile.py
+index d8ce0e2..0da2f12 100644
+--- a/lasy/profiles/gaussian_profile.py
++++ b/lasy/profiles/gaussian_profile.py
+@@ -103,7 +103,7 @@ class GaussianProfile(CombinedLongitudinalTransverseProfile):
+     """
+ 
+     def __init__(self, wavelength, pol, laser_energy, w0, tau, t_peak,
+-                 cep_phase=0, z_foc=0:
++                 cep_phase=0, z_foc=0):
+         super().__init__(
+             wavelength,
+             pol,

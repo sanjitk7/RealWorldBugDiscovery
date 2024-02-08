@@ -1,0 +1,28 @@
+diff --git a/retrofit-adapters/rxjava/src/main/java/retrofit/RxJavaCallAdapterFactory.java b/retrofit-adapters/rxjava/src/main/java/retrofit/RxJavaCallAdapterFactory.java
+index 8fec6814..fa179761 100644
+--- a/retrofit-adapters/rxjava/src/main/java/retrofit/RxJavaCallAdapterFactory.java
++++ b/retrofit-adapters/rxjava/src/main/java/retrofit/RxJavaCallAdapterFactory.java
+@@ -38,7 +38,8 @@ public final class RxJavaCallAdapterFactory implements CallAdapter.Factory {
+   private RxJavaCallAdapterFactory() {
+   }
+ 
+-  @Override public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
++  @Override
++  public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
+     Class<?> rawType = Utils.getRawType(returnType);
+     boolean isSingle = "rx.Single".equals(rawType.getCanonicalName());
+     if (rawType != Observable.class && !isSingle) {
+diff --git a/samples/src/main/java/com/example/retrofit/CustomCallAdapter.java b/samples/src/main/java/com/example/retrofit/CustomCallAdapter.java
+index 154c7302..a3a8ba28 100644
+--- a/samples/src/main/java/com/example/retrofit/CustomCallAdapter.java
++++ b/samples/src/main/java/com/example/retrofit/CustomCallAdapter.java
+@@ -36,8 +36,7 @@ import retrofit.http.GET;
+  */
+ public final class CustomCallAdapter {
+   public static class ListenableFutureCallAdapterFactory implements CallAdapter.Factory {
+-    @Override
+-    public CallAdapter<ListenableFuture<?>> get(Type returnType, Annotation[] annotations,
++    @Override public CallAdapter<ListenableFuture<?>> get(Type returnType, Annotation[] annotations,
+         Retrofit retrofit) {
+       TypeToken<?> token = TypeToken.of(returnType);
+       if (token.getRawType() != ListenableFuture.class) {

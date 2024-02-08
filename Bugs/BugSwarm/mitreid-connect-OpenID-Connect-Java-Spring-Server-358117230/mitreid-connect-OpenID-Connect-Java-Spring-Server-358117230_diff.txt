@@ -1,0 +1,446 @@
+diff --git a/.gitignore b/.gitignore
+index e663c16b..b97c240c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -10,3 +10,4 @@ bin
+ /target
+ .springBeans
+ nb-configuration.xml
++.DS_Store
+diff --git a/openid-connect-common/src/main/java/org/mitre/oauth2/model/RegisteredClientFields.java b/openid-connect-common/src/main/java/org/mitre/oauth2/model/RegisteredClientFields.java
+index 79231b52..f3335c31 100644
+--- a/openid-connect-common/src/main/java/org/mitre/oauth2/model/RegisteredClientFields.java
++++ b/openid-connect-common/src/main/java/org/mitre/oauth2/model/RegisteredClientFields.java
+@@ -58,4 +58,6 @@ public interface RegisteredClientFields {
+ 	public String CLIENT_SECRET = "client_secret";
+ 	public String CLIENT_ID = "client_id";
+ 	public String CODE_CHALLENGE_METHOD = "code_challenge_method";
++	public String CLIENT_DESCRIPTION = "client_description";
++	public String ALLOWS_INTROSPECTION = "allows_introspection";
+ }
+diff --git a/openid-connect-common/src/main/java/org/mitre/openid/connect/ClientDetailsEntityJsonProcessor.java b/openid-connect-common/src/main/java/org/mitre/openid/connect/ClientDetailsEntityJsonProcessor.java
+index 1594e4b7..511a973f 100644
+--- a/openid-connect-common/src/main/java/org/mitre/openid/connect/ClientDetailsEntityJsonProcessor.java
++++ b/openid-connect-common/src/main/java/org/mitre/openid/connect/ClientDetailsEntityJsonProcessor.java
+@@ -57,6 +57,8 @@ import static org.mitre.oauth2.model.RegisteredClientFields.CLAIMS_REDIRECT_URIS
+ import static org.mitre.oauth2.model.RegisteredClientFields.CLIENT_ID;
+ import static org.mitre.oauth2.model.RegisteredClientFields.CLIENT_ID_ISSUED_AT;
+ import static org.mitre.oauth2.model.RegisteredClientFields.CLIENT_NAME;
++import static org.mitre.oauth2.model.RegisteredClientFields.CLIENT_DESCRIPTION;
++import static org.mitre.oauth2.model.RegisteredClientFields.ALLOWS_INTROSPECTION;
+ import static org.mitre.oauth2.model.RegisteredClientFields.CLIENT_SECRET;
+ import static org.mitre.oauth2.model.RegisteredClientFields.CLIENT_SECRET_EXPIRES_AT;
+ import static org.mitre.oauth2.model.RegisteredClientFields.CLIENT_URI;
+@@ -129,6 +131,8 @@ public class ClientDetailsEntityJsonProcessor {
+ 			c.setClientId(getAsString(o, CLIENT_ID));
+ 			c.setClientSecret(getAsString(o, CLIENT_SECRET));
+ 
++			// other client fields
++			c.setClientDescription(getAsString(o, CLIENT_DESCRIPTION));
+ 			// OAuth DynReg
+ 			c.setRedirectUris(getAsStringSet(o, REDIRECT_URIS));
+ 			c.setClientName(getAsString(o, CLIENT_NAME));
+@@ -225,8 +229,7 @@ public class ClientDetailsEntityJsonProcessor {
+ 				}
+ 			}
+ 
+-
+-			c.setAllowIntrospection(getAsBoolean(o, "allow_introspection"));
++			c.setAllowIntrospection(getAsBoolean(o, ALLOWS_INTROSPECTION) == Boolean.TRUE);
+ 
+ 			return c;
+ 		} else {
+@@ -267,8 +270,6 @@ public class ClientDetailsEntityJsonProcessor {
+ 
+ 	/**
+ 	 * @param c
+-	 * @param token
+-	 * @param registrationUri
+ 	 * @return
+ 	 */
+ 	public static JsonObject serialize(RegisteredClient c) {
+diff --git a/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthenticationProvider.java b/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthenticationProvider.java
+new file mode 100755
+index 00000000..50234c46
+--- /dev/null
++++ b/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthenticationProvider.java
+@@ -0,0 +1,29 @@
++package org.opal;
++
++import org.springframework.security.authentication.AuthenticationProvider;
++import org.springframework.security.core.Authentication;
++import org.springframework.security.core.AuthenticationException;
++
++public class ExternalAuthenticationProvider implements AuthenticationProvider {
++
++	@Override
++	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
++		ExternalAuthenticationToken auth = (ExternalAuthenticationToken)authentication;
++
++        // TODO add logic to check token and verify
++		
++		ExternalAuthenticationToken a1 = new ExternalAuthenticationToken(auth.getPrincipal(),
++				auth.getCredentials(), auth.getAuthorities());
++		return null;
++        //return a1;
++	}
++
++	@Override
++	public boolean supports(Class<?> authentication) {
++		if ( authentication.isAssignableFrom( ExternalAuthenticationToken.class)){
++			return true;
++		}
++		return false;
++	}
++
++}
+diff --git a/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthenticationToken.java b/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthenticationToken.java
+new file mode 100755
+index 00000000..84902c3a
+--- /dev/null
++++ b/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthenticationToken.java
+@@ -0,0 +1,24 @@
++package org.opal;
++
++import java.util.Collection;
++
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++import org.springframework.security.core.GrantedAuthority;
++
++public class ExternalAuthenticationToken extends UsernamePasswordAuthenticationToken{
++	public ExternalAuthenticationToken(Object principal, Object credentials,
++			Collection<? extends GrantedAuthority> authorities) {
++		super(principal, credentials, authorities);
++		this.externalAuthentication = true;
++	}
++
++
++	private static final long serialVersionUID = 1L;
++	private Boolean externalAuthentication = false;
++	
++	
++	public Boolean isExternalAuthentication() {
++		return this.externalAuthentication;
++	}
++
++}
+diff --git a/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthorizationFilter.java b/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthorizationFilter.java
+new file mode 100755
+index 00000000..6a677abc
+--- /dev/null
++++ b/openid-connect-server-webapp/src/main/java/org/opal/ExternalAuthorizationFilter.java
+@@ -0,0 +1,73 @@
++package org.opal;
++
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.Collections;
++
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
++
++import org.mitre.openid.connect.model.OIDCAuthenticationToken;
++import org.mitre.openid.connect.model.UserInfo;
++import org.mitre.openid.connect.service.UserInfoService;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.security.authentication.AuthenticationManager;
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++//import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.security.core.Authentication;
++import org.springframework.security.core.AuthenticationException;
++import org.springframework.security.core.GrantedAuthority;
++import org.springframework.security.core.userdetails.UserDetails;
++import org.springframework.security.core.userdetails.UserDetailsService;
++//import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
++import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
++
++import com.nimbusds.jwt.JWT;
++
++public class ExternalAuthorizationFilter extends AbstractAuthenticationProcessingFilter {
++    
++    private static final Logger logger = LoggerFactory.getLogger(ExternalAuthorizationFilter.class);
++
++    @Autowired
++	private UserInfoService userService;
++    
++	public ExternalAuthorizationFilter() {
++		super(new AntPathRequestMatcher("/login/facebook"));
++	}
++
++	
++	public Authentication attemptAuthentication( HttpServletRequest request, HttpServletResponse response ) throws AuthenticationException{
++
++        String code = request.getParameter("code");
++        String state = request.getParameter("state");
++        if ( code == null ) {
++            return null; // no header found, continue on to other security filters
++        }
++        logger.debug("***filter: code: "+code+" state:"+state);
++        
++        
++        UserInfo user = userService.getByUsername("admin");
++        ArrayList<GrantedAuthority> temp = new ArrayList<GrantedAuthority>();
++		temp.add(new GrantedAuthority() {
++			private static final long serialVersionUID = 1L;
++
++			@Override
++			public String getAuthority() {
++				return "ROLE_ADMIN";
++			}
++			
++		});
++		ExternalAuthenticationToken t1 = new ExternalAuthenticationToken(user.getPreferredUsername(), "99", Collections.unmodifiableList(temp));
++		t1.setAuthenticated(false);
++        return t1;
++    }
++    
++    @Override
++    @Autowired
++    public void setAuthenticationManager(AuthenticationManager authenticationManager) {
++        super.setAuthenticationManager(authenticationManager);
++    }
++}
+\ No newline at end of file
+diff --git a/openid-connect-server-webapp/src/main/java/org/opal/OAuth2Configuration.java b/openid-connect-server-webapp/src/main/java/org/opal/OAuth2Configuration.java
+new file mode 100755
+index 00000000..cedd9738
+--- /dev/null
++++ b/openid-connect-server-webapp/src/main/java/org/opal/OAuth2Configuration.java
+@@ -0,0 +1,63 @@
++package org.opal;
++
++public class OAuth2Configuration {
++
++	private String clientId;
++	private String clientSecret;
++	private String accessTokenUri;
++	private String userAuthorizationUri;
++	private String userInfoUri;
++	private String tokenName;
++    private String authenticationScheme;
++    private String clientAuthenticationScheme;
++    
++	public String getClientId() {
++		return clientId;
++	}
++	public void setClientId(String clientId) {
++		this.clientId = clientId;
++	}
++	public String getClientSecret() {
++		return clientSecret;
++	}
++	public void setClientSecret(String clientSecret) {
++		this.clientSecret = clientSecret;
++	}
++	public String getAccessTokenUri() {
++		return accessTokenUri;
++	}
++	public void setAccessTokenUri(String accessTokenUri) {
++		this.accessTokenUri = accessTokenUri;
++	}
++	public String getUserAuthorizationUri() {
++		return userAuthorizationUri;
++	}
++	public void setUserAuthorizationUri(String userAuthorizationUri) {
++		this.userAuthorizationUri = userAuthorizationUri;
++	}
++	public String getUserInfoUri() {
++		return userInfoUri;
++	}
++	public void setUserInfoUri(String userInfoUri) {
++		this.userInfoUri = userInfoUri;
++	}
++	public String getTokenName() {
++		return tokenName;
++	}
++	public void setTokenName(String tokenName) {
++		this.tokenName = tokenName;
++	}
++	public String getAuthenticationScheme() {
++		return authenticationScheme;
++	}
++	public void setAuthenticationScheme(String authenticationScheme) {
++		this.authenticationScheme = authenticationScheme;
++	}
++	public String getClientAuthenticationScheme() {
++		return clientAuthenticationScheme;
++	}
++	public void setClientAuthenticationScheme(String clientAuthenticationScheme) {
++		this.clientAuthenticationScheme = clientAuthenticationScheme;
++	}
++
++}
+diff --git a/openid-connect-server-webapp/src/main/resources/db/hsql/hsql_database_index.sql b/openid-connect-server-webapp/src/main/resources/db/hsql/hsql_database_index.sql
+index 4f61d534..38636a96 100644
+--- a/openid-connect-server-webapp/src/main/resources/db/hsql/hsql_database_index.sql
++++ b/openid-connect-server-webapp/src/main/resources/db/hsql/hsql_database_index.sql
+@@ -6,6 +6,7 @@ CREATE INDEX IF NOT EXISTS at_tv_idx ON access_token(token_value);
+ CREATE INDEX IF NOT EXISTS ts_oi_idx ON token_scope(owner_id);
+ CREATE INDEX IF NOT EXISTS at_exp_idx ON access_token(expiration);
+ CREATE INDEX IF NOT EXISTS rf_ahi_idx ON refresh_token(auth_holder_id);
++CREATE INDEX IF NOT EXISTS rf_tv_idx ON refresh_token(token_value);
+ CREATE INDEX IF NOT EXISTS cd_ci_idx ON client_details(client_id);
+ CREATE INDEX IF NOT EXISTS at_ahi_idx ON access_token(auth_holder_id);
+ CREATE INDEX IF NOT EXISTS aha_oi_idx ON authentication_holder_authority(owner_id);
+diff --git a/openid-connect-server-webapp/src/main/resources/db/mysql/mysql_database_index.sql b/openid-connect-server-webapp/src/main/resources/db/mysql/mysql_database_index.sql
+index bbd5236e..f5daf991 100644
+--- a/openid-connect-server-webapp/src/main/resources/db/mysql/mysql_database_index.sql
++++ b/openid-connect-server-webapp/src/main/resources/db/mysql/mysql_database_index.sql
+@@ -6,6 +6,7 @@ CREATE INDEX at_tv_idx ON access_token(token_value(767));
+ CREATE INDEX ts_oi_idx ON token_scope(owner_id);
+ CREATE INDEX at_exp_idx ON access_token(expiration);
+ CREATE INDEX rf_ahi_idx ON refresh_token(auth_holder_id);
++CREATE INDEX rf_tv_idx ON refresh_token(token_value(105));
+ CREATE INDEX cd_ci_idx ON client_details(client_id);
+ CREATE INDEX at_ahi_idx ON access_token(auth_holder_id);
+ CREATE INDEX aha_oi_idx ON authentication_holder_authority(owner_id);
+diff --git a/openid-connect-server-webapp/src/main/resources/db/oracle/oracle_database_index.sql b/openid-connect-server-webapp/src/main/resources/db/oracle/oracle_database_index.sql
+index 135d8819..fc70a7ae 100644
+--- a/openid-connect-server-webapp/src/main/resources/db/oracle/oracle_database_index.sql
++++ b/openid-connect-server-webapp/src/main/resources/db/oracle/oracle_database_index.sql
+@@ -6,6 +6,7 @@ CREATE INDEX at_tv_idx ON access_token(token_value);
+ CREATE INDEX ts_oi_idx ON token_scope(owner_id);
+ CREATE INDEX at_exp_idx ON access_token(expiration);
+ CREATE INDEX rf_ahi_idx ON refresh_token(auth_holder_id);
++CREATE INDEX rf_tv_idx ON refresh_token(token_value);
+ CREATE INDEX at_ahi_idx ON access_token(auth_holder_id);
+ CREATE INDEX aha_oi_idx ON authentication_holder_authority(owner_id);
+ CREATE INDEX ahe_oi_idx ON authentication_holder_extension(owner_id);
+diff --git a/openid-connect-server-webapp/src/main/resources/db/psql/psql_database_index.sql b/openid-connect-server-webapp/src/main/resources/db/psql/psql_database_index.sql
+index 2eabf4f5..a641ff82 100644
+--- a/openid-connect-server-webapp/src/main/resources/db/psql/psql_database_index.sql
++++ b/openid-connect-server-webapp/src/main/resources/db/psql/psql_database_index.sql
+@@ -6,6 +6,7 @@ CREATE INDEX IF NOT EXISTS at_tv_idx ON access_token(token_value);
+ CREATE INDEX IF NOT EXISTS ts_oi_idx ON token_scope(owner_id);
+ CREATE INDEX IF NOT EXISTS at_exp_idx ON access_token(expiration);
+ CREATE INDEX IF NOT EXISTS rf_ahi_idx ON refresh_token(auth_holder_id);
++CREATE INDEX IF NOT EXISTS rf_tv_idx ON refresh_token(token_value);
+ CREATE INDEX IF NOT EXISTS cd_ci_idx ON client_details(client_id);
+ CREATE INDEX IF NOT EXISTS at_ahi_idx ON access_token(auth_holder_id);
+ CREATE INDEX IF NOT EXISTS aha_oi_idx ON authentication_holder_authority(owner_id);
+diff --git a/openid-connect-server-webapp/src/main/webapp/WEB-INF/server-config.xml b/openid-connect-server-webapp/src/main/webapp/WEB-INF/server-config.xml
+index e8059db8..26cf110a 100644
+--- a/openid-connect-server-webapp/src/main/webapp/WEB-INF/server-config.xml
++++ b/openid-connect-server-webapp/src/main/webapp/WEB-INF/server-config.xml
+@@ -33,7 +33,7 @@
+ 	<bean id="configBean" class="org.mitre.openid.connect.config.ConfigurationPropertiesBean">
+ 	    
+ 	    <!-- This property sets the root URL of the server, known as the issuer -->
+-		<property name="issuer" value="http://localhost:8080/openid-connect-server-webapp/" />
++		<property name="issuer" value="http://localhost:8080" />
+ 		
+ 		<!-- This property is a URL pointing to a logo image 24px high to be used in the top bar -->
+  		<property name="logoImageUrl" value="resources/images/openid_connect_small.png" />
+diff --git a/openid-connect-server-webapp/src/main/webapp/WEB-INF/user-context.xml b/openid-connect-server-webapp/src/main/webapp/WEB-INF/user-context.xml
+index 2aff9436..b6b682aa 100644
+--- a/openid-connect-server-webapp/src/main/webapp/WEB-INF/user-context.xml
++++ b/openid-connect-server-webapp/src/main/webapp/WEB-INF/user-context.xml
+@@ -17,34 +17,47 @@
+     limitations under the License.
+  -->
+ <beans xmlns="http://www.springframework.org/schema/beans"
+-	xmlns:mvc="http://www.springframework.org/schema/mvc"
+-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+-	xmlns:tx="http://www.springframework.org/schema/tx"
+-	xmlns:context="http://www.springframework.org/schema/context"
+-	xmlns:security="http://www.springframework.org/schema/security"
+-	xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
+-	xsi:schemaLocation="http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2-2.0.xsd
++	   xmlns:mvc="http://www.springframework.org/schema/mvc"
++	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++	   xmlns:tx="http://www.springframework.org/schema/tx"
++	   xmlns:context="http://www.springframework.org/schema/context"
++	   xmlns:security="http://www.springframework.org/schema/security"
++	   xmlns:oauth="http://www.springframework.org/schema/security/oauth2"
++	   xmlns:util="http://www.springframework.org/schema/util"
++	   xsi:schemaLocation="http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2-2.0.xsd
+ 		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+ 		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+ 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+ 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
++		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
++		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
++
++	<context:component-scan annotation-config="true" base-package="org.opal" />
++
++	<bean id="ExternalAuthorizationFilter" class="org.opal.ExternalAuthorizationFilter" />
++	<bean id="ExternalAuthenticationProvider" class="org.opal.ExternalAuthenticationProvider" />
++
++	<!--util:properties id="applicationProps"  location="classpath:application.yml"/>
++	<context:property-placeholder  properties-ref="applicationProps" /-->
++
+ 
+ 	<security:authentication-manager id="authenticationManager">
++		<security:authentication-provider ref="ExternalAuthenticationProvider" />
+ 		<security:authentication-provider>
+ 			<security:jdbc-user-service data-source-ref="dataSource"/>
+ 		</security:authentication-provider>
+ 	</security:authentication-manager>
+-		
++
+ 	<mvc:view-controller path="/login" view-name="login" />
+ 
+-	<security:http authentication-manager-ref="authenticationManager"> 
+-	
++	<security:http authentication-manager-ref="authenticationManager">
++
+ 		<security:intercept-url pattern="/authorize" access="hasRole('ROLE_USER')" />
+ 		<security:intercept-url pattern="/**" access="permitAll" />
+-		
++
+ 		<security:form-login login-page="/login" authentication-failure-url="/login?error=failure" authentication-success-handler-ref="authenticationTimeStamper" />
+ 		<security:custom-filter ref="authRequestFilter" after="SECURITY_CONTEXT_FILTER" />
++		<security:custom-filter ref="ExternalAuthorizationFilter"  after="CONCURRENT_SESSION_FILTER" />
+ 		<security:logout logout-url="/logout" />
+ 		<security:anonymous />
+ 		<security:expression-handler ref="oauthWebExpressionHandler" />
+@@ -52,6 +65,6 @@
+ 			<security:frame-options policy="DENY" />
+ 		</security:headers>
+ 		<security:csrf />
+-	</security:http>	
++	</security:http>
+ 
+ </beans>
+diff --git a/openid-connect-server-webapp/src/main/webapp/WEB-INF/views/login.jsp b/openid-connect-server-webapp/src/main/webapp/WEB-INF/views/login.jsp
+old mode 100644
+new mode 100755
+index 5be8f9b2..3c650ecc
+--- a/openid-connect-server-webapp/src/main/webapp/WEB-INF/views/login.jsp
++++ b/openid-connect-server-webapp/src/main/webapp/WEB-INF/views/login.jsp
+@@ -3,6 +3,7 @@
+ <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+ <%@ taglib prefix="o" tagdir="/WEB-INF/tags"%>
+ <%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
++
+ <o:header title="Log In" />
+ <script type="text/javascript">
+ <!--
+@@ -45,6 +46,10 @@ $(document).ready(function() {
+ 				</div>
+ 			</form>
+ 		</div>
++		<div class="span6 well">
++
++			<a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=">Click here</a> to begin!</a>
++		</div>
+ 	</div>
+ </div>
+ 
+diff --git a/openid-connect-server/src/main/java/org/mitre/openid/connect/web/DynamicClientRegistrationEndpoint.java b/openid-connect-server/src/main/java/org/mitre/openid/connect/web/DynamicClientRegistrationEndpoint.java
+index 1b09451b..e2691686 100644
+--- a/openid-connect-server/src/main/java/org/mitre/openid/connect/web/DynamicClientRegistrationEndpoint.java
++++ b/openid-connect-server/src/main/java/org/mitre/openid/connect/web/DynamicClientRegistrationEndpoint.java
+@@ -229,7 +229,7 @@ public class DynamicClientRegistrationEndpoint {
+ 			newClient.setDynamicallyRegistered(true);
+ 
+ 			// this client can't do token introspection
+-			newClient.setAllowIntrospection(false);
++			//newClient.setAllowIntrospection(false);
+ 
+ 			// now save it
+ 			try {

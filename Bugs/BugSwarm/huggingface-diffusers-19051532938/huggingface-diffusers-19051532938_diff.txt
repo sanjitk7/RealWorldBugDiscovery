@@ -1,0 +1,498 @@
+diff --git a/src/diffusers/models/autoencoder_kl_temporal_decoder.py b/src/diffusers/models/autoencoder_kl_temporal_decoder.py
+index 8f2922afd..c0db980da 100644
+--- a/src/diffusers/models/autoencoder_kl_temporal_decoder.py
++++ b/src/diffusers/models/autoencoder_kl_temporal_decoder.py
+@@ -358,11 +358,7 @@ class AutoencoderKLTemporalDecoder(ModelMixin, ConfigMixin, FromOriginalVAEMixin
+         # set recursively
+         processors = {}
+ 
+-        def fn_recursive_add_processors(
+-            name: str,
+-            module: torch.nn.Module,
+-            processors: Dict[str, AttentionProcessor],
+-        ):
++        def fn_recursive_add_processors(name: str, module: torch.nn.Module, processors: Dict[str, AttentionProcessor]):
+             if hasattr(module, "get_processor"):
+                 processors[f"{name}.processor"] = module.get_processor(return_deprecated_lora=True)
+ 
+@@ -378,9 +374,7 @@ class AutoencoderKLTemporalDecoder(ModelMixin, ConfigMixin, FromOriginalVAEMixin
+ 
+     # Copied from diffusers.models.unet_2d_condition.UNet2DConditionModel.set_attn_processor
+     def set_attn_processor(
+-        self,
+-        processor: Union[AttentionProcessor, Dict[str, AttentionProcessor]],
+-        _remove_lora=False,
++        self, processor: Union[AttentionProcessor, Dict[str, AttentionProcessor]], _remove_lora=False
+     ):
+         r"""
+         Sets the attention processor to use to compute attention.
+diff --git a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_video.py b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_video.py
+index b2027def9..f07bd6ec2 100644
+--- a/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_video.py
++++ b/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_video.py
+@@ -247,7 +247,6 @@ class StableDiffusionVideoPipeline(DiffusionPipeline):
+                 f" {type(callback_steps)}."
+             )
+ 
+-    # Copied from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline.prepare_latents
+     def prepare_latents(
+         self, batch_size, num_frames, num_channels_latents, height, width, dtype, device, generator, latents=None
+     ):
+diff --git a/src/diffusers/schedulers/scheduling_deis_multistep.py b/src/diffusers/schedulers/scheduling_deis_multistep.py
+index a99135300..6aa994676 100644
+--- a/src/diffusers/schedulers/scheduling_deis_multistep.py
++++ b/src/diffusers/schedulers/scheduling_deis_multistep.py
+@@ -323,8 +323,20 @@ class DEISMultistepScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/schedulers/scheduling_dpmsolver_multistep.py b/src/diffusers/schedulers/scheduling_dpmsolver_multistep.py
+index b427f19e9..4b638547b 100644
+--- a/src/diffusers/schedulers/scheduling_dpmsolver_multistep.py
++++ b/src/diffusers/schedulers/scheduling_dpmsolver_multistep.py
+@@ -358,8 +358,20 @@ class DPMSolverMultistepScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/schedulers/scheduling_dpmsolver_multistep_inverse.py b/src/diffusers/schedulers/scheduling_dpmsolver_multistep_inverse.py
+index bc8ee24a9..e762c0ec8 100644
+--- a/src/diffusers/schedulers/scheduling_dpmsolver_multistep_inverse.py
++++ b/src/diffusers/schedulers/scheduling_dpmsolver_multistep_inverse.py
+@@ -358,8 +358,20 @@ class DPMSolverMultistepInverseScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/schedulers/scheduling_dpmsolver_singlestep.py b/src/diffusers/schedulers/scheduling_dpmsolver_singlestep.py
+index 6fd4d3bbf..2c0be3b84 100644
+--- a/src/diffusers/schedulers/scheduling_dpmsolver_singlestep.py
++++ b/src/diffusers/schedulers/scheduling_dpmsolver_singlestep.py
+@@ -357,8 +357,20 @@ class DPMSolverSinglestepScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/schedulers/scheduling_euler_discrete.py b/src/diffusers/schedulers/scheduling_euler_discrete.py
+index fff643148..19f934856 100644
+--- a/src/diffusers/schedulers/scheduling_euler_discrete.py
++++ b/src/diffusers/schedulers/scheduling_euler_discrete.py
+@@ -147,7 +147,7 @@ class EulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
+         sigma_min: Optional[float] = None,
+         sigma_max: Optional[float] = None,
+         timestep_spacing: str = "linspace",
+-        timestep_type: str = "discrete", # can be "discrete" or "continuous"
++        timestep_type: str = "discrete",  # can be "discrete" or "continuous"
+         steps_offset: int = 0,
+     ):
+         if trained_betas is not None:
+@@ -270,7 +270,7 @@ class EulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
+         if self.use_karras_sigmas:
+             sigmas = self._convert_to_karras(in_sigmas=sigmas, num_inference_steps=self.num_inference_steps)
+             timesteps = np.array([self._sigma_to_t(sigma, log_sigmas) for sigma in sigmas])
+-        
++
+         # when timestep_type is continuous, we need to convert the timesteps to continuous values using c_noise
+         if self.config.timestep_type == "continuous":
+             timesteps = np.array([self.get_scalings(sigma)[-1] for sigma in sigmas])
+@@ -308,8 +308,20 @@ class EulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min = self.config.sigma_min if self.config.sigma_min is not None else in_sigmas[-1].item()
+-        sigma_max = self.config.sigma_max if self.config.sigma_max is not None else in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+@@ -360,7 +372,6 @@ class EulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
+         else:
+             step_index = index_candidates[0]
+ 
+-        step_index = index_candidates[0]
+         self._step_index = step_index.item()
+ 
+     def step(
+@@ -448,8 +459,6 @@ class EulerDiscreteScheduler(SchedulerMixin, ConfigMixin):
+         elif self.config.prediction_type == "epsilon":
+             pred_original_sample = sample - sigma_hat * model_output
+         elif self.config.prediction_type == "v_prediction":
+-            # * c_out + input * c_skip
+-            # pred_original_sample = model_output * (-sigma / (sigma**2 + 1) ** 0.5) + (sample / (sigma**2 + 1))
+             pred_original_sample = model_output * c_out + sample * c_skip
+         else:
+             raise ValueError(
+diff --git a/src/diffusers/schedulers/scheduling_heun_discrete.py b/src/diffusers/schedulers/scheduling_heun_discrete.py
+index 980dbd1bf..460299cf2 100644
+--- a/src/diffusers/schedulers/scheduling_heun_discrete.py
++++ b/src/diffusers/schedulers/scheduling_heun_discrete.py
+@@ -303,8 +303,20 @@ class HeunDiscreteScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/schedulers/scheduling_k_dpm_2_ancestral_discrete.py b/src/diffusers/schedulers/scheduling_k_dpm_2_ancestral_discrete.py
+index e74dd868d..aae5a15ab 100644
+--- a/src/diffusers/schedulers/scheduling_k_dpm_2_ancestral_discrete.py
++++ b/src/diffusers/schedulers/scheduling_k_dpm_2_ancestral_discrete.py
+@@ -324,8 +324,20 @@ class KDPM2AncestralDiscreteScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/schedulers/scheduling_k_dpm_2_discrete.py b/src/diffusers/schedulers/scheduling_k_dpm_2_discrete.py
+index ac590e571..3248520aa 100644
+--- a/src/diffusers/schedulers/scheduling_k_dpm_2_discrete.py
++++ b/src/diffusers/schedulers/scheduling_k_dpm_2_discrete.py
+@@ -335,8 +335,20 @@ class KDPM2DiscreteScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/schedulers/scheduling_unipc_multistep.py b/src/diffusers/schedulers/scheduling_unipc_multistep.py
+index a6d82de80..d778f37ec 100644
+--- a/src/diffusers/schedulers/scheduling_unipc_multistep.py
++++ b/src/diffusers/schedulers/scheduling_unipc_multistep.py
+@@ -337,8 +337,20 @@ class UniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
+     def _convert_to_karras(self, in_sigmas: torch.FloatTensor, num_inference_steps) -> torch.FloatTensor:
+         """Constructs the noise schedule of Karras et al. (2022)."""
+ 
+-        sigma_min: float = in_sigmas[-1].item()
+-        sigma_max: float = in_sigmas[0].item()
++        # Hack to make sure that other schedulers which copy this function don't break
++        # TODO: Add this logic to the other schedulers
++        if hasattr(self.config, "sigma_min"):
++            sigma_min = self.config.sigma_min
++        else:
++            sigma_min = None
++
++        if hasattr(self.config, "sigma_max"):
++            sigma_max = self.config.sigma_max
++        else:
++            sigma_max = None
++
++        sigma_min = sigma_min if sigma_min is not None else in_sigmas[-1].item()
++        sigma_max = sigma_max if sigma_max is not None else in_sigmas[0].item()
+ 
+         rho = 7.0  # 7.0 is the value used in the paper
+         ramp = np.linspace(0, 1, num_inference_steps)
+diff --git a/src/diffusers/utils/dummy_pt_objects.py b/src/diffusers/utils/dummy_pt_objects.py
+index 090b1081f..8d9e86093 100644
+--- a/src/diffusers/utils/dummy_pt_objects.py
++++ b/src/diffusers/utils/dummy_pt_objects.py
+@@ -32,6 +32,21 @@ class AutoencoderKL(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
++class AutoencoderKLTemporalDecoder(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
+ class AutoencoderTiny(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+@@ -257,6 +272,21 @@ class UNetMotionModel(metaclass=DummyObject):
+         requires_backends(cls, ["torch"])
+ 
+ 
++class UNetSpatioTemporalConditionModel(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
+ class VQModel(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+diff --git a/src/diffusers/utils/dummy_torch_and_transformers_objects.py b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+index d6200bcaf..9e0b2e648 100644
+--- a/src/diffusers/utils/dummy_torch_and_transformers_objects.py
++++ b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+@@ -992,6 +992,21 @@ class StableDiffusionUpscalePipeline(metaclass=DummyObject):
+         requires_backends(cls, ["torch", "transformers"])
+ 
+ 
++class StableDiffusionVideoPipeline(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
+ class StableDiffusionXLAdapterPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 
+diff --git a/tests/pipelines/stable_diffusion/test_stable_diffusion_video.py b/tests/pipelines/stable_diffusion/test_stable_diffusion_video.py
+index 1307f52f6..a0c4d10bb 100644
+--- a/tests/pipelines/stable_diffusion/test_stable_diffusion_video.py
++++ b/tests/pipelines/stable_diffusion/test_stable_diffusion_video.py
+@@ -96,9 +96,7 @@ class StableDiffusionVideoPipelineFastTests(PipelineTesterMixin, unittest.TestCa
+             vocab_size=1000,
+         )
+         text_encoder = CLIPTextModel(text_encoder_config)
+-        tokenizer = CLIPTokenizer.from_pretrained(
+-            "hf-internal-testing/tiny-random-clip"
+-        )
++        tokenizer = CLIPTokenizer.from_pretrained("hf-internal-testing/tiny-random-clip")
+         feature_extractor = CLIPImageProcessor(crop_size=32, size=32)
+ 
+         components = {
+@@ -166,18 +164,14 @@ class StableDiffusionVideoPipelineFastTests(PipelineTesterMixin, unittest.TestCa
+             value = inputs[name]
+             if name == "prompt":
+                 len_prompt = len(value)
+-                batched_inputs[name] = [
+-                    value[: len_prompt // i] for i in range(1, batch_size + 1)
+-                ]
++                batched_inputs[name] = [value[: len_prompt // i] for i in range(1, batch_size + 1)]
+                 batched_inputs[name][-1] = 100 * "very long"
+ 
+             else:
+                 batched_inputs[name] = batch_size * [value]
+ 
+         if "generator" in inputs:
+-            batched_inputs["generator"] = [
+-                self.get_generator(i) for i in range(batch_size)
+-            ]
++            batched_inputs["generator"] = [self.get_generator(i) for i in range(batch_size)]
+ 
+         if "batch_size" in inputs:
+             batched_inputs["batch_size"] = batch_size
+@@ -193,9 +187,7 @@ class StableDiffusionVideoPipelineFastTests(PipelineTesterMixin, unittest.TestCa
+         max_diff = np.abs(to_np(output_batch[0][0]) - to_np(output[0][0])).max()
+         assert max_diff < expected_max_diff
+ 
+-    @unittest.skipIf(
+-        torch_device != "cuda", reason="CUDA and CPU are required to switch devices"
+-    )
++    @unittest.skipIf(torch_device != "cuda", reason="CUDA and CPU are required to switch devices")
+     def test_to_device(self):
+         components = self.get_dummy_components()
+         pipe = self.pipeline_class(**components)
+@@ -203,9 +195,7 @@ class StableDiffusionVideoPipelineFastTests(PipelineTesterMixin, unittest.TestCa
+ 
+         pipe.to("cpu")
+         model_devices = [
+-            component.device.type
+-            for component in pipe.components.values()
+-            if hasattr(component, "device")
++            component.device.type for component in pipe.components.values() if hasattr(component, "device")
+         ]
+         self.assertTrue(all(device == "cpu" for device in model_devices))
+ 
+@@ -214,9 +204,7 @@ class StableDiffusionVideoPipelineFastTests(PipelineTesterMixin, unittest.TestCa
+ 
+         pipe.to("cuda")
+         model_devices = [
+-            component.device.type
+-            for component in pipe.components.values()
+-            if hasattr(component, "device")
++            component.device.type for component in pipe.components.values() if hasattr(component, "device")
+         ]
+         self.assertTrue(all(device == "cuda" for device in model_devices))
+ 
+@@ -228,19 +216,11 @@ class StableDiffusionVideoPipelineFastTests(PipelineTesterMixin, unittest.TestCa
+         pipe = self.pipeline_class(**components)
+         pipe.set_progress_bar_config(disable=None)
+ 
+-        model_dtypes = [
+-            component.dtype
+-            for component in pipe.components.values()
+-            if hasattr(component, "dtype")
+-        ]
++        model_dtypes = [component.dtype for component in pipe.components.values() if hasattr(component, "dtype")]
+         self.assertTrue(all(dtype == torch.float32 for dtype in model_dtypes))
+ 
+         pipe.to(torch_dtype=torch.float16)
+-        model_dtypes = [
+-            component.dtype
+-            for component in pipe.components.values()
+-            if hasattr(component, "dtype")
+-        ]
++        model_dtypes = [component.dtype for component in pipe.components.values() if hasattr(component, "dtype")]
+         self.assertTrue(all(dtype == torch.float16 for dtype in model_dtypes))
+ 
+ 
+@@ -277,12 +257,5 @@ class StableDiffusionVideoPipelineSlowTests(unittest.TestCase):
+         assert image.shape == (num_frames, 576, 1024, 3)
+ 
+         image_slice = image[0, -3:, -3:, -1]
+-        expected_slice = np.array(
+-            [0.8592, 0.8645, 0.8499, 0.8722, 0.8769, 0.8421, 0.8557, 0.8528, 0.8285]
+-        )
+-        assert (
+-            numpy_cosine_similarity_distance(
+-                image_slice.flatten(), expected_slice.flatten()
+-            )
+-            < 1e-3
+-        )
++        expected_slice = np.array([0.8592, 0.8645, 0.8499, 0.8722, 0.8769, 0.8421, 0.8557, 0.8528, 0.8285])
++        assert numpy_cosine_similarity_distance(image_slice.flatten(), expected_slice.flatten()) < 1e-3

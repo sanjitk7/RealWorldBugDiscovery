@@ -1,0 +1,16 @@
+diff --git a/manager/src/test/java/org/dromara/hertzbeat/manager/service/MonitorServiceTest.java b/manager/src/test/java/org/dromara/hertzbeat/manager/service/MonitorServiceTest.java
+index bfb3201a..72623532 100644
+--- a/manager/src/test/java/org/dromara/hertzbeat/manager/service/MonitorServiceTest.java
++++ b/manager/src/test/java/org/dromara/hertzbeat/manager/service/MonitorServiceTest.java
+@@ -76,7 +76,10 @@ class MonitorServiceTest {
+ 
+     @Mock
+     private AppService appService;
+-    
++
++    @Mock
++    private TagService tagService;
++
+     @Mock
+     private CollectJobScheduling collectJobScheduling;
+ 

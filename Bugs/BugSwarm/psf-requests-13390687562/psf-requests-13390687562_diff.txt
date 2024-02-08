@@ -1,0 +1,17 @@
+diff --git a/requests/adapters.py b/requests/adapters.py
+index 0aa699a0..33d13cc5 100644
+--- a/requests/adapters.py
++++ b/requests/adapters.py
+@@ -277,10 +277,10 @@ class HTTPAdapter(BaseAdapter):
+         if cert:
+             if not isinstance(cert, basestring):
+                 # a subscriptable object
+-                if hasattr(cert, '__getitem__'):
++                if hasattr(cert, "__getitem__"):
+                     conn.cert_file = cert[0]
+                     conn.key_file = cert[1]
+-                elif hasattr(cert, '__fspath__'):
++                elif hasattr(cert, "__fspath__"):
+                     # a path-like object implements __fspath__
+                     # see https://docs.python.org/3/library/os.html#os.PathLike
+                     conn.cert_file = cert.__fspath__()

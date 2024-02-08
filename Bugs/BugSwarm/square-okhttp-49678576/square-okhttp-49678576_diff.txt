@@ -1,0 +1,13 @@
+diff --git a/okhttp/src/main/java/com/squareup/okhttp/ConnectionSpec.java b/okhttp/src/main/java/com/squareup/okhttp/ConnectionSpec.java
+index ffe8f5597..2e8111443 100644
+--- a/okhttp/src/main/java/com/squareup/okhttp/ConnectionSpec.java
++++ b/okhttp/src/main/java/com/squareup/okhttp/ConnectionSpec.java
+@@ -242,7 +242,7 @@ public final class ConnectionSpec {
+       return cipherSuites(strings);
+     }
+ 
+-    public Builder cipherSuites(String[] cipherSuites) {
++    public Builder cipherSuites(String... cipherSuites) {
+       this.cipherSuites = cipherSuites; // No defensive copy.
+       return this;
+     }

@@ -1,0 +1,140 @@
+diff --git a/src/diffusers/models/lora.py b/src/diffusers/models/lora.py
+index d1e90a4a7..9edec19a3 100644
+--- a/src/diffusers/models/lora.py
++++ b/src/diffusers/models/lora.py
+@@ -77,8 +77,6 @@ def text_encoder_lora_state_dict(text_encoder):
+ 
+ 
+ def adjust_lora_scale_text_encoder(text_encoder, lora_scale: float = 1.0):
+-    from ..loaders import PatchedLoraProjection, text_encoder_attn_modules, text_encoder_mlp_modules
+-
+     for _, attn_module in text_encoder_attn_modules(text_encoder):
+         if isinstance(attn_module.q_proj, PatchedLoraProjection):
+             attn_module.q_proj.lora_scale = lora_scale
+diff --git a/src/diffusers/utils/dummy_pt_objects.py b/src/diffusers/utils/dummy_pt_objects.py
+index 64866d814..090b1081f 100644
+--- a/src/diffusers/utils/dummy_pt_objects.py
++++ b/src/diffusers/utils/dummy_pt_objects.py
+@@ -2,51 +2,6 @@
+ from ..utils import DummyObject, requires_backends
+ 
+ 
+-class FromOriginalControlnetMixin(metaclass=DummyObject):
+-    _backends = ["torch"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-
+-class FromOriginalVAEMixin(metaclass=DummyObject):
+-    _backends = ["torch"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-
+-class UNet2DConditionLoadersMixin(metaclass=DummyObject):
+-    _backends = ["torch"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch"])
+-
+-
+ class AsymmetricAutoencoderKL(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+diff --git a/src/diffusers/utils/dummy_torch_and_transformers_objects.py b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+index fb3ba8243..d6200bcaf 100644
+--- a/src/diffusers/utils/dummy_torch_and_transformers_objects.py
++++ b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+@@ -2,66 +2,6 @@
+ from ..utils import DummyObject, requires_backends
+ 
+ 
+-class FromSingleFileMixin(metaclass=DummyObject):
+-    _backends = ["torch", "transformers"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-
+-class LoraLoaderMixin(metaclass=DummyObject):
+-    _backends = ["torch", "transformers"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-
+-class StableDiffusionXLLoraLoaderMixin(metaclass=DummyObject):
+-    _backends = ["torch", "transformers"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-
+-class TextualInversionLoaderMixin(metaclass=DummyObject):
+-    _backends = ["torch", "transformers"]
+-
+-    def __init__(self, *args, **kwargs):
+-        requires_backends(self, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_config(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-    @classmethod
+-    def from_pretrained(cls, *args, **kwargs):
+-        requires_backends(cls, ["torch", "transformers"])
+-
+-
+ class AltDiffusionImg2ImgPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 

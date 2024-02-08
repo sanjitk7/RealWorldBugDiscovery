@@ -1,0 +1,183 @@
+diff --git a/tests/test_api.py b/tests/test_api.py
+index 93ca43eb..275dc7d7 100644
+--- a/tests/test_api.py
++++ b/tests/test_api.py
+@@ -213,6 +213,7 @@ async def test_database_page(ds_client):
+                 "complex_array",
+                 "distinct_some_null",
+                 "n",
++                "value",
+             ],
+             "primary_keys": ["pk"],
+             "count": 15,
+diff --git a/tests/test_csv.py b/tests/test_csv.py
+index ed83d685..bd6eb75c 100644
+--- a/tests/test_csv.py
++++ b/tests/test_csv.py
+@@ -26,22 +26,22 @@ world
+ )
+ 
+ EXPECTED_TABLE_WITH_LABELS_CSV = """
+-pk,created,planet_int,on_earth,state,_city_id,_city_id_label,_neighborhood,tags,complex_array,distinct_some_null,n
+-1,2019-01-14 08:00:00,1,1,CA,1,San Francisco,Mission,"[""tag1"", ""tag2""]","[{""foo"": ""bar""}]",one,n1
+-2,2019-01-14 08:00:00,1,1,CA,1,San Francisco,Dogpatch,"[""tag1"", ""tag3""]",[],two,n2
+-3,2019-01-14 08:00:00,1,1,CA,1,San Francisco,SOMA,[],[],,
+-4,2019-01-14 08:00:00,1,1,CA,1,San Francisco,Tenderloin,[],[],,
+-5,2019-01-15 08:00:00,1,1,CA,1,San Francisco,Bernal Heights,[],[],,
+-6,2019-01-15 08:00:00,1,1,CA,1,San Francisco,Hayes Valley,[],[],,
+-7,2019-01-15 08:00:00,1,1,CA,2,Los Angeles,Hollywood,[],[],,
+-8,2019-01-15 08:00:00,1,1,CA,2,Los Angeles,Downtown,[],[],,
+-9,2019-01-16 08:00:00,1,1,CA,2,Los Angeles,Los Feliz,[],[],,
+-10,2019-01-16 08:00:00,1,1,CA,2,Los Angeles,Koreatown,[],[],,
+-11,2019-01-16 08:00:00,1,1,MI,3,Detroit,Downtown,[],[],,
+-12,2019-01-17 08:00:00,1,1,MI,3,Detroit,Greektown,[],[],,
+-13,2019-01-17 08:00:00,1,1,MI,3,Detroit,Corktown,[],[],,
+-14,2019-01-17 08:00:00,1,1,MI,3,Detroit,Mexicantown,[],[],,
+-15,2019-01-17 08:00:00,2,0,MC,4,Memnonia,Arcadia Planitia,[],[],,
++pk,created,planet_int,on_earth,state,_city_id,_city_id_label,_neighborhood,tags,complex_array,distinct_some_null,n,value
++1,2019-01-14 08:00:00,1,1,CA,1,San Francisco,Mission,"[""tag1"", ""tag2""]","[{""foo"": ""bar""}]",one,n1,1
++2,2019-01-14 08:00:00,1,1,CA,1,San Francisco,Dogpatch,"[""tag1"", ""tag3""]",[],two,n2,2
++3,2019-01-14 08:00:00,1,1,CA,1,San Francisco,SOMA,[],[],,,
++4,2019-01-14 08:00:00,1,1,CA,1,San Francisco,Tenderloin,[],[],,,
++5,2019-01-15 08:00:00,1,1,CA,1,San Francisco,Bernal Heights,[],[],,,
++6,2019-01-15 08:00:00,1,1,CA,1,San Francisco,Hayes Valley,[],[],,,
++7,2019-01-15 08:00:00,1,1,CA,2,Los Angeles,Hollywood,[],[],,,
++8,2019-01-15 08:00:00,1,1,CA,2,Los Angeles,Downtown,[],[],,,
++9,2019-01-16 08:00:00,1,1,CA,2,Los Angeles,Los Feliz,[],[],,,
++10,2019-01-16 08:00:00,1,1,CA,2,Los Angeles,Koreatown,[],[],,,
++11,2019-01-16 08:00:00,1,1,MI,3,Detroit,Downtown,[],[],,,
++12,2019-01-17 08:00:00,1,1,MI,3,Detroit,Greektown,[],[],,,
++13,2019-01-17 08:00:00,1,1,MI,3,Detroit,Corktown,[],[],,,
++14,2019-01-17 08:00:00,1,1,MI,3,Detroit,Mexicantown,[],[],,,
++15,2019-01-17 08:00:00,2,0,MC,4,Memnonia,Arcadia Planitia,[],[],,,
+ """.lstrip().replace(
+     "\n", "\r\n"
+ )
+diff --git a/tests/test_internals_database.py b/tests/test_internals_database.py
+index 647ae7bd..fd8cec9d 100644
+--- a/tests/test_internals_database.py
++++ b/tests/test_internals_database.py
+@@ -108,6 +108,7 @@ async def test_view_exists(db, view, expected):
+                 "complex_array",
+                 "distinct_some_null",
+                 "n",
++                "value",
+             ],
+         ),
+         (
+@@ -235,6 +236,15 @@ async def test_table_columns(db, table, expected):
+                     is_pk=0,
+                     hidden=0,
+                 ),
++                Column(
++                    cid=11,
++                    name="value",
++                    type="integer",
++                    notnull=0,
++                    default_value=None,
++                    is_pk=0,
++                    hidden=0,
++                ),
+             ],
+         ),
+         (
+diff --git a/tests/test_plugins.py b/tests/test_plugins.py
+index 82e2f7f1..6369fdff 100644
+--- a/tests/test_plugins.py
++++ b/tests/test_plugins.py
+@@ -452,6 +452,7 @@ async def test_hook_register_output_renderer_all_parameters(ds_client):
+             "complex_array",
+             "distinct_some_null",
+             "n",
++            "value",
+         ],
+         "rows": [
+             "<sqlite3.Row object at 0xXXX>",
+@@ -470,7 +471,7 @@ async def test_hook_register_output_renderer_all_parameters(ds_client):
+             "<sqlite3.Row object at 0xXXX>",
+             "<sqlite3.Row object at 0xXXX>",
+         ],
+-        "sql": "select pk, created, planet_int, on_earth, state, _city_id, _neighborhood, tags, complex_array, distinct_some_null, n from facetable order by pk limit 51",
++        "sql": "select pk, created, planet_int, on_earth, state, _city_id, _neighborhood, tags, complex_array, distinct_some_null, n, value from facetable order by pk limit 51",
+         "query_name": None,
+         "database": "fixtures",
+         "table": "facetable",
+@@ -550,8 +551,9 @@ async def test_hook_register_output_renderer_can_render(ds_client):
+             "complex_array",
+             "distinct_some_null",
+             "n",
++            "value",
+         ],
+-        "sql": "select pk, created, planet_int, on_earth, state, _city_id, _neighborhood, tags, complex_array, distinct_some_null, n from facetable order by pk limit 51",
++        "sql": "select pk, created, planet_int, on_earth, state, _city_id, _neighborhood, tags, complex_array, distinct_some_null, n, value from facetable order by pk limit 51",
+         "query_name": None,
+         "database": "fixtures",
+         "table": "facetable",
+diff --git a/tests/test_table_api.py b/tests/test_table_api.py
+index 5dbb8b8f..c957c2a3 100644
+--- a/tests/test_table_api.py
++++ b/tests/test_table_api.py
+@@ -581,6 +581,7 @@ async def test_table_filter_json_arraycontains(ds_client):
+             '[{"foo": "bar"}]',
+             "one",
+             "n1",
++            1,
+         ],
+         [
+             2,
+@@ -594,6 +595,7 @@ async def test_table_filter_json_arraycontains(ds_client):
+             "[]",
+             "two",
+             "n2",
++            2,
+         ],
+     ]
+ 
+@@ -617,6 +619,7 @@ async def test_table_filter_json_arraynotcontains(ds_client):
+             '[{"foo": "bar"}]',
+             "one",
+             "n1",
++            1,
+         ]
+     ]
+ 
+@@ -639,6 +642,7 @@ async def test_table_filter_extra_where(ds_client):
+             "[]",
+             "two",
+             "n2",
++            2,
+         ]
+     ] == response.json()["rows"]
+ 
+@@ -1088,6 +1092,7 @@ async def test_expand_labels(ds_client):
+             "complex_array": "[]",
+             "distinct_some_null": "two",
+             "n": "n2",
++            "value": 2,
+         },
+         "13": {
+             "pk": 13,
+@@ -1101,6 +1106,7 @@ async def test_expand_labels(ds_client):
+             "complex_array": "[]",
+             "distinct_some_null": None,
+             "n": None,
++            "value": None,
+         },
+     }
+ 
+@@ -1304,6 +1310,7 @@ def test_generated_columns_are_visible_in_datasette():
+                 "complex_array",
+                 "distinct_some_null",
+                 "n",
++                "value",
+             ],
+         ),
+         (
+@@ -1332,6 +1339,7 @@ def test_generated_columns_are_visible_in_datasette():
+                 "complex_array",
+                 "distinct_some_null",
+                 "n",
++                "value",
+             ],
+         ),
+         (

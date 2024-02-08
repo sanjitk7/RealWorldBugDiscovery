@@ -1,0 +1,262 @@
+diff --git a/src/diffusers/__init__.py b/src/diffusers/__init__.py
+index 9e4c903e..5d1a0e98 100644
+--- a/src/diffusers/__init__.py
++++ b/src/diffusers/__init__.py
+@@ -74,7 +74,15 @@ except OptionalDependencyNotAvailable:
+ 
+ else:
+     _import_structure["loaders"].extend(
+-        ["FromOriginalControlnetMixin", "FromOriginalVAEMixin", "UNet2DConditionLoadersMixin"]
++        [
++            "FromOriginalControlnetMixin",
++            "FromOriginalVAEMixin",
++            "PatchedLoraProjection",
++            "UNet2DConditionLoadersMixin",
++            "text_encoder_attn_modules",
++            "text_encoder_lora_state_dict",
++            "text_encoder_mlp_modules",
++        ]
+     )
+     _import_structure["models"].extend(
+         [
+@@ -198,7 +206,9 @@ except OptionalDependencyNotAvailable:
+     ]
+ 
+ else:
+-    _import_structure["loaders"].extend(["FromSingleFileMixin", "LoraLoaderMixin", "StableDiffusionXLLoraLoaderMixin", "TextualInversionLoaderMixin"])
++    _import_structure["loaders"].extend(
++        ["FromSingleFileMixin", "LoraLoaderMixin", "StableDiffusionXLLoraLoaderMixin", "TextualInversionLoaderMixin"]
++    )
+     _import_structure["pipelines"].extend(
+         [
+             "AltDiffusionImg2ImgPipeline",
+@@ -445,7 +455,15 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
+     except OptionalDependencyNotAvailable:
+         from .utils.dummy_pt_objects import *  # noqa F403
+     else:
+-        from .loaders import FromOriginalControlnetMixin, FromOriginalVAEMixin, UNet2DConditionLoadersMixin
++        from .loaders import (
++            FromOriginalControlnetMixin,
++            FromOriginalVAEMixin,
++            PatchedLoraProjection,
++            UNet2DConditionLoadersMixin,
++            text_encoder_attn_modules,
++            text_encoder_lora_state_dict,
++            text_encoder_mlp_modules,
++        )
+         from .models import (
+             AsymmetricAutoencoderKL,
+             AutoencoderKL,
+@@ -549,7 +567,12 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
+     except OptionalDependencyNotAvailable:
+         from .utils.dummy_torch_and_transformers_objects import *  # noqa F403
+     else:
+-        from .loaders import FromSingleFileMixin, LoraLoaderMixin, StableDiffusionXLLoraLoaderMixin, TextualInversionLoaderMixin
++        from .loaders import (
++            FromSingleFileMixin,
++            LoraLoaderMixin,
++            StableDiffusionXLLoraLoaderMixin,
++            TextualInversionLoaderMixin,
++        )
+         from .pipelines import (
+             AltDiffusionImg2ImgPipeline,
+             AltDiffusionPipeline,
+diff --git a/src/diffusers/loaders/__init__.py b/src/diffusers/loaders/__init__.py
+index 0ab1f3c0..a799fc9c 100644
+--- a/src/diffusers/loaders/__init__.py
++++ b/src/diffusers/loaders/__init__.py
+@@ -2,6 +2,12 @@ from typing import TYPE_CHECKING
+ 
+ from ..utils import DIFFUSERS_SLOW_IMPORT, _LazyModule
+ from ..utils.import_utils import is_torch_available, is_transformers_available
++from .utils import (
++    PatchedLoraProjection,
++    text_encoder_attn_modules,
++    text_encoder_lora_state_dict,
++    text_encoder_mlp_modules,
++)
+ 
+ 
+ _import_structure = {}
+@@ -9,7 +15,13 @@ _import_structure = {}
+ if is_torch_available():
+     _import_structure["single_file"] = ["FromOriginalControlnetMixin", "FromOriginalVAEMixin"]
+     _import_structure["unet"] = ["UNet2DConditionLoadersMixin"]
+-    
++    _import_structure["utils"] = [
++        "PatchedLoraProjection",
++        "text_encoder_attn_modules",
++        "text_encoder_lora_state_dict",
++        "text_encoder_mlp_modules",
++    ]
++
+     if is_transformers_available():
+         _import_structure["single_file"].extend(["FromSingleFileMixin"])
+         _import_structure["lora"] = ["LoraLoaderMixin", "StableDiffusionXLLoraLoaderMixin"]
+@@ -20,6 +32,12 @@ if TYPE_CHECKING or DIFFUSERS_SLOW_IMPORT:
+     if is_torch_available():
+         from .single_file import FromOriginalControlnetMixin, FromOriginalVAEMixin
+         from .unet import UNet2DConditionLoadersMixin
++        from .utils import (
++            PatchedLoraProjection,
++            text_encoder_attn_modules,
++            text_encoder_lora_state_dict,
++            text_encoder_mlp_modules,
++        )
+ 
+         if is_transformers_available():
+             from .lora import LoraLoaderMixin, StableDiffusionXLLoraLoaderMixin
+diff --git a/src/diffusers/utils/dummy_pt_objects.py b/src/diffusers/utils/dummy_pt_objects.py
+index 090b1081..c4653b19 100644
+--- a/src/diffusers/utils/dummy_pt_objects.py
++++ b/src/diffusers/utils/dummy_pt_objects.py
+@@ -2,6 +2,78 @@
+ from ..utils import DummyObject, requires_backends
+ 
+ 
++class FromOriginalControlnetMixin(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
++class FromOriginalVAEMixin(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
++class PatchedLoraProjection(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
++class UNet2DConditionLoadersMixin(metaclass=DummyObject):
++    _backends = ["torch"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch"])
++
++
++def text_encoder_attn_modules(*args, **kwargs):
++    requires_backends(text_encoder_attn_modules, ["torch"])
++
++
++def text_encoder_lora_state_dict(*args, **kwargs):
++    requires_backends(text_encoder_lora_state_dict, ["torch"])
++
++
++def text_encoder_mlp_modules(*args, **kwargs):
++    requires_backends(text_encoder_mlp_modules, ["torch"])
++
++
+ class AsymmetricAutoencoderKL(metaclass=DummyObject):
+     _backends = ["torch"]
+ 
+diff --git a/src/diffusers/utils/dummy_torch_and_transformers_objects.py b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+index d6200bca..fb3ba824 100644
+--- a/src/diffusers/utils/dummy_torch_and_transformers_objects.py
++++ b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+@@ -2,6 +2,66 @@
+ from ..utils import DummyObject, requires_backends
+ 
+ 
++class FromSingleFileMixin(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
++class LoraLoaderMixin(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
++class StableDiffusionXLLoraLoaderMixin(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
++class TextualInversionLoaderMixin(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
+ class AltDiffusionImg2ImgPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 

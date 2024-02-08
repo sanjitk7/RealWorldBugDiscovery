@@ -1,0 +1,13 @@
+diff --git a/spring-security-oauth2/src/main/java/org/springframework/security/oauth2/client/DefaultOAuth2ClientContext.java b/spring-security-oauth2/src/main/java/org/springframework/security/oauth2/client/DefaultOAuth2ClientContext.java
+index ffa81fa4..67cf6161 100644
+--- a/spring-security-oauth2/src/main/java/org/springframework/security/oauth2/client/DefaultOAuth2ClientContext.java
++++ b/spring-security-oauth2/src/main/java/org/springframework/security/oauth2/client/DefaultOAuth2ClientContext.java
+@@ -17,7 +17,7 @@ public class DefaultOAuth2ClientContext implements OAuth2ClientContext, Serializ
+ 
+     private static final long serialVersionUID = 914967629530462926L;
+ 
+-    private ThreadLocal<OAuth2AccessToken> accessToken = new ThreadLocal<>();
++    private ThreadLocal<OAuth2AccessToken> accessToken = new ThreadLocal<OAuth2AccessToken>();
+ 
+     private AccessTokenRequest accessTokenRequest;
+ 

@@ -1,0 +1,129 @@
+diff --git a/src/diffusers/utils/dummy_torch_and_transformers_objects.py b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+index 016760337..254b99e85 100644
+--- a/src/diffusers/utils/dummy_torch_and_transformers_objects.py
++++ b/src/diffusers/utils/dummy_torch_and_transformers_objects.py
+@@ -167,6 +167,36 @@ class ImageTextPipelineOutput(metaclass=DummyObject):
+         requires_backends(cls, ["torch", "transformers"])
+ 
+ 
++class KandinskyCombinedPipeline(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
++class KandinskyImg2ImgCombinedPipeline(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
+ class KandinskyImg2ImgPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 
+@@ -182,6 +212,21 @@ class KandinskyImg2ImgPipeline(metaclass=DummyObject):
+         requires_backends(cls, ["torch", "transformers"])
+ 
+ 
++class KandinskyInpaintCombinedPipeline(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
+ class KandinskyInpaintPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 
+@@ -227,6 +272,21 @@ class KandinskyPriorPipeline(metaclass=DummyObject):
+         requires_backends(cls, ["torch", "transformers"])
+ 
+ 
++class KandinskyV22CombinedPipeline(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
+ class KandinskyV22ControlnetImg2ImgPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 
+@@ -257,6 +317,21 @@ class KandinskyV22ControlnetPipeline(metaclass=DummyObject):
+         requires_backends(cls, ["torch", "transformers"])
+ 
+ 
++class KandinskyV22Img2ImgCombinedPipeline(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
+ class KandinskyV22Img2ImgPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 
+@@ -272,6 +347,21 @@ class KandinskyV22Img2ImgPipeline(metaclass=DummyObject):
+         requires_backends(cls, ["torch", "transformers"])
+ 
+ 
++class KandinskyV22InpaintCombinedPipeline(metaclass=DummyObject):
++    _backends = ["torch", "transformers"]
++
++    def __init__(self, *args, **kwargs):
++        requires_backends(self, ["torch", "transformers"])
++
++    @classmethod
++    def from_config(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++    @classmethod
++    def from_pretrained(cls, *args, **kwargs):
++        requires_backends(cls, ["torch", "transformers"])
++
++
+ class KandinskyV22InpaintPipeline(metaclass=DummyObject):
+     _backends = ["torch", "transformers"]
+ 
