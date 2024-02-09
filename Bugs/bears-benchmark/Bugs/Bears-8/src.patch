@@ -1,64 +1,38 @@
-diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/AsPropertyTypeDeserializer.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/AsPropertyTypeDeserializer.java
-index 7941e054c..d1d096a75 100644
---- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/AsPropertyTypeDeserializer.java
-+++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/AsPropertyTypeDeserializer.java
-@@ -153,13 +153,6 @@ public class AsPropertyTypeDeserializer extends AsArrayTypeDeserializer
-         // or, something for which "as-property" won't work, changed into "wrapper-array" type:
-         if (p.getCurrentToken() == JsonToken.START_ARRAY) {
-             return super.deserializeTypedFromAny(p, ctxt);
--        } else if (p.getCurrentToken() == JsonToken.VALUE_STRING) {
--            if (ctxt.isEnabled(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)) {
--                String str = p.getText().trim();
--                if (str.isEmpty()) {
--                    return null;
--                }
--            }
+diff --git a/src/main/java/com/fasterxml/jackson/databind/ser/std/MapSerializer.java b/src/main/java/com/fasterxml/jackson/databind/ser/std/MapSerializer.java
+index dbba25d..a3af8cc 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/ser/std/MapSerializer.java
++++ b/src/main/java/com/fasterxml/jackson/databind/ser/std/MapSerializer.java
+@@ -952,7 +952,9 @@ public class MapSerializer
          }
-         ctxt.reportWrongTokenException(p, JsonToken.FIELD_NAME,
-                 "missing property '"+_typePropertyName+"' that is to contain type id  (for class "+baseTypeName()+")");
-diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
-index 0e293c52b..36e6901bc 100644
---- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
-+++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
-@@ -129,16 +129,6 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
-         public BaseClass value;
+         // [databind#1411]: TreeMap does not like null key... (although note that
+         //   check above should prevent this code from being called in that case)
+-        if (input.containsKey(null)) {
++        // [databind#153]: but, apparently, some custom Maps do manage hit this
++        //   problem.
++        if (_hasNullKey(input)) {
+             TreeMap<Object,Object> result = new TreeMap<Object,Object>();
+             for (Map.Entry<?,?> entry : input.entrySet()) {
+                 Object key = entry.getKey();
+@@ -967,6 +969,22 @@ public class MapSerializer
+         return new TreeMap<Object,Object>(input);
      }
  
--    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY,
--            property = "type")
--    static class AsProperty {
--
--    }
--
--    static class AsPropertyWrapper {
--        public AsProperty value;
--    }
--
-     /*
-     /**********************************************************
-     /* Unit tests, deserialization
-@@ -257,24 +247,6 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
-         assertNull(w.value);
-     }
- 
--    public void testWithoutEmptyStringAsNullObject1533() throws Exception
--    {
--    	ObjectMapper mapper = new ObjectMapper().disable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
--        try {
--            mapper.readValue("{ \"value\": \"\" }", AsPropertyWrapper.class);
--            fail("Expected " + JsonMappingException.class);
--        } catch (JsonMappingException e) {
--            // expected
--        }
--    }
--
--    public void testWithEmptyStringAsNullObject1533() throws Exception
--    {
--        ObjectMapper mapper = new ObjectMapper().enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
--        AsPropertyWrapper wrapper = mapper.readValue("{ \"value\": \"\" }", AsPropertyWrapper.class);
--        assertNull(wrapper.value);
--    }
--
-     /*
-     /**********************************************************
-     /* Unit tests, serialization
++    /**
++     * @since 2.8.7
++     */
++    protected boolean _hasNullKey(Map<?,?> input) {
++        // 19-Feb-2017, tatu: As per [databind#1513] there are many cases where `null`
++        //   keys are not allowed, and even attempt to check for presence can cause
++        //   problems. Without resorting to external sorting (and internal API change),
++        //   or custom sortable Map implementation (more code) we can try black- or
++        //   white-listing (that is; either skip known problem cases; or only apply for
++        //   known good cases).
++        //   While my first instinct was to do black-listing (remove Hashtable and ConcurrentHashMap),
++        //   all in all it is probably better to just white list `HashMap` (and its sub-classes).
++        
++        return (input instanceof HashMap) && input.containsKey(null);
++    }
++    
+     protected void _writeNullKeyedEntry(JsonGenerator gen, SerializerProvider provider,
+             Object suppressableValue, Object value) throws IOException
+     {

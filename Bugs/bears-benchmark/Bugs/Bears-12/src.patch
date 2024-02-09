@@ -1,152 +1,222 @@
-diff --git a/release-notes/VERSION b/release-notes/VERSION
-index c2c06a9ea..69c80bf52 100644
---- a/release-notes/VERSION
-+++ b/release-notes/VERSION
-@@ -6,9 +6,6 @@ Project: jackson-databind
- 2.8.8 (not yet released)
+diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/BuilderBasedDeserializer.java b/src/main/java/com/fasterxml/jackson/databind/deser/BuilderBasedDeserializer.java
+index 7b92423..817e29e 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/deser/BuilderBasedDeserializer.java
++++ b/src/main/java/com/fasterxml/jackson/databind/deser/BuilderBasedDeserializer.java
+@@ -26,7 +26,7 @@ public class BuilderBasedDeserializer
+     private static final long serialVersionUID = 1L;
  
- (partial) #994: `DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS` only works for POJOs, Maps
--#1345: `@JsonProperty(access = READ_ONLY)` together with generated constructor (Lombok) causes
-- exception: "Could not find creator property with name ..."
-- (reported by Raniz85@github)
- #1533: `AsPropertyTypeDeserializer` ignores `DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT`
- #1543: JsonFormat.Shape.NUMBER_INT does not work when defined on enum type in 2.8
-  (reported by Alex P)
-diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializerFactory.java b/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializerFactory.java
-index c69169f7f..4c6144408 100644
---- a/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializerFactory.java
-+++ b/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializerFactory.java
-@@ -441,11 +441,9 @@ public class BeanDeserializerFactory
-             BeanDescription beanDesc, BeanDeserializerBuilder builder)
-         throws JsonMappingException
-     {
-+        final SettableBeanProperty[] creatorProps =
-+                builder.getValueInstantiator().getFromObjectArguments(ctxt.getConfig());
-         final boolean isConcrete = !beanDesc.getType().isAbstract();
--        final SettableBeanProperty[] creatorProps = isConcrete
--                ? builder.getValueInstantiator().getFromObjectArguments(ctxt.getConfig())
--                : null;
--        final boolean hasCreatorProps = (creatorProps != null);
-         
-         // 01-May-2016, tatu: Which base type to use here gets tricky, since
-         //   it may often make most sense to use general type for overrides,
-@@ -492,8 +490,8 @@ public class BeanDeserializerFactory
-                 }
-             }
-         }
--        final boolean useGettersAsSetters = ctxt.isEnabled(MapperFeature.USE_GETTERS_AS_SETTERS)
--                && ctxt.isEnabled(MapperFeature.AUTO_DETECT_GETTERS);
-+        final boolean useGettersAsSetters = (ctxt.isEnabled(MapperFeature.USE_GETTERS_AS_SETTERS)
-+                && ctxt.isEnabled(MapperFeature.AUTO_DETECT_GETTERS));
- 
-         // Ok: let's then filter out property definitions
-         List<BeanPropertyDefinition> propDefs = filterBeanProps(ctxt,
-@@ -533,7 +531,7 @@ public class BeanDeserializerFactory
-             }
-             // 25-Sep-2014, tatu: No point in finding constructor parameters for abstract types
-             //   (since they are never used anyway)
--            if (hasCreatorProps && propDef.hasConstructorParameter()) {
-+            if (isConcrete && propDef.hasConstructorParameter()) {
-                 /* If property is passed via constructor parameter, we must
-                  * handle things in special way. Not sure what is the most optimal way...
-                  * for now, let's just call a (new) method in builder, which does nothing.
-@@ -550,13 +548,8 @@ public class BeanDeserializerFactory
-                     }
-                 }
-                 if (cprop == null) {
--                    List<String> n = new ArrayList<>();
--                    for (SettableBeanProperty cp : creatorProps) {
--                        n.add(cp.getName());
--                    }
--                    ctxt.reportBadPropertyDefinition(beanDesc, propDef,
--                            "Could not find creator property with name '%s' (known Creator properties: %s)",
--                            name, n);
-+                    ctxt.reportMappingException("Could not find creator property with name '%s' (in class %s)",
-+                            name, beanDesc.getBeanClass().getName());
-                     continue;
-                 }
-                 if (prop != null) {
-diff --git a/src/test/java/com/fasterxml/jackson/databind/deser/ReadOrWriteOnlyTest.java b/src/test/java/com/fasterxml/jackson/databind/deser/ReadOrWriteOnlyTest.java
-index 0afd3ffb9..78d54bcc9 100644
---- a/src/test/java/com/fasterxml/jackson/databind/deser/ReadOrWriteOnlyTest.java
-+++ b/src/test/java/com/fasterxml/jackson/databind/deser/ReadOrWriteOnlyTest.java
-@@ -1,7 +1,5 @@
- package com.fasterxml.jackson.databind.deser;
- 
--import java.beans.ConstructorProperties;
--
- import com.fasterxml.jackson.annotation.JsonProperty;
- import com.fasterxml.jackson.databind.*;
- 
-@@ -49,22 +47,7 @@ public class ReadOrWriteOnlyTest extends BaseMapTest
-         public void setLastName(String n) {
-             lastName = n;
-         }
--    }
--
--    // for [databind#1345], emulate way Lombok embellishes classes
--    static class Foo1345 {
--        @JsonProperty(access=JsonProperty.Access.READ_ONLY)
--        public String id;
--        public String name;
--
--        @ConstructorProperties({ "id", "name" })
--        public Foo1345(String id, String name) {
--            this.id = id;
--            this.name = name;
--        }
--
--        protected Foo1345() { }
--    }
-+    }    
- 
+     protected final AnnotatedMethod _buildMethod;
+-	
++
      /*
      /**********************************************************
-@@ -92,12 +75,4 @@ public class ReadOrWriteOnlyTest extends BaseMapTest
-         Pojo935 result = MAPPER.readValue(json, Pojo935.class);
-         assertNotNull(result);
+     /* Life-cycle, construction, initialization
+@@ -66,7 +66,7 @@ public class BuilderBasedDeserializer
+         super(src, ignoreAllUnknown);
+         _buildMethod = src._buildMethod;
      }
--
--    public void testReadOnly1345() throws Exception
--    {
--        Foo1345 result = MAPPER.readValue("{\"name\":\"test\"}", Foo1345.class);
--        assertNotNull(result);
--        assertEquals("test", result.name);
--        assertNull(result.id);
--    }
- }
-diff --git a/src/test/java/com/fasterxml/jackson/failing/ReadOnly1345Test.java b/src/test/java/com/fasterxml/jackson/failing/ReadOnly1345Test.java
-new file mode 100644
-index 000000000..7c081786b
---- /dev/null
-+++ b/src/test/java/com/fasterxml/jackson/failing/ReadOnly1345Test.java
-@@ -0,0 +1,29 @@
-+package com.fasterxml.jackson.failing;
+-    
 +
-+import java.beans.ConstructorProperties;
+     protected BuilderBasedDeserializer(BuilderBasedDeserializer src, NameTransformer unwrapper) {
+         super(src, unwrapper);
+         _buildMethod = src._buildMethod;
+@@ -86,7 +86,7 @@ public class BuilderBasedDeserializer
+         super(src, props);
+         _buildMethod = src._buildMethod;
+     }
+-    
 +
-+import com.fasterxml.jackson.annotation.JsonProperty;
-+import com.fasterxml.jackson.databind.*;
+     @Override
+     public JsonDeserializer<Object> unwrappingDeserializer(NameTransformer unwrapper)
+     {
+@@ -117,13 +117,13 @@ public class BuilderBasedDeserializer
+         SettableBeanProperty[] props = _beanProperties.getPropertiesInInsertionOrder();
+         return new BeanAsArrayBuilderDeserializer(this, props, _buildMethod);
+     }
+-    
 +
-+public class ReadOnly1345Test extends BaseMapTest
-+{
-+    static class Foo1345 {
-+        @JsonProperty(access=JsonProperty.Access.READ_ONLY)
-+        public String id;
-+        public String name;
+     /*
+     /**********************************************************
+     /* JsonDeserializer implementation
+     /**********************************************************
+      */
+-    
 +
-+        @ConstructorProperties({ "id", "name" })
-+        public Foo1345(String id, String name) {
-+            this.id = id;
-+            this.name = name;
-+        }
-+    }
+     protected final Object finishBuild(DeserializationContext ctxt, Object builder)
+             throws IOException
+     {
+@@ -137,7 +137,7 @@ public class BuilderBasedDeserializer
+             return wrapInstantiationProblem(e, ctxt);
+         }
+     }
+-    
 +
-+    public void testReadOnly1345() throws Exception
+     /**
+      * Main deserialization method for bean-based objects (POJOs).
+      */
+@@ -146,7 +146,7 @@ public class BuilderBasedDeserializer
+         throws IOException
+     {
+         JsonToken t = p.getCurrentToken();
+-        
++
+         // common case first:
+         if (t == JsonToken.START_OBJECT) {
+             t = p.nextToken();
+@@ -197,7 +197,7 @@ public class BuilderBasedDeserializer
+          */
+         return finishBuild(ctxt, _deserialize(p, ctxt, builder));
+     }
+-    
++
+     /*
+     /**********************************************************
+     /* Concrete deserialization methods
+@@ -207,7 +207,7 @@ public class BuilderBasedDeserializer
+     protected final Object _deserialize(JsonParser p,
+             DeserializationContext ctxt, Object builder)
+         throws IOException, JsonProcessingException
+-    {        
 +    {
-+        ObjectMapper mapper = new ObjectMapper();
-+        Foo1345 result = mapper.readValue("{\"name\":\"test\"}", Foo1345.class);
-+        assertNotNull(result);
-+        assertEquals("test", result.name);
+         if (_injectables != null) {
+             injectValues(ctxt, builder);
+         }
+@@ -233,7 +233,7 @@ public class BuilderBasedDeserializer
+             // Skip field name:
+             p.nextToken();
+             SettableBeanProperty prop = _beanProperties.find(propName);
+-            
++
+             if (prop != null) { // normal case
+                 try {
+                     builder = prop.deserializeSetAndReturn(p, ctxt, builder);
+@@ -246,7 +246,7 @@ public class BuilderBasedDeserializer
+         }
+         return builder;
+     }
+-    
++
+     /**
+      * Streamlined version that is only used when no "special"
+      * features are enabled.
+@@ -323,7 +323,7 @@ public class BuilderBasedDeserializer
+      * Method called to deserialize bean using "property-based creator":
+      * this means that a non-default constructor or factory method is
+      * called, and then possibly other setters. The trick is that
+-     * values for creator method need to be buffered, first; and 
++     * values for creator method need to be buffered, first; and
+      * due to non-guaranteed ordering possibly some other properties
+      * as well.
+      */
+@@ -332,7 +332,7 @@ public class BuilderBasedDeserializer
+     protected final Object _deserializeUsingPropertyBased(final JsonParser p,
+             final DeserializationContext ctxt)
+         throws IOException, JsonProcessingException
+-    { 
++    {
+         final PropertyBasedCreator creator = _propertyBasedCreator;
+         PropertyValueBuffer buffer = creator.startBuilding(p, ctxt, _objectIdReader);
+ 
+@@ -414,13 +414,13 @@ public class BuilderBasedDeserializer
+         }
+         return bean;
+     }
+-    
++
+     /*
+     /**********************************************************
+     /* Deserializing when we have to consider an active View
+     /**********************************************************
+      */
+-    
++
+     protected final Object deserializeWithView(JsonParser p, DeserializationContext ctxt,
+             Object bean, Class<?> activeView)
+         throws IOException, JsonProcessingException
+@@ -447,7 +447,7 @@ public class BuilderBasedDeserializer
+         }
+         return bean;
+     }
+-    
++
+     /*
+     /**********************************************************
+     /* Handling for cases where we have "unwrapped" values
+@@ -477,7 +477,7 @@ public class BuilderBasedDeserializer
+         }
+ 
+         final Class<?> activeView = _needViewProcesing ? ctxt.getActiveView() : null;
+-        
++
+         for (; p.getCurrentToken() != JsonToken.END_OBJECT; p.nextToken()) {
+             String propName = p.getCurrentName();
+             p.nextToken();
+@@ -515,7 +515,7 @@ public class BuilderBasedDeserializer
+         tokens.writeEndObject();
+         _unwrappedPropertyHandler.processUnwrapped(p, ctxt, bean, tokens);
+         return bean;
+-    }    
 +    }
-+}
+ 
+     @SuppressWarnings("resource")
+     protected Object deserializeWithUnwrapped(JsonParser p,
+@@ -580,31 +580,7 @@ public class BuilderBasedDeserializer
+             // creator property?
+             SettableBeanProperty creatorProp = creator.findCreatorProperty(propName);
+             if (creatorProp != null) {
+-                // Last creator property to set?
+-                if (buffer.assignParameter(creatorProp, creatorProp.deserialize(p, ctxt))) {
+-                    t = p.nextToken(); // to move to following FIELD_NAME/END_OBJECT
+-                    Object bean;
+-                    try {
+-                        bean = creator.build(ctxt, buffer);
+-                    } catch (Exception e) {
+-                        wrapAndThrow(e, _beanType.getRawClass(), propName, ctxt);
+-                        continue; // never gets here
+-                    }
+-                    // if so, need to copy all remaining tokens into buffer
+-                    while (t == JsonToken.FIELD_NAME) {
+-                        p.nextToken(); // to skip name
+-                        tokens.copyCurrentStructure(p);
+-                        t = p.nextToken();
+-                    }
+-                    tokens.writeEndObject();
+-                    if (bean.getClass() != _beanType.getRawClass()) {
+-                        // !!! 08-Jul-2011, tatu: Could probably support; but for now
+-                        //   it's too complicated, so bail out
+-                        ctxt.reportMappingException("Can not create polymorphic instances with unwrapped values");
+-                        return null;
+-                    }
+-                    return _unwrappedPropertyHandler.processUnwrapped(p, ctxt, bean, tokens);
+-                }
++                buffer.assignParameter(creatorProp, creatorProp.deserialize(p, ctxt));
+                 continue;
+             }
+             // Object Id property?
+@@ -646,7 +622,7 @@ public class BuilderBasedDeserializer
+     /* external type id
+     /**********************************************************
+      */
+-    
++
+     protected Object deserializeWithExternalTypeId(JsonParser p, DeserializationContext ctxt)
+         throws IOException, JsonProcessingException
+     {
+@@ -699,15 +675,14 @@ public class BuilderBasedDeserializer
+                 } catch (Exception e) {
+                     wrapAndThrow(e, bean, propName, ctxt);
+                 }
+-                continue;
+             } else {
+                 // Unknown: let's call handler method
+-                handleUnknownProperty(p, ctxt, bean, propName);         
++                handleUnknownProperty(p, ctxt, bean, propName);
+             }
+         }
+         // and when we get this far, let's try finalizing the deal:
+         return ext.complete(p, ctxt, bean);
+-    }        
++    }
+ 
+     protected Object deserializeUsingPropertyBasedWithExternalTypeId(JsonParser p,
+     		DeserializationContext ctxt)

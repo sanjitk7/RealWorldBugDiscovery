@@ -1,110 +1,20 @@
-diff --git a/release-notes/CREDITS b/release-notes/CREDITS
-index 092a4f0b9..0a4eddf6d 100644
---- a/release-notes/CREDITS
-+++ b/release-notes/CREDITS
-@@ -489,10 +489,6 @@ Josh Caplan (jecaplan@github)
- Frédéric Camblor (fcamblor@github)
-   * Reported #1451: Type parameter not passed by `ObjectWriter` if serializer pre-fetch disabled
- 
--Diego de Estrada (diegode@github)
--  * Contributed fix for #1367: No Object Id found for an instance when using `@ConstructorProperties`
--   (2.7.9)
--
- Kevin Hogeland (khogeland@github)
-   * Reported #1501: `ArrayIndexOutOfBoundsException` on non-static inner class constructor
-    (2.7.9)
-diff --git a/release-notes/VERSION b/release-notes/VERSION
-index 474f41ebf..7b62df1bb 100644
---- a/release-notes/VERSION
-+++ b/release-notes/VERSION
-@@ -6,8 +6,6 @@ Project: jackson-databind
- 
- 2.7.9 (not yet released)
- 
--#1367: No Object Id found for an instance when using `@ConstructorProperties`
-- (reported by kajo-bellabeat@github; fix by diegode@github)
- #1392: Custom UnmodifiableSetMixin Fails in Jackson 2.7+ but works in Jackson 2.6
-  (reported by Rob W)
- #1411: MapSerializer._orderEntries should check for null keys
-diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializer.java b/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializer.java
-index d0ebabafb..0e2b87490 100644
---- a/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializer.java
-+++ b/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializer.java
-@@ -373,10 +373,6 @@ public class BeanDeserializer
-         for (; t == JsonToken.FIELD_NAME; t = p.nextToken()) {
-             String propName = p.getCurrentName();
-             p.nextToken(); // to point to value
--            // Object Id property?
--            if (buffer.readIdProperty(propName)) {
--                continue;
--            }
-             // creator property?
-             SettableBeanProperty creatorProp = creator.findCreatorProperty(propName);
-             if (creatorProp != null) {
-@@ -409,6 +405,10 @@ public class BeanDeserializer
-                 }
-                 continue;
-             }
-+            // Object Id property?
-+            if (buffer.readIdProperty(propName)) {
-+                continue;
-+            }
-             // regular property? needs buffering
-             SettableBeanProperty prop = _beanProperties.find(propName);
-             if (prop != null) {
-diff --git a/src/test/java/com/fasterxml/jackson/databind/creators/CreatorWithObjectIdTest.java b/src/test/java/com/fasterxml/jackson/databind/creators/CreatorWithObjectIdTest.java
-deleted file mode 100644
-index 01c13a0b6..000000000
---- a/src/test/java/com/fasterxml/jackson/databind/creators/CreatorWithObjectIdTest.java
-+++ /dev/null
-@@ -1,50 +0,0 @@
--package com.fasterxml.jackson.databind.creators;
--
--import java.beans.ConstructorProperties;
--
--import com.fasterxml.jackson.annotation.JsonIdentityInfo;
--import com.fasterxml.jackson.annotation.ObjectIdGenerators;
--import com.fasterxml.jackson.databind.*;
--
--// for [databind#1367]
--public class CreatorWithObjectIdTest
--    extends BaseMapTest
--{
--    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
--//            resolver = SimpleObjectIdResolver.class)
--    public static class A {
--        String id;
--        String name;
--
--        public A() { }
--
--        @ConstructorProperties({"id", "name"})
--        public A(String id, String name) {
--            this.id = id;
--            this.name = name;
--        }
--
--        public String getId() {
--            return id;
--        }
--        public void setId(String id) {
--            this.id = id;
--        }
--        public String getName() {
--            return name;
--        }
--        public void setName(String name) {
--            this.name = name;
--        }
--    }
--
--    public void testObjectIdWithCreator() throws Exception
--    {
--        A a = new A("123", "A");
--
--        ObjectMapper om = new ObjectMapper();
--        String json = om.writeValueAsString(a);
--        A deser = om.readValue(json, A.class);
--        assertEquals(a.name, deser.name);
--    }
--}
+diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/impl/InnerClassProperty.java b/src/main/java/com/fasterxml/jackson/databind/deser/impl/InnerClassProperty.java
+index 311802e..4a9ca99 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/deser/impl/InnerClassProperty.java
++++ b/src/main/java/com/fasterxml/jackson/databind/deser/impl/InnerClassProperty.java
+@@ -83,6 +83,15 @@ public final class InnerClassProperty
+     public InnerClassProperty withValueDeserializer(JsonDeserializer<?> deser) {
+         return new InnerClassProperty(this, deser);
+     }
++
++    @Override
++    public void assignIndex(int index) { _delegate.assignIndex(index); }
++
++    @Override
++    public int getPropertyIndex() { return _delegate.getPropertyIndex(); }
++
++    @Override
++    public int getCreatorIndex() { return _delegate.getCreatorIndex(); }
+     
+     // // // BeanProperty impl
+     

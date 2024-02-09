@@ -1,18 +1,5 @@
-diff --git a/release-notes/VERSION b/release-notes/VERSION
-index c01c4b36c..52168f311 100644
---- a/release-notes/VERSION
-+++ b/release-notes/VERSION
-@@ -18,6 +18,8 @@ Project: jackson-databind
- #1456: `TypeFactory` type resolution broken in 2.7 for generic types
-    when using `constructType` with context
-  (reported by Dmitry S)
-+#1476: Wrong constructor picked up when deserializing object
-+ (reported by laurentgo@github)
- 
- 2.7.8 (26-Sep-2016)
- 
 diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/impl/CreatorCollector.java b/src/main/java/com/fasterxml/jackson/databind/deser/impl/CreatorCollector.java
-index 8e38f5dec..a530e4b20 100644
+index 8e38f5d..a530e4b 100644
 --- a/src/main/java/com/fasterxml/jackson/databind/deser/impl/CreatorCollector.java
 +++ b/src/main/java/com/fasterxml/jackson/databind/deser/impl/CreatorCollector.java
 @@ -162,36 +162,39 @@ public class CreatorCollector
@@ -117,52 +104,3 @@ index 8e38f5dec..a530e4b20 100644
      }
  
      /*
-diff --git a/src/test/java/com/fasterxml/jackson/databind/creators/Creator1476Test.java b/src/test/java/com/fasterxml/jackson/databind/creators/Creator1476Test.java
-new file mode 100644
-index 000000000..94a1eeef6
---- /dev/null
-+++ b/src/test/java/com/fasterxml/jackson/databind/creators/Creator1476Test.java
-@@ -0,0 +1,43 @@
-+package com.fasterxml.jackson.databind.creators;
-+
-+import com.fasterxml.jackson.annotation.*;
-+
-+import com.fasterxml.jackson.databind.*;
-+
-+public class Creator1476Test extends BaseMapTest
-+{
-+    static final class SimplePojo {
-+        private final int intField;
-+        private final String stringField;
-+
-+        public SimplePojo(@JsonProperty("intField") int intField) {
-+          this(intField, "empty");
-+        }
-+
-+        public SimplePojo(@JsonProperty("stringField") String stringField) {
-+          this(-1, stringField);
-+        }
-+
-+        @JsonCreator
-+        public SimplePojo(@JsonProperty("intField") int intField, @JsonProperty("stringField") String stringField) {
-+          this.intField = intField;
-+          this.stringField = stringField;
-+        }
-+
-+        public int getIntField() {
-+          return intField;
-+        }
-+
-+        public String getStringField() {
-+          return stringField;
-+        }
-+    }
-+
-+    public void testConstructorChoice() throws Exception {
-+        ObjectMapper mapper = new ObjectMapper();
-+        SimplePojo pojo = mapper.readValue("{ \"intField\": 1, \"stringField\": \"foo\" }", SimplePojo.class);
-+
-+        assertEquals(1, pojo.getIntField());
-+        assertEquals("foo", pojo.getStringField());
-+    }
-+}
