@@ -2,7 +2,7 @@
 
 ## Introduction
 
-ManySStubs4j is a mined corpus of bugs from 100 Java Maven projects and 1000 Java projects. It contains a total of ~170,000 bug fixes, some of which that fall under any of the 16 commonly found categories have been classified as Simple Stupid Bugs (SStuBs). These bugs are all stored into JSON files bugs.json (100 Java Maven Projects - 25000 bugs) and bugsLarge.json (1000 Java Projects - 153,000 bugs). The SStuBs idenetified from these files are stored in sstubs.json (100 Java Maven Projects - 10000 SStuBs) and sstubsLarge.json (1000 Java Maven Projects - 63000 SStuBs).
+ManySStubs4j is a mined corpus of bugs from 100 Java Maven projects and 1000 Java projects. It contains a total of ~170,000 bug fixes, some of which that fall under any of the 16 commonly found categories have been classified as Simple Stupid Bugs (SStuBs). These bug-fixing changes were collected using the SZZ heuristic, and filtered to obtain the simple bugs. These bugs are all stored into JSON files bugs.json (100 Java Maven Projects - 25000 bugs) and bugsLarge.json (1000 Java Projects - 153,000 bugs). The SStuBs idenetified from these files are stored in sstubs.json (100 Java Maven Projects - 10000 SStuBs) and sstubsLarge.json (1000 Java Maven Projects - 63000 SStuBs).
 
 The JSON files contain fields like 'fixCommitSHA1', 'fixCommitParentSHA1', 'bugFilePath' and 'projectName', which we use to clone the project repositories, checkout to the buggy and fixed versions to extract the buggy and fixed files, and create their diff file.
 
@@ -19,11 +19,7 @@ This subdirectory contains buggy, fixed and diff files for 5 of the bugs. The re
 
 ## Tests per bug
 
-Since the number of projects is too high, it was not possible to automate building every project and getting the number of tests run per bug for all of them with our environment. However, below are the no. of tests per bug for 1 project (Activiti.Activiti):
-
-| Bug                        | Total Tests | Tests Passed | Tests Failed |
-|----------------------------|-------------|---------------|---------------|
-|                    |            |              |              |
+Since the number of projects is too high, it was not possible to automate building every project and getting the number of tests run per bug for all of them with our environment. The script was able to clone repositories, however, the builds failed due maven conflicts with the working environment.
 
 ## Bug Samples
 
