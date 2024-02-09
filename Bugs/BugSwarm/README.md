@@ -12,7 +12,7 @@ Number of bugs: 2900
 
 ## Tests per bug
 
-(Showing 20 of 2900)
+(Showing 20 of 2900. Remaining tests per bug are stored in 'test_info.json' file.)
 | Bug                        | Total Tests | Tests Passed | Tests Failed |
 --------------------------------------|---------------|------------------|------------------
 | gwtbootstrap3-gwtbootstrap3-92837490 | 16            | 0                 | 16      |         

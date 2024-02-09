@@ -24,3 +24,8 @@ Every week on Sat, until Apr 27, 2024
 | Date       | Present Team Members | Progress on Tasks for Each Member | To-Do List for Each Member |
 |------------|-----------------------|-----------------------------------|-----------------------------|
 02/05/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | First meeting. (Github/Overleaf setup). Assigned individual work. | Basic Github/Overleaf setup and working on one dataset (extract bugs, update dataset subdirectories and readmes) each: Sanjit (Defects4J), Rahul (BugSwarm), Sakshil (Bears), Urja (ManySStuBs4J), Ajitesh (QuixBugs)
+
+
+### Overleaf
+
+**Link:** https://www.overleaf.com/read/tgpcjchsxrww#a7be3d
