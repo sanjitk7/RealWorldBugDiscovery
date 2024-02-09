@@ -8,7 +8,11 @@ The JSON file for the dataset of bugs contains fields like 'repo', 'trigger_sha'
 
 ## Number of bugs
 
-Number of bugs: 2900
+Number of bugs: ~3000
+| Language | No. of bugs |
+| ---------|-------------|
+| Java     | ~1800       |
+| Python   | ~1200       |
 
 ## Tests per bug
 
