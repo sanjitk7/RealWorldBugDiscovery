@@ -26,7 +26,7 @@ Every week on Sat, until Apr 27, 2024
 | 02/05/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | First meeting. (Github/Overleaf setup). Assigned individual work. | Basic Github/Overleaf setup and working on one dataset (extract bugs, update dataset subdirectories and readmes) each: Sanjit - Defects4J, Rahul - BugSwarm, Sakshil - Bears, Urja - ManySStuBs4J, Ajitesh - QuixBugs |
 | 02/07/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Sanjit - Created script for extracting bugs for Defects4J, Rahul & Sakshil - Worked on scripts for Bears, Ajitesh - Completed script for QuixBugs, Urja - Completed script for ManySStuBs4J | Sanjit - Complete script and upload bugs to repo, Rahul & Sakshil - Complete Bears script & upload bugs, Ajitesh - Upload bugs and create visualition for no. of tests, Urja - Upload bugs and find no. of tests per bug |
 | 02/08/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Sanjit - Completed script for Defects4J, Rahul & Sakshil - Completed scripts for Bears and uploaded bugs, Ajitesh - Uploaded bugs for QuixBugs, created visualisations and solved errors in Bears script, Urja - Uploaded bugs for ManySStubs4J, Completed script for BugSwarm and uploaded bugs | All members - Complete all remaining tasks like updating ReadMEs and Overleaf draft |
-
+| 02/17/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Discussed Milestone-2 and explored potential benchmarking metrics. Moved previous work to branch Milestone-1. Assigned repositories to each member to complete task 1 | Selecting and structuring bugs: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J, Rahul & Sakshil - Bears |
 
 ### Overleaf
 
