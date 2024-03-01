@@ -1,5 +1,27 @@
 # QuixBugs
 
+## Install prerequisite
+
+- Java version 8 or above
+- Install gradle
+```bash
+brew install gradle
+```
+
+## Test Execution
+
+``` bash
+# Gradle build and tests are stored in Tests folder
+$ cd Tests
+# Run test on buggy code
+$ gradle test --tests KNAPSACK_TEST.test_1
+# Run test on patched code
+$ gradle crtTest --tests KNAPSACK_TEST.test_1
+```
+
+
+
+# Dataset Description (Milestone 1)
 ## Introduction
 
 Quixbugs is a dataset containing 40 Java and Python programs, each containing a single bug.  These buggy programs were built as part of the Quixey Challenge, organized by a startup named Quixey in 2011. These buggy programs of classic algorithms were provided to programmers to fix in a minute for a monetary prize. These programs were initially written only in Python. Researchers at MIT and Google translated them into Java to generate a dataset for Multilingual Program Repair. Each bug is accompanied by pass/fail test cases.
