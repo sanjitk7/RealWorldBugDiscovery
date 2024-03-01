@@ -44,7 +44,7 @@ if __name__ == "__main__":
     os.makedirs(destination_directory, exist_ok=True)
 
     # Select 20 random java programs
-    random_java_files = select_random_java_files(source_correct_directory, 25)
+    random_java_files = select_random_java_files(source_correct_directory, 20)
     print(random_java_files)
 
     for java_file in random_java_files:
