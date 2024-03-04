@@ -1,0 +1,2 @@
+com.fasterxml.jackson.databind.jsontype.TestPolymorphicWithDefaultImpl::testUnknownTypeIDRecovery
+com.fasterxml.jackson.databind.ser.TestJdkTypes::testInetAddress

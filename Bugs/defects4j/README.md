@@ -1,6 +1,27 @@
 # Defects4J
 
-## Background
+## How to Run Tests? (Milestone 2)
+
+
+**Install defects4j framework**
+```
+git clone https://github.com/rjust/defects4j
+cd defects4j
+cpanm --installdeps .
+./init.sh
+export PATH=$PATH:"yourpath2defects4j"/framework/bin
+```
+
+**Command to use:**
+
+```
+cd <projectname_id>/buggy/
+defects4j test
+```
+
+## Dataset Description (Milestone 1)
+
+### Background
 
 Defects4J is a collection of reproducible bugs and a supporting infrastructure (defects4j framework) with the goal of advancing software engineering research. It is a collection of real-world bugs from open-source Java projects that contains buggy and fixed versions of source code. The creators collected it by 1. choosing sufficiently sized and popular open source projects 2. bug identification 3. bug isolation and repair 4. verification of reproducibility and 5. packaging it with the framework. 
 
@@ -20,14 +41,14 @@ The tests_per_bug data is visualized with `visualize_tests.py`
 
 (All scripts written to collect bugs etc. are located in the ./Scripts directory)
 
-## Note (on challenges faced):
+### Note (on challenges faced):
 
 - We have ignored the bugs in Collections project because the bugs are deprecated. 
 - The bugs from Chart project were also not obtained due to an error getting the code through the defects4j framework with SVN and SQLite incompatibility on local machines.
 - All other bugs were obtained.
 
 
-## Number of bugs
+### Number of bugs
 
 All the bugs are in Java. The total number of bugs are 835 Bugs (+29 deprecated and non-reproducible).
 
@@ -45,7 +66,7 @@ The breakdown in terms of projects.
 | JacksonXml      | 6           | |
 
 
-## Number of Tests
+### Number of Tests
 
 The number of tests for each bug can be found inside `defects4j/framework/projects/<project_name>/relevant_tests` - each bug has a file that has the names of the tests for the bugs. The `get_number_of_tests.py` script obtains the number for each.
 
@@ -59,9 +80,9 @@ This data exists in a json file called `tests_per_bug.json` and is visualized be
 ![tests6](./Imgs/6.png)
 
 
-## 5 Bug Samples
+### 5 Bug Samples
 
-#### Codec_2
+##### Codec_2
 ```diff
 diff --git a/src/java/org/apache/commons/codec/binary/Base64.java b/src/java/org/apache/commons/codec/binary/Base64.java
 index dc2ecfc1..c00fbe5e 100644
