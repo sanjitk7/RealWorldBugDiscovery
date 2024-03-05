@@ -1,0 +1,1 @@
+NodesStatusTest.testParseEndpoint22WithHostnameStatusString
