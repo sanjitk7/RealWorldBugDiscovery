@@ -31,7 +31,11 @@ python scripts/run_tests_bug.py --bugId Bears-1 # this should fail because the c
 ```
 In the same way as you can check out one or all bugs you can compile the checked out buggy program versions and run tests on them using the scripts compile_all.py, compile_bug.py, run_tests_all.py, run_tests_bug.py.
 
-## Checkpoint 1 -
+## Benchmarking Visualization (Box Plot)
+
+![Bears Metrics Box Plot](https://github.com/urjakhadilkar/CS527-team11/assets/66205950/75ae72f0-fd38-475c-b910-f6598117678a)
+
+## Checkpoint 1
 ## Introduction
 
 This project aims to provide a comprehensive dataset of software bugs and their fixes, collected from various open-source projects using the Bears-Benchmark. The Bears-Benchmark, or just Bears, is a benchmark of bugs for automatic program repair studies in Java 8. Bugs are collected from open-source projects hosted on GitHub through a process that scans pairs of builds from Travis Continuous Integration and reproduces bugs (by test failure) and their patches (passing test suite). The dataset contains detailed information about each bug, including unique identifiers, commit hashes, file paths, and repository URLs. Additionally, it includes metadata such as bug types, timestamps, and project names. Researchers and developers can leverage this dataset to analyze common types of bugs, study bug fix patterns, and develop automated bug detection and fixing tools. We strive to maintain the accuracy and integrity of the dataset, and contributions or suggestions for improvement are always welcome. Explore the dataset, conduct your research, and join us in advancing software quality and reliability.
