@@ -1,0 +1,1 @@
+TypeCoercion1592Test.testTypeCoercion1592
