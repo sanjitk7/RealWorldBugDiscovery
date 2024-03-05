@@ -1,6 +1,7 @@
 import os
 import sys
 import lizard
+import subprocess
 import Levenshtein
 from codebleu import calc_codebleu
 
@@ -28,23 +29,72 @@ def read_diff(bug_name):
     return diff
 
 def get_classes_changed(bug):
-    return 10
+    buggy, patched = read_file(bug)
+    buggy_lines = buggy.split("\n")
+    patched_lines = patched.split("\n")
+    max_lines = max(len(buggy_lines), len(patched_lines))
+    # -U flag will show all the lines in the file
+    diff_command = f"diff -r -U {2*max_lines} ./Bugs/{bug}/Buggy-Version/{bug}.java ./Bugs/{bug}/Patched-Version/{bug}.java"
+    sp = subprocess.Popen(diff_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = sp.communicate()
+    out = out.decode("utf-8")
+    classes_changed = 0
+    part_of_class, class_counted = False, False
+    for line in out.split("\n")[2:]:
+        line = line.lower()
+        if len(line) == 0:
+            continue
+        if "class" in line and "{" in line and ("public" in line or "private" in line or "protected" in line):
+            part_of_class = True
+            class_counted = False
+        if line[0] == '+' and part_of_class and not class_counted:
+            classes_changed += 1
+            class_counted = True
+        elif line[0] == '-' and part_of_class and not class_counted:
+            classes_changed += 1
+            class_counted = True
+
+    return classes_changed
 
 def get_methods_changed(bug):
-    return 10
+    buggy, patched = read_file(bug)
+    buggy_lines = buggy.split("\n")
+    patched_lines = patched.split("\n")
+    max_lines = max(len(buggy_lines), len(patched_lines))
+    # -U flag will show all the lines in the file
+    diff_command = f"diff -r -U {2*max_lines} ./Bugs/{bug}/Buggy-Version/{bug}.java ./Bugs/{bug}/Patched-Version/{bug}.java"
+    sp = subprocess.Popen(diff_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = sp.communicate()
+    out = out.decode("utf-8")
+    func_changed = 0
+    part_of_func, func_counted = False, False
+    for line in out.split("\n")[2:]:
+        line = line.lower()
+        if len(line) == 0:
+            continue
+        if "class" not in line and "(" in line and ("public" in line or "private" in line or "protected" in line):
+            part_of_func = True
+            func_counted = False
+        if line[0] == '+' and part_of_func and not func_counted and "class" not in line:
+            func_changed += 1
+            func_counted = True
+        elif line[0] == '-' and part_of_func and not func_counted and "class" not in line:
+            func_changed += 1
+            func_counted = True
+
+    return func_changed
 
 def get_lines_changed(bug):
     diff = read_diff(bug)
     changed_lines = 0
-    for line in diff.split("\n"):
+    for line in diff.split("\n")[2:]:
         if len(line) == 0:
             continue
         if line[0] == '+':
             changed_lines += 1
         elif line[0] == '-':
             changed_lines += 1
-            
-    return changed_lines - 2
+    return changed_lines 
     
 
 def get_levenshtein_distance(bug):
@@ -72,7 +122,7 @@ def get_codebleu(bug):
     buggy, patched= read_file(bug)
 
     result = calc_codebleu([buggy], [patched], lang="java", weights=(0.25, 0.25, 0.25, 0.25), tokenizer=None)
-    return result
+    return result['codebleu']
 
 def get_metric(dataset, bug, metric):
 
