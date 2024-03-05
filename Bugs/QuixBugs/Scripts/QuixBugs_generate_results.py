@@ -3,16 +3,14 @@ import csv
 import QuixBugs_Benchmark
 
 
-#valid_metrics = ["CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"]
-valid_metrics = [ "LD", "CB", "CP", "CC"]
+valid_metrics = ["CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"]
 results_csv = "./results/QuixBugs_Results.csv"
 
 if __name__ == "__main__":
     bugs = os.listdir("./Bugs")
     bugs = [bug for bug in bugs if os.path.isdir(f"./Bugs/{bug}")]
 
-    #column_names = ["Bug Id", "CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"]
-    column_names = ["Bug Id", "LD", "CB", "CP", "CC"]
+    column_names = ["Bug Id", "CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"]
     with open(results_csv, mode='a', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=column_names)
 
