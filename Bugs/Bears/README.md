@@ -1,5 +1,37 @@
 # Bears-Benchmark
 
+## Install prerequisite
+
+- Ensure you use Java 8.
+```bash
+$export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/ 
+$ mvn -version
+Apache Maven 3.6.3
+Maven home: /usr/share/maven
+Java version: 1.8.0_382, vendor: Private Build, runtime: /usr/lib/jvm/java-8-openjdk-amd64/jre
+Default locale: en_US, platform encoding: UTF-8
+OS name: "linux", version: "5.15.0-79-generic", arch: "amd64", family: "unix"
+```
+
+## Test Execution
+In the folder scripts you can find scripts to check out bugs, to compile them, and to run tests on them.
+
+You can list the bugs in the current version of the benchmark with jq
+``` bash
+jq ".[].bugId" scripts/data/bug_id_and_branch.json
+```
+You can check out a single bug by given a bug ID (see bug IDs) as argument with
+``` bash
+python scripts/checkout_bug.py --bugId <bug ID>
+```
+For example,
+``` bash
+python scripts/checkout_bug.py --bugId Bears-1
+python scripts/run_tests_bug.py --bugId Bears-1 # this should fail because the checkout_bug.py has checked out the third, buggy commit
+```
+In the same way as you can check out one or all bugs you can compile the checked out buggy program versions and run tests on them using the scripts compile_all.py, compile_bug.py, run_tests_all.py, run_tests_bug.py.
+
+## Checkpoint 1 -
 ## Introduction
 
 This project aims to provide a comprehensive dataset of software bugs and their fixes, collected from various open-source projects using the Bears-Benchmark. The Bears-Benchmark, or just Bears, is a benchmark of bugs for automatic program repair studies in Java 8. Bugs are collected from open-source projects hosted on GitHub through a process that scans pairs of builds from Travis Continuous Integration and reproduces bugs (by test failure) and their patches (passing test suite). The dataset contains detailed information about each bug, including unique identifiers, commit hashes, file paths, and repository URLs. Additionally, it includes metadata such as bug types, timestamps, and project names. Researchers and developers can leverage this dataset to analyze common types of bugs, study bug fix patterns, and develop automated bug detection and fixing tools. We strive to maintain the accuracy and integrity of the dataset, and contributions or suggestions for improvement are always welcome. Explore the dataset, conduct your research, and join us in advancing software quality and reliability.
