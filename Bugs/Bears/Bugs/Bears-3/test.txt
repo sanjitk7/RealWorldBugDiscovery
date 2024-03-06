@@ -1,1 +1,1 @@
-TestUnwrapped.testCaseInsensitiveUnwrap
+com.fasterxml.jackson.databind.struct.TestUnwrapped.testCaseInsensitiveUnwrap

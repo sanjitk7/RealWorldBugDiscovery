@@ -1,1 +1,1 @@
-GoogleStorageTests.testValidObjectWithUnderscore
+org.springframework.cloud.gcp.storage.GoogleStorageTests.testValidObjectWithUnderscore

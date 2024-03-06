@@ -1,1 +1,1 @@
-StarLinkProtocolDecoderTest.testDecode
+org.traccar.protocol.StarLinkProtocolDecoderTest.testDecode

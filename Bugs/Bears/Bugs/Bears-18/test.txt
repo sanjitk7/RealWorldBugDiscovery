@@ -1,1 +1,1 @@
-TypeCoercion1592Test.testTypeCoercion1592
+com.fasterxml.jackson.databind.introspect.TypeCoercion1592Test.testTypeCoercion1592

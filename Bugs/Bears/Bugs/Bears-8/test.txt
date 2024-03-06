@@ -1,1 +1,1 @@
-TestMapSerialization.testConcurrentMaps
+com.fasterxml.jackson.databind.ser.TestMapSerialization.testConcurrentMaps

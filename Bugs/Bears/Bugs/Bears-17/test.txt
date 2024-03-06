@@ -1,1 +1,1 @@
-TestTypeNames.testBaseTypeId1616
+com.fasterxml.jackson.databind.jsontype.TestTypeNames.testBaseTypeId1616

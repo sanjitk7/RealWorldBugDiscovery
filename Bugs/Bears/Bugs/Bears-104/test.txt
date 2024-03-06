@@ -1,1 +1,1 @@
-SuntechProtocolDecoderTest.testDecode
+org.traccar.protocol.SuntechProtocolDecoderTest.testDecode

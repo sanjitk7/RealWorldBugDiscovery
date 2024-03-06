@@ -1,1 +1,1 @@
-NodesStatusTest.testParseEndpoint22WithHostnameStatusString
+io.cassandrareaper.resources.view.NodesStatusTest.testParseEndpoint22WithHostnameStatusString
