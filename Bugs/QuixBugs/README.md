@@ -1,6 +1,6 @@
 # QuixBugs
 
-## Install prerequisite
+## Install prerequisites
 
 - Java version 8 or above
 - Install gradle
@@ -18,6 +18,28 @@ $ gradle test --tests KNAPSACK_TEST.test_1
 # Run test on patched code
 $ gradle crtTest --tests KNAPSACK_TEST.test_1
 ```
+
+## Benchmark Scripts Execution
+
+- Make sure you have installed <b><i>lizard, Levenshtein and codebleu</i></b> packages using pip.
+- Execute the benchmark script in scripts folder using
+  ```bash
+  python Scripts/QuixBugs_Benchmark.py QuixBugs BUCKETSORT LD
+  ```
+- Ensure that the Bug is present in the Bugs folder and the metric is one of <i>"CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"</i>
+
+## Benchmark Results
+<p align="middle">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/CB.png" height ="100px" width="500px">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/CC.png" height ="100px" width="500px">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/CChange.png" height ="100px" width="500px">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/CP.png" height ="100px" width="500px">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/CodeBleu.png" height ="100px" width="500px">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/LChange.png" height ="100px" width="500px">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/LD.png" height ="100px" width="500px">
+<img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/MChange.png" height ="100px" width="500px">
+
+The average cyclomatic complexity is approximately 5, and it does not differ significantly between buggy and fixed files. The complexity of the majority of bugs remains constant even in patched code, but a handful differ by one. Quixbugs only contains simple bugs, with only one class and method that need patching. The average Levenshtein Edit Distance is roughly 25, implying that just about 25 characters need to be changed in the buggy code to repair it.
 
 
 
