@@ -35,6 +35,8 @@ $ mvn test
 <img src="https://github.com/urjakhadilkar/CS527-team11/blob/main/Bugs/BugSwarm/Results/Visualizations/Levenshtein.png" width="500px">
 <img src="https://github.com/urjakhadilkar/CS527-team11/blob/main/Bugs/BugSwarm/Results/Visualizations/MChange.png" width="500px">
 
+The benchmarking metrics for the 20 bugs reveal a diverse set of fixes, from minor line edits to more significant structural changes, without dramatically altering the cyclomatic complexity of the codebase. Most fixes didn't require class modifications, but varied in the number of methods and lines changed, indicating different levels of effort and complexity in resolving the bugs. The Levenshtein distances and CodeBLEU scores suggest that while some bugs required extensive textual modifications, the fixes generally maintained high syntactic and semantic similarity to the original code, indicating precise and effective integration of patches that preserved the original code's intent and readability.
+
 # MileStone-1
 
 ## Introduction
