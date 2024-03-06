@@ -44,6 +44,28 @@ In the same way as you can check out one or all bugs you can compile the checked
 
 ![Bears Metrics Box Plot](https://github.com/urjakhadilkar/CS527-team11/assets/66205950/75ae72f0-fd38-475c-b910-f6598117678a)
 
+CChange (Cyclomatic Complexity Change):
+The median CChange is approximately 1, indicating that the cyclomatic complexity of the code does not change significantly between the buggy and fixed versions for most bugs.
+
+MChange (Method Change):
+The median MChange is 1, implying that only one method required modification to fix the bug for most cases.
+
+LChange (Line Changes):
+The median LChange is around 10, which means that roughly 10 lines of code needed to be changed to fix the bug for most cases.
+
+LD (Levenshtein Distance):
+The median Levenshtein Distance (LD) is approximately 200, indicating that on average, around 200 characters needed to be modified to fix the bug.
+
+CB (Cyclomatic Complexity of Buggy Code):
+The median CB is around 35, suggesting that the buggy code had a moderate cyclomatic complexity for most cases.
+
+CP (Cyclomatic Complexity of Patched Code):
+The median CP is also around 35, similar to the median CB. This observation aligns with the finding that the cyclomatic complexity did not change significantly between the buggy and patched code for most cases.
+
+CC (Cyclomatic Complexity Change):
+The median CC is 0, indicating that the cyclomatic complexity remained unchanged for most bugs after fixing them.
+CodeBLEU: The median CodeBLEU score is approximately 0.95, suggesting that the patched code is relatively similar to the buggy code for most cases.
+
 ## Checkpoint 1
 ## Introduction
 
