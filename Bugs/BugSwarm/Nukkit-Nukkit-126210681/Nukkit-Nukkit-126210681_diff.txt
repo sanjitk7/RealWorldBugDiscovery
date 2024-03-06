@@ -1,6 +1,0 @@
-diff --git a/src/main/java/cn/nukkit/level/generator/biome/MountainsBiome.java b/src/main/java/cn/nukkit/level/generator/biome/MountainsBiome.java
-index d54661d7..9893ef20 100644
-Binary files a/src/main/java/cn/nukkit/level/generator/biome/MountainsBiome.java and b/src/main/java/cn/nukkit/level/generator/biome/MountainsBiome.java differ
-diff --git a/src/main/java/cn/nukkit/level/generator/biome/WateryBiome.java b/src/main/java/cn/nukkit/level/generator/biome/WateryBiome.java
-index b168db9d..d24f2e8c 100644
-Binary files a/src/main/java/cn/nukkit/level/generator/biome/WateryBiome.java and b/src/main/java/cn/nukkit/level/generator/biome/WateryBiome.java differ
