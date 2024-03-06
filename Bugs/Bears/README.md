@@ -40,7 +40,7 @@ In the same way as you can check out one or all bugs you can compile the checked
   ```
 - Ensure that the Bug is present in the Bugs folder and the metric is one of <i>"CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"</i>
 
-## Benchmarking Visualization (Box Plot)
+## Benchmarking Results (Visualizations and Observations)
 
 ![Bears Metrics Box Plot](https://github.com/urjakhadilkar/CS527-team11/assets/66205950/75ae72f0-fd38-475c-b910-f6598117678a)
 
