@@ -31,6 +31,15 @@ python scripts/run_tests_bug.py --bugId Bears-1 # this should fail because the c
 ```
 In the same way as you can check out one or all bugs you can compile the checked out buggy program versions and run tests on them using the scripts compile_all.py, compile_bug.py, run_tests_all.py, run_tests_bug.py.
 
+## Benchmark Scripts Execution
+
+- Make sure you have installed <b><i>lizard, Levenshtein and codebleu</i></b> packages using pip.
+- Execute the benchmark script in scripts folder using
+  ```bash
+  python Scripts/Bears_Benchmark.py Bears Bears-3 CChange
+  ```
+- Ensure that the Bug is present in the Bugs folder and the metric is one of <i>"CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"</i>
+
 ## Benchmarking Visualization (Box Plot)
 
 ![Bears Metrics Box Plot](https://github.com/urjakhadilkar/CS527-team11/assets/66205950/75ae72f0-fd38-475c-b910-f6598117678a)
