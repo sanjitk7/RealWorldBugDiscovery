@@ -12,12 +12,34 @@ cpanm --installdeps .
 export PATH=$PATH:"yourpath2defects4j"/framework/bin
 ```
 
-**Command to use:**
+**Command to use to run tests:**
 
 ```
 cd <projectname_id>/buggy/
 defects4j test
 ```
+
+**Challenges:**
+
+- The bugs from Chart project were also not obtained due to an error getting the code through the defects4j framework with SVN and SQLite incompatibility on local machines. 
+- Have not been able to fix the SVN-SQLite environment version bug - the machine does not seem to use the right version even when there are multiple versions installed and the right one is exported to the $PATH environment.
+- Will be experimenting and look for a fix for next milestone.
+- Computing CodeBLUE the naive way using a list of file names yields incorrect results (0.5 for all bugs) but using an alternative-approach of concatenating file content and computing it yields the correct result in the range of ~0.999. However this has been ignored in the results due to high overhead and taking lots of hours in my local machine.
+
+
+**Location of deliverables:**
+
+- *Source Code* of all scripts for THIS specific bug dataset can be found parallel to this readme file under the `scripts` subdirectory. 
+- The box plot and CSV file for generated results can be found inside `results`
+
+**Discussion of Results:**
+
+The box plot obtained can be viewed here. ![box-plot-defects4j](./results/defects4j_boxplot.png)
+
+Observations:
+
+1. Classes changes are usually between 0-10, Methods between 0-30  nd lines changed up to 0-50. Which also intrusively make sense.
+2. The cyclomentric complexity benchmarks are similar for buggy and patched versions because the code changes are relatively small. But there is a clear difference in the outliers because they are more probable to have faults.
 
 ## Dataset Description (Milestone 1)
 
