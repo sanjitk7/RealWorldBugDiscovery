@@ -39,7 +39,7 @@ $ gradle crtTest --tests KNAPSACK_TEST.test_1
 <img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/LD.png" height ="100px" width="500px">
 <img src="https://github.com/urjakhadilkar/CS527-team11/blob/Quixbugs-Milestone2/Bugs/QuixBugs/results/BoxPlots/MChange.png" height ="100px" width="500px">
 
-The average cyclomatic complexity is approximately 5, and it does not differ significantly between buggy and fixed files. The complexity of the majority of bugs remains constant even in patched code, but a handful differ by one. Quixbugs only contains simple bugs, with only one class and method that need patching. The average Levenshtein Edit Distance is roughly 25, implying that just about 25 characters need to be changed in the buggy code to repair it.
+The average cyclomatic complexity is approximately 5, and it does not differ significantly between buggy and fixed files. The complexity of the majority of bugs remains constant even in patched code, but a handful differ by one. Quixbugs only contains simple bugs, with only one class and method that need patching. The average Levenshtein Edit Distance is roughly 25, implying that just about 25 characters need to be changed in the buggy code to repair it. The average CodeBLEU metric is about 0.94, indicating high similarity between the buggy and patched files.
 
 
 
