@@ -10,7 +10,7 @@ import sys
 # Assuming you have a setup to calculate CodeBLEU
 # from your_codebleu_setup import calculate_codebleu 
 
-bugs_dir = '../../BugSwarm'
+bugs_dir = '../BugSwarm'
 # output_csv_path = '/Users/urjakhadilkar/Desktop/BugSwarm_BenchmarkingResults.csv'
 
 valid_metrics = ["CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"]
