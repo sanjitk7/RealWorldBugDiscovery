@@ -17,3 +17,5 @@ xcuserdata/
 
 # automatic backup files
 *.swp
+
+**/.gradle/
