@@ -12,10 +12,11 @@ brew install gradle
 
 ``` bash
 # Gradle build and tests are stored in Tests folder
-$ cd Tests
+$ cd QuixBugs/KNAPSACK/Buggy-Version
 # Run test on buggy code
 $ gradle test --tests KNAPSACK_TEST.test_1
 # Run test on patched code
+$ cd QuixBugs/KNAPSACK/Patched-Version
 $ gradle crtTest --tests KNAPSACK_TEST.test_1
 ```
 
@@ -24,7 +25,8 @@ $ gradle crtTest --tests KNAPSACK_TEST.test_1
 - Make sure you have installed <b><i>lizard, Levenshtein and codebleu</i></b> packages using pip.
 - Execute the benchmark script in scripts folder using
   ```bash
-  python Scripts/QuixBugs_Benchmark.py QuixBugs BUCKETSORT LD
+  cd Scripts/
+  python QuixBugs_Benchmark.py QuixBugs BUCKETSORT LD
   ```
 - Ensure that the Bug is present in the Bugs folder and the metric is one of <i>"CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"</i>
 
