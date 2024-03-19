@@ -22,10 +22,10 @@ def read_files(file_paths):
     return '\n'.join(contents)
 
 def get_buggy_directory_path(bug_id):
-    return os.path.join("../../", bug_id, "buggy")
+    return os.path.join("../../", bug_id, "Buggy-Version")
 
 def get_fixed_directory_path(bug_id):
-    return os.path.join("../../", bug_id, "fixed")
+    return os.path.join("../../", bug_id, "Patched-Version")
 
 def get_cyclomatic_complexity(directory_path):
     """Calculate total cyclomatic complexity for all Java files in a directory."""
