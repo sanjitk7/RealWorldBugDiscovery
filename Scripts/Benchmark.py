@@ -17,7 +17,7 @@ bugs_folder = {
 dataset_scripts_invoke_folder = {
     "bears": "./",
     "quixbugs": "./",
-    "defects4j": "./../defects4j/scripts/benchmarking_scripts/",
+    "defects4j": "./defects4j_scripts/benchmarking_scripts/",
     "bugswarm": "./",
 }
 
