@@ -4,7 +4,7 @@ import Bears_Benchmark
 
 
 valid_metrics = ["CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"]
-results_csv = "./../Results/Bears_results/Bears_Results.csv"
+results_csv = "./../results/Bears_results/Bears_Results.csv"
 
 if __name__ == "__main__":
     bugs = os.listdir("./../Bears")
