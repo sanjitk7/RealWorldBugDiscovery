@@ -9,10 +9,10 @@ valid_datasets = ["Bears"]
 valid_metrics = ["CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeBLEU"]
 
 def get_buggy_file_path(bug_name):
-    return f"./Bugs/{bug_name}/Buggy-Version/{bug_name}.java"
+    return f"./../Bears/{bug_name}/Buggy-Version/{bug_name}.java"
 
 def get_patched_file_path(bug_name):
-    return f"./Bugs/{bug_name}/Patched-Version/{bug_name}.java"
+    return f"./../Bears/{bug_name}/Patched-Version/{bug_name}.java"
 
 def read_file(bug_name):
     with open(get_buggy_file_path(bug_name), "r") as b_file:
@@ -24,7 +24,7 @@ def read_file(bug_name):
     return buggy, patched
 
 def read_diff(bug_name):
-    with open(f"./Bugs/{bug_name}/Diff", "r") as diff_file:
+    with open(f"./../Bears/{bug_name}/Diff", "r") as diff_file:
         diff = diff_file.read()
     return diff
 
@@ -34,7 +34,7 @@ def get_classes_changed(bug):
     patched_lines = patched.split("\n")
     max_lines = max(len(buggy_lines), len(patched_lines))
     # -U flag will show all the lines in the file
-    diff_command = f"diff -r -U {2*max_lines} ./Bugs/{bug}/Buggy-Version/{bug}.java ./Bugs/{bug}/Patched-Version/{bug}.java"
+    diff_command = f"diff -r -U {2*max_lines} ./../Bears/{bug}/Buggy-Version/{bug}.java ./../Bears/{bug}/Patched-Version/{bug}.java"
     sp = subprocess.Popen(diff_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = sp.communicate()
     out = out.decode("utf-8")
@@ -62,7 +62,7 @@ def get_methods_changed(bug):
     patched_lines = patched.split("\n")
     max_lines = max(len(buggy_lines), len(patched_lines))
     # -U flag will show all the lines in the file
-    diff_command = f"diff -r -U {2*max_lines} ./Bugs/{bug}/Buggy-Version/{bug}.java ./Bugs/{bug}/Patched-Version/{bug}.java"
+    diff_command = f"diff -r -U {2*max_lines} ./../Bears/{bug}/Buggy-Version/{bug}.java ./../Bears/{bug}/Patched-Version/{bug}.java"
     sp = subprocess.Popen(diff_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = sp.communicate()
     out = out.decode("utf-8")
@@ -157,8 +157,8 @@ if __name__ == "__main__":
         print(f"Invalid dataset: {arg1}, valid datasets: {valid_datasets}")
         exit(1)
 
-    if arg2 not in os.listdir('./Bugs/'):
-        print(f'''Invalid bug name: {arg2}, valid bug names: {os.listdir("./Bugs/")}''')
+    if arg2 not in os.listdir('./../Bears/'):
+        print(f'''Invalid bug name: {arg2}, valid bug names: {os.listdir("./../Bears/")}''')
         exit(1)
 
     if arg3 not in valid_metrics:

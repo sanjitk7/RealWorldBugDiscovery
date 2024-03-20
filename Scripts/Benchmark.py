@@ -8,21 +8,21 @@ valid_metrics = ["CChange", "MChange", "LChange", "LD", "CB", "CP", "CC", "CodeB
 
 
 bugs_folder = {
-    "bears": "./../Bears/Bugs",
+    "bears": "./../Bears",
     "quixbugs": "./../QuixBugs/Bugs",
     "defects4j": "./../defects4j",
     "bugswarm": "./../BugSwarm"
 }
 
 dataset_scripts_invoke_folder = {
-    "bears": "./../Bears/",
+    "bears": "./",
     "quixbugs": "./",
     "defects4j": "./../defects4j/scripts/benchmarking_scripts/",
     "bugswarm": "./",
 }
 
 dataset_scripts_call = {
-    "bears": lambda bug_name, metric: f"python3 Scripts/Bears_Benchmark.py Bears {bug_name} {metric}",
+    "bears": lambda bug_name, metric: f"python3 Bears_Benchmark.py Bears {bug_name} {metric}",
     "quixbugs": lambda bug_name, metric: f"python3 QuixBugs_Benchmark.py QuixBugs {bug_name} {metric}",
     "defects4j": lambda bug_name, metric: f"python3 benchmark.py {bug_name} {metric}",
     "bugswarm": lambda bug_name, metric: f"python3 BugSwarm_Script.py {bug_name} {metric}",
