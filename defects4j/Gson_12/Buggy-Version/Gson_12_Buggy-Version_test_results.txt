@@ -1,0 +1,6 @@
+Failing tests: 3
+  - com.google.gson.ErrorTest
+  - com.google.gson.internal.bind.JsonTreeReaderTest::testSkipValue_filledJsonObject
+  - com.google.gson.internal.bind.JsonTreeReaderTest::testSkipValue_emptyJsonObject
+Running ant (compile.tests)................................................ OK
+Running ant (run.dev.tests)................................................ OK

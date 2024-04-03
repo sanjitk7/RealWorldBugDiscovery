@@ -1,0 +1,13 @@
+######  Start test generation  /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone1/defects4j/framework/bin/gen_tests.pl: 2024-04-01 23:17:28  ######
+Mode: regression
+Parameters:
+ -g randoop
+ -p Cli
+ -v 18f
+ -n 3
+ -b 10
+ -c /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone1/defects4j/framework/projects/Cli/modified_classes/18.src
+ -s 77
+Created test suite archive: Cli-18f-randoop.3.tar.bz2
+Moved test suite archive to output directory: ./gen_test/Cli/randoop/3
+######  End test generation  /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone1/defects4j/framework/bin/gen_tests.pl: 2024-04-01 23:17:47  ######

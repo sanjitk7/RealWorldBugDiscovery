@@ -1,0 +1,5 @@
+Failing tests: 2
+  - com.google.gson.ErrorTest
+  - com.google.gson.functional.JsonAdapterAnnotationOnFieldsTest::testPrimitiveFieldAnnotationTakesPrecedenceOverDefault
+Running ant (compile.tests)................................................ OK
+Running ant (run.dev.tests)................................................ OK
