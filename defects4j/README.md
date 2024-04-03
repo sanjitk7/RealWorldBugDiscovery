@@ -1,6 +1,6 @@
 # Defects4J
 
-## How to Run Tests? (Milestone 2)
+## How to Generate and Run Tests? (Milestone 3)
 
 
 **Install defects4j framework**
@@ -11,6 +11,10 @@ cpanm --installdeps .
 ./init.sh
 export PATH=$PATH:"yourpath2defects4j"/framework/bin
 ```
+**Command to create tests:**
+```
+gen_tests.pl -g [randoop/evosuite] -p {project_name} -v {bug_id}b -n 1 -o /path/to/milestone3/location -b 250 [-E]
+```
 
 **Command to use to run tests:**
 
@@ -19,9 +23,19 @@ cd <projectname_id>/buggy/
 defects4j test
 ```
 
+**Progress made for this milestone for Defects4J:**
+
+- Created tests for 24 bugs with about 5+ mins of budget for Randoop Regression tests. The rest could not be generated even with 10+ min budget.
+- Created tests for 59 bugs using Randoop for Randoop Regression tests. 
+- Created tests for 68 bugs using Evosuite Regression tests with about 3+ min budgets.
+- Working on Coverage and Visualization.
+
+## Background for (Milestone 2)
+
+
 **Challenges:**
 
-- The bugs from Chart project were also not obtained due to an error getting the code through the defects4j framework with SVN and SQLite incompatibility on local machines. 
+- Tests for Chart could not be obtained due to SVN errors on MacOS system.
 - Have not been able to fix the SVN-SQLite environment version bug - the machine does not seem to use the right version even when there are multiple versions installed and the right one is exported to the $PATH environment.
 - Will be experimenting and look for a fix for next milestone.
 - Computing CodeBLUE the naive way using a list of file names yields incorrect results (0.5 for all bugs) but using an alternative-approach of concatenating file content and computing it yields the correct result in the range of ~0.999. However this has been ignored in the results due to high overhead and taking lots of hours in my local machine.
@@ -30,7 +44,6 @@ defects4j test
 **Location of deliverables:**
 
 - *Source Code* of all scripts for THIS specific bug dataset can be found parallel to this readme file under the `scripts` subdirectory. 
-- The box plot and CSV file for generated results can be found inside `results`
 
 **Discussion of Results:**
 
