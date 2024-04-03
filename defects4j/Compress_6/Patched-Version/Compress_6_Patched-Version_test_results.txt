@@ -8,178 +8,13 @@ test-offline:
 get-deps:
 
 commons-compress-from-maven.compile:
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/target/classes
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/maven-build.xml:74: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
-    [javac] Compiling 62 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/target/classes
-    [javac] warning: [options] bootstrap class path not set in conjunction with -source 1.4
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Date.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Object.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/String.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Exception.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Throwable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Serializable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/IOException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/InputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Closeable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/AutoCloseable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/File.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/OutputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Flushable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/EOFException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FilterOutputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/HashMap.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/cert/Certificate.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/jar/Attributes.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/jar/JarEntry.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/ZipEntry.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/ZipException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/LinkedHashMap.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/ZipConstants.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Cloneable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/RuntimeException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/PushbackInputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/CRC32.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/DataFormatException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/Inflater.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/ByteBuffer.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FileOutputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/RandomAccessFile.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Iterator.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/LinkedList.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/List.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Map.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/Deflater.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Locale.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Arrays.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/UnsupportedEncodingException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/ArrayList.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Class.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/InstantiationException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/IllegalAccessException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/CharBuffer.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/charset/Charset.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/charset/CharsetEncoder.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/charset/CoderResult.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/charset/CodingErrorAction.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Collections.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Comparable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/charset/UnsupportedCharsetException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Enumeration.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/InflaterInputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Calendar.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/LinkedHashSet.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Set.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/GZIPInputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/GZIPOutputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Date.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation': class file for jdk.Profile+Annotation not found
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Object.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/String.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Exception.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Throwable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Serializable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/IOException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/InputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Closeable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/AutoCloseable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/File.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/OutputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Flushable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/EOFException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FilterOutputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/HashMap.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/cert/Certificate.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/jar/Attributes.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/jar/JarEntry.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/ZipEntry.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/ZipException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/LinkedHashMap.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/ZipConstants.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Cloneable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/RuntimeException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/PushbackInputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/CRC32.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/DataFormatException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/Inflater.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/ByteBuffer.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FileOutputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/RandomAccessFile.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Iterator.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/LinkedList.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/List.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Map.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/zip/Deflater.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Locale.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Arrays.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/UnsupportedEncodingException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] 100 warnings
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/target/classes/META-INF
-     [copy] Copying 2 files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/target/classes/META-INF
 
 compile:
 
 commons-compress-from-maven.compile-tests:
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/target/test-classes
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/maven-build.xml:107: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
-    [javac] Compiling 35 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/target/test-classes
+    [javac] Compiling 38 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/target/test-classes
     [javac] warning: [options] bootstrap class path not set in conjunction with -source 1.4
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/src/test/java/org/apache/commons/compress/ErrorTest.java:6: error: annotations are not supported in -source 1.4
     [javac] @RunWith(Suite.class)
@@ -189,12 +24,32 @@ commons-compress-from-maven.compile-tests:
     [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
     [javac]  ^
     [javac]   (use -source 5 or higher to enable annotations)
-    [javac] 2 errors
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/src/test/java/org/apache/commons/compress/RegressionTest.java:6: error: annotations are not supported in -source 1.4
+    [javac] @RunWith(Suite.class)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/src/test/java/org/apache/commons/compress/RegressionTest0.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/src/test/java/org/apache/commons/compress/RegressionTest0.java:33: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass6 = zipArchiveEntry1.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/src/test/java/org/apache/commons/compress/RegressionTest1.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/src/test/java/org/apache/commons/compress/RegressionTest1.java:60: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass14 = zipArchiveEntry1.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
+    [javac] 7 errors
     [javac] 1 warning
 
 BUILD FAILED
 /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Compress_6/Patched-Version/maven-build.xml:107: Compile failed; see the compiler error output for details.
 
-Total time: 4 seconds
+Total time: 1 second
 Cannot compile test suite! at /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone1/defects4j/framework/bin/d4j/d4j-test line 134.
 Compilation failed in require at /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone1/defects4j/framework/bin/defects4j line 195.

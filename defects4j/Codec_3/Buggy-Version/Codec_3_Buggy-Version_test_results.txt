@@ -7,7 +7,6 @@ init:
      [echo] -------- commons-codec 1.4-dev --------
 
 prepare:
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/target/test-reports
 
 static:
 
@@ -16,7 +15,7 @@ compile:
 
 compile.tests:
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/build.xml:189: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
-    [javac] Compiling 2 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/target/tests
+    [javac] Compiling 6 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/target/tests
     [javac] warning: [options] bootstrap class path not set in conjunction with -source 1.4
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/ErrorTest.java:6: error: annotations are not supported in -source 1.4
     [javac] @RunWith(Suite.class)
@@ -26,7 +25,35 @@ compile.tests:
     [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
     [javac]  ^
     [javac]   (use -source 5 or higher to enable annotations)
-    [javac] 2 errors
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/RegressionTest.java:6: error: annotations are not supported in -source 1.4
+    [javac] @RunWith(Suite.class)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/RegressionTest0.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/RegressionTest0.java:461: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass11 = context7.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/RegressionTest1.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/RegressionTest1.java:939: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass15 = doubleMetaphone0.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/RegressionTest2.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Buggy-Version/src/test/org/apache/commons/codec/RegressionTest2.java:696: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass57 = doubleMetaphone45.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
+    [javac] 9 errors
     [javac] 1 warning
 
 BUILD FAILED

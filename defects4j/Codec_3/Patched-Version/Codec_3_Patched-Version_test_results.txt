@@ -7,158 +7,15 @@ init:
      [echo] -------- commons-codec 1.4-dev --------
 
 prepare:
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target/classes
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target/tests
-    [mkdir] Created dir: /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target/test-reports
 
 static:
 
 compile:
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/build.xml:56: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
-    [javac] Compiling 29 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target/classes
-    [javac] warning: [options] bootstrap class path not set in conjunction with -source 1.4
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Object.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Exception.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Throwable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Serializable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/String.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Comparator.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/math/BigInteger.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FilterInputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/IOException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/InputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Closeable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/AutoCloseable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FilterOutputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/OutputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Flushable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/UnsupportedEncodingException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/IllegalStateException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/MessageDigest.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/NoSuchAlgorithmException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/StringBuffer.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/BitSet.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/ByteArrayOutputStream.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Object.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation': class file for jdk.Profile+Annotation not found
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Exception.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Throwable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Serializable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/String.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Comparator.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/math/BigInteger.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FilterInputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/IOException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/InputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Closeable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/AutoCloseable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/FilterOutputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/OutputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/Flushable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/UnsupportedEncodingException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/IllegalStateException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/MessageDigest.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/NoSuchAlgorithmException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/StringBuffer.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/BitSet.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/io/ByteArrayOutputStream.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Comparable.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Comparable.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Error.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Error.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/RuntimeException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/RuntimeException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/System.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/System.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/IllegalArgumentException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/IllegalArgumentException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Math.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Math.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Integer.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Integer.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Random.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Random.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Number.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Number.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/NullPointerException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/NullPointerException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/CharSequence.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/CharSequence.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/AbstractStringBuilder.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/AbstractStringBuilder.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/InterruptedException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/InterruptedException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/IndexOutOfBoundsException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/IndexOutOfBoundsException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/StringBuilder.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/StringBuilder.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Character.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Character.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/ClassCastException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/ClassCastException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/charset/Charset.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/nio/charset/Charset.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/MessageDigestSpi.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/MessageDigestSpi.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/GeneralSecurityException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/security/GeneralSecurityException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Locale.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/util/Locale.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Class.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/Class.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] warning: /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/ArrayIndexOutOfBoundsException.class): major version 52 is newer than 51, the highest major version supported by this compiler.
-    [javac]   It is recommended that the compiler be upgraded.
-    [javac] /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ct.sym(META-INF/sym/rt.jar/java/lang/ArrayIndexOutOfBoundsException.class): warning: Cannot find annotation method 'value()' in type 'Profile+Annotation'
-    [javac] 91 warnings
-     [copy] Copying 6 files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target/classes
 
 compile.tests:
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/build.xml:189: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
-    [javac] Compiling 29 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target/tests
+    [javac] Compiling 33 source files to /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/target/tests
     [javac] warning: [options] bootstrap class path not set in conjunction with -source 1.4
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/ErrorTest.java:6: error: annotations are not supported in -source 1.4
     [javac] @RunWith(Suite.class)
@@ -168,6 +25,34 @@ compile.tests:
     [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
     [javac]  ^
     [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/RegressionTest.java:6: error: annotations are not supported in -source 1.4
+    [javac] @RunWith(Suite.class)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/RegressionTest0.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/RegressionTest0.java:461: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass11 = context7.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/RegressionTest1.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/RegressionTest1.java:939: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass15 = doubleMetaphone0.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/RegressionTest2.java:7: error: annotations are not supported in -source 1.4
+    [javac] @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+    [javac]  ^
+    [javac]   (use -source 5 or higher to enable annotations)
+    [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/RegressionTest2.java:696: error: generics are not supported in -source 1.4
+    [javac]         java.lang.Class<?> wildcardClass57 = doubleMetaphone45.getClass();
+    [javac]                        ^
+    [javac]   (use -source 5 or higher to enable generics)
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/binary/Base64Test.java:78: warning: unmappable character for encoding UTF8
     [javac]         byte[] decode = b64.decode("SGVsbG{������}8gV29ybGQ=");
     [javac]                                            ^
@@ -186,12 +71,12 @@ compile.tests:
     [javac] /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/src/test/org/apache/commons/codec/binary/Base64Test.java:78: warning: unmappable character for encoding UTF8
     [javac]         byte[] decode = b64.decode("SGVsbG{������}8gV29ybGQ=");
     [javac]                                                 ^
-    [javac] 2 errors
+    [javac] 9 errors
     [javac] 7 warnings
 
 BUILD FAILED
 /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone3/project_repo/defects4j/Codec_3/Patched-Version/build.xml:189: Compile failed; see the compiler error output for details.
 
-Total time: 3 seconds
+Total time: 1 second
 Cannot compile test suite! at /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone1/defects4j/framework/bin/d4j/d4j-test line 134.
 Compilation failed in require at /Users/sanjitkumar/personal_projects/CollegeIllinois/SoftwareEngineeringPrinciples/milestone1/defects4j/framework/bin/defects4j line 195.
