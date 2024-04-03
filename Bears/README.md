@@ -1,5 +1,14 @@
 # Bears-Benchmark
 
+
+# Milestone 3
+
+## Test Generation
+
+<b>Note:</b> For Bears, we were able to get the tools to generate all tests for Randoop and some tests for Evosuite. The errors faced were arising from dependency issues, file path issues, and java classes. Since many projects in the Bears dataset has different structuring and multiple nested modules, we haven't been able to create perfect scripts to automate generation of tests. However, we are still working on it.
+
+We perform automated test generation using Randoop and Evosuite, focusing on creating tests that reveal the discrepancies between buggy and patched versions of the code. This approach targets specific classes or methods associated with known bugs. Following the generation of these tests, we proceed to execute them, collecting both the execution results and coverage information with the aid of Clover. This methodology serves a dual purpose: it not only assists in pinpointing regression issues but also deepens our understanding of the code's resilience and the efficiency of our testing methodologies.
+
 ## Install prerequisite
 
 - Ensure you use Java 8.
