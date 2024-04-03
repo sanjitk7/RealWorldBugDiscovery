@@ -6,8 +6,8 @@ import random
 from multiprocessing import Pool
 
 # Adjust these paths as needed
-json_file_path = 'Export.json'
-base_dir = 'cloned_repos'
+json_file_path = '/Users/urjakhadilkar/Desktop/Filtered20.json'
+base_dir = '/Users/urjakhadilkar/Desktop/cloned_repos'
 filtered_json_file_path = 'filtered_bugs.json'
 num_bugs_to_process = 20
 
@@ -51,9 +51,9 @@ def main():
         bugs = json.load(file)
     
     successful_bugs = filter_and_clone_bugs(bugs)
-    filtered_bugs = select_and_filter_json(successful_bugs)
+    # filtered_bugs = select_and_filter_json(successful_bugs)
     
-    print(f"Filtered {len(filtered_bugs)} bugs successfully cloned and saved to {filtered_json_file_path}")
+    # print(f"Filtered {len(filtered_bugs)} bugs successfully cloned and saved to {filtered_json_file_path}")
 
 if __name__ == '__main__':
     main()

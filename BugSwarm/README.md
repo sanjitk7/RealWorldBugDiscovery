@@ -1,5 +1,15 @@
 # BugSwarm
 
+# Milestone 3
+
+## Test Generation
+
+<b>Note:</b> For BugSwarm, we were not able to get the tools to generate tests. The errors faced were arising from dependency issues, file path issues, and java classes. Since every project in the BugSwarm dataset has different structuring and multiple nested modules, we haven't been able to perfect scripts to automate generation of tests. However, we are still working on it.
+
+We perform automated test generation using Randoop and Evosuite, focusing on creating tests that reveal the discrepancies between buggy and patched versions of the code. This approach targets specific classes or methods associated with known bugs. Following the generation of these tests, we proceed to execute them, collecting both the execution results and coverage information with the aid of Clover. This methodology serves a dual purpose: it not only assists in pinpointing regression issues but also deepens our understanding of the code's resilience and the efficiency of our testing methodologies.
+
+# Milestone 2
+
 ## Install prerequisites
 
 - Java version 8 or above
