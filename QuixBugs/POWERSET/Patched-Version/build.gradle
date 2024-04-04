@@ -21,7 +21,7 @@ dependencies {
 sourceSets {
     main {
         java {
-            srcDirs = ['java_programs','correct_java_programs']
+            srcDirs = ['.']
         }
     }
 
@@ -103,6 +103,7 @@ task randoopCoverage(type: Test) {
     testClassesDirs = sourceSets.randoopCoverage.output.classesDirs
     classpath = sourceSets.randoopCoverage.runtimeClasspath
     finalizedBy jacocoTestReport
+    ignoreFailures = true
 }
 
 task evosuiteCoverage(type: Test) {
@@ -112,6 +113,7 @@ task evosuiteCoverage(type: Test) {
     testClassesDirs = sourceSets.evosuiteCoverage.output.classesDirs
     classpath = sourceSets.evosuiteCoverage.runtimeClasspath
     finalizedBy jacocoTestReport
+    ignoreFailures = true
 }
 
 task allCoverage(type: Test) {
@@ -121,6 +123,7 @@ task allCoverage(type: Test) {
     testClassesDirs = sourceSets.allCoverage.output.classesDirs
     classpath = sourceSets.allCoverage.runtimeClasspath    
     finalizedBy jacocoTestReport
+    ignoreFailures = true
 }
 
 task randoopEvosuite(type: Test) {
@@ -135,6 +138,8 @@ tasks.withType(Test) {
     maxHeapSize = "4096m"
 }
 jacocoTestReport {
+    executionData tasks.withType(Test)
+
     group = "reporting"
     description = "Generate Jacoco coverage reports after running tests."
     reports {
