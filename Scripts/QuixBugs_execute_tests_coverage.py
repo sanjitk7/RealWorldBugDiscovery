@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import shutil
 import fileinput
 import subprocess
@@ -33,27 +34,29 @@ def generate_coverage(project):
     os.mkdir(f"{quixbugs_directory}/{project}/Coverage/Patched-version-All")
 
     os.chdir(f"{quixbugs_directory}/{project}/Buggy-Version")
-    os.system(f"gradle test")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' clean")
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage")
     except FileNotFoundError:  
         pass
-    os.system(f"gradle randoopCoverage")
-    os.system(f"cp -r {quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage {quixbugs_directory}/{project}/Coverage/Buggy-version-Randoop")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' randoopCoverage")
+    os.system(f"cp -r {quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage/* {quixbugs_directory}/{project}/Coverage/Buggy-version-Randoop")
 
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage")
     except FileNotFoundError:  
         pass
-    os.system(f"gradle evosuiteCoverage")
-    os.system(f"cp -r {quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage {quixbugs_directory}/{project}/Coverage/Buggy-version-Evosuite")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' clean")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' evosuiteCoverage")
+    os.system(f"cp -r {quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage/* {quixbugs_directory}/{project}/Coverage/Buggy-version-Evosuite")
     
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage")
     except FileNotFoundError:  
         pass
-    os.system(f"gradle allCoverage")
-    os.system(f"cp -r {quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage {quixbugs_directory}/{project}/Coverage/Buggy-version-All")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' clean")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' allCoverage")
+    os.system(f"cp -r {quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage/* {quixbugs_directory}/{project}/Coverage/Buggy-version-All")
 
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Buggy-Version/JacocoCoverage")
@@ -62,32 +65,35 @@ def generate_coverage(project):
 
 
     os.chdir(f"{quixbugs_directory}/{project}/Patched-Version")
-    os.system(f"gradle crtTest")
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Patched-Version/JacocoCoverage")
     except FileNotFoundError:  
         pass
-    os.system(f"gradle randoopCoverage")
-    os.system(f"cp -r {quixbugs_directory}/{project}/Patched-Version/JacocoCoverage {quixbugs_directory}/{project}/Coverage/Patched-version-Randoop")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' clean")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' randoopCoverage")
+    os.system(f"cp -r {quixbugs_directory}/{project}/Patched-Version/JacocoCoverage/* {quixbugs_directory}/{project}/Coverage/Patched-version-Randoop")
 
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Patched-Version/JacocoCoverage")
     except FileNotFoundError:  
         pass
-    os.system(f"gradle evosuiteCoverage")
-    os.system(f"cp -r {quixbugs_directory}/{project}/Patched-Version/JacocoCoverage {quixbugs_directory}/{project}/Coverage/Patched-version-Evosuite")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' clean")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' evosuiteCoverage")
+    os.system(f"cp -r {quixbugs_directory}/{project}/Patched-Version/JacocoCoverage/* {quixbugs_directory}/{project}/Coverage/Patched-version-Evosuite")
     
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Patched-Version/JacocoCoverage")
     except FileNotFoundError:  
         pass
-    os.system(f"gradle allCoverage")
-    os.system(f"cp -r {quixbugs_directory}/{project}/Patched-Version/JacocoCoverage {quixbugs_directory}/{project}/Coverage/Patched-version-All")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' clean")
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' allCoverage")
+    os.system(f"cp -r {quixbugs_directory}/{project}/Patched-Version/JacocoCoverage/* {quixbugs_directory}/{project}/Coverage/Patched-version-All")
 
     try:
         shutil.rmtree(f"{quixbugs_directory}/{project}/Patched-Version/JacocoCoverage")
     except FileNotFoundError:  
         pass
+    os.system(f"gradle -Dorg.gradle.jvmargs='-Xmx3g' clean")
 
 
     
@@ -103,7 +109,7 @@ def find_failing_test_Patched(project):
     os.mkdir(f"{quixbugs_directory}/{project}/temp")
     os.system(f"cp -r {quixbugs_directory}/{project}/Patched-Version/* {quixbugs_directory}/{project}/temp")
     os.chdir(f"{quixbugs_directory}/{project}/temp")
-    test_command = " gradle randoopEvosuite"
+    test_command = " gradle -Dorg.gradle.jvmargs='-Xmx3g' randoopEvosuite"
     test_output = subprocess.run(test_command, shell=True, capture_output=True, text=True)
     failed_tests_logs = [line for line in test_output.stdout.split("\n") if "FAILED" in line and ">" in line]
     failed_tests_P_P = []
@@ -144,7 +150,7 @@ def find_failing_test_Patched(project):
     
     subprocess.run(f"javac {quixbugs_directory}/{project}/temp/correct_java_programs/{project}.java", shell=True)
     
-    test_command = " gradle randoopEvosuite"
+    test_command = " gradle -Dorg.gradle.jvmargs='-Xmx3g' randoopEvosuite"
     test_output = subprocess.run(test_command, shell=True, capture_output=True, text=True)
     failed_tests_logs = [line for line in test_output.stdout.split("\n") if "FAILED" in line and ">" in line]
     failed_tests_P_B = []
@@ -179,7 +185,7 @@ def find_failing_test_Buggy(project):
     os.mkdir(f"{quixbugs_directory}/{project}/temp")
     os.system(f"cp -r {quixbugs_directory}/{project}/Buggy-Version/* {quixbugs_directory}/{project}/temp")
     os.chdir(f"{quixbugs_directory}/{project}/temp")
-    test_command = " gradle randoopEvosuite"
+    test_command = " gradle -Dorg.gradle.jvmargs='-Xmx3g' randoopEvosuite"
     test_output = subprocess.run(test_command, shell=True, capture_output=True, text=True)
     failed_tests_logs = [line for line in test_output.stdout.split("\n") if "FAILED" in line and ">" in line]
     failed_tests_B_B = []
@@ -213,7 +219,7 @@ def find_failing_test_Buggy(project):
     subprocess.run(f"javac {quixbugs_directory}/{project}/temp/java_programs/Node.java", shell=True)
     subprocess.run(f"javac {quixbugs_directory}/{project}/temp/java_programs/{project}.java", shell=True)
     
-    test_command = " gradle randoopEvosuite"
+    test_command = " gradle -Dorg.gradle.jvmargs='-Xmx3g' randoopEvosuite"
     test_output = subprocess.run(test_command, shell=True, capture_output=True, text=True)
     failed_tests_logs = [line for line in test_output.stdout.split("\n") if "FAILED" in line and ">" in line]
     failed_tests_B_P = []
@@ -261,14 +267,14 @@ if __name__ == "__main__":
 
 
     projects = get_all_projects(quixbugs_directory)
-    # projects = ["BREADTH_FIRST_SEARCH"]
-
+   
 
 
     if arg1 == "coverage":
         for project in projects:
             
                generate_coverage(project)
+               time.sleep(10)
     else:   
         for project in projects:
             print("-------------------------------------------------------------------------------------------------------------------------------------------")
