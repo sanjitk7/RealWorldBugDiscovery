@@ -1,1 +1,11 @@
-org.apache.commons.jxpath.ri.compiler.VariableTest::testUnionOfVariableAndNode
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteDOMNodePointer_ESTest
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteDOMNodePointer_ESTest_scaffolding
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteJDOMNodePointer_ESTest
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteJDOMNodePointer_ESTest_scaffolding
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteNodePointer_ESTest
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteNodePointer_ESTest_scaffolding
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteNullPropertyPointer_ESTest
+src.test.org.apache.commons.jxpath.ri.model.beans.EvosuiteNullPropertyPointer_ESTest_scaffolding
+src.test.org.apache.commons.jxpath.ri.model.beans.RandoopRegressionTest
+src.test.org.apache.commons.jxpath.ri.model.beans.RandoopRegressionTest0
+src.test.org.apache.commons.jxpath.ri.model.beans.RandoopRegressionTest1
