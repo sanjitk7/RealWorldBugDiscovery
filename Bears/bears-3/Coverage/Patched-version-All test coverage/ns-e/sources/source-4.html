@@ -84,7 +84,6 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;import com.fasterxml.jackson.core.Version;
 &nbsp;import com.fasterxml.jackson.databind.*;
-&nbsp;import com.fasterxml.jackson.databind.Module;
 &nbsp;import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 &nbsp;import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 &nbsp;import com.fasterxml.jackson.databind.jsontype.NamedType;
@@ -112,52 +111,52 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    protected final String _name;
 &nbsp;    protected final Version _version;
 &nbsp;    
-<b class="fc">&nbsp;    protected SimpleSerializers _serializers = null;</b>
+&nbsp;    protected SimpleSerializers _serializers = null;
 <b class="fc">&nbsp;    protected SimpleDeserializers _deserializers = null;</b>
-&nbsp;
-<b class="fc">&nbsp;    protected SimpleSerializers _keySerializers = null;</b>
+<b class="fc">&nbsp;</b>
+&nbsp;    protected SimpleSerializers _keySerializers = null;
 <b class="fc">&nbsp;    protected SimpleKeyDeserializers _keyDeserializers = null;</b>
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Lazily-constructed resolver used for storing mappings from
 &nbsp;     * abstract classes to more specific implementing classes
 &nbsp;     * (which may be abstract or concrete)
 &nbsp;     */
-<b class="fc">&nbsp;    protected SimpleAbstractTypeResolver _abstractTypes = null;</b>
-&nbsp;
+&nbsp;    protected SimpleAbstractTypeResolver _abstractTypes = null;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Lazily-constructed resolver used for storing mappings from
 &nbsp;     * abstract classes to more specific implementing classes
 &nbsp;     * (which may be abstract or concrete)
 &nbsp;     */
-<b class="fc">&nbsp;    protected SimpleValueInstantiators _valueInstantiators = null;</b>
-&nbsp;
+&nbsp;    protected SimpleValueInstantiators _valueInstantiators = null;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * @since 2.2
 &nbsp;     */
-<b class="fc">&nbsp;    protected BeanDeserializerModifier _deserializerModifier = null;</b>
-&nbsp;
+&nbsp;    protected BeanDeserializerModifier _deserializerModifier = null;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * @since 2.2
 &nbsp;     */
-<b class="fc">&nbsp;    protected BeanSerializerModifier _serializerModifier = null;</b>
-&nbsp;
+&nbsp;    protected BeanSerializerModifier _serializerModifier = null;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Lazily-constructed map that contains mix-in definitions, indexed
 &nbsp;     * by target class, value being mix-in to apply.
 &nbsp;     */
-<b class="fc">&nbsp;    protected HashMap&lt;Class&lt;?&gt;, Class&lt;?&gt;&gt; _mixins = null;</b>
-&nbsp;    
+&nbsp;    protected HashMap&lt;Class&lt;?&gt;, Class&lt;?&gt;&gt; _mixins = null;
+<b class="fc">&nbsp;    </b>
 &nbsp;    /**
 &nbsp;     * Set of subtypes to register, if any.
 &nbsp;     */
-<b class="fc">&nbsp;    protected LinkedHashSet&lt;NamedType&gt; _subtypes = null;</b>
-&nbsp;
+&nbsp;    protected LinkedHashSet&lt;NamedType&gt; _subtypes = null;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * @since 2.3
 &nbsp;     */
-<b class="fc">&nbsp;    protected PropertyNamingStrategy _namingStrategy = null;</b>
-&nbsp;    
+&nbsp;    protected PropertyNamingStrategy _namingStrategy = null;
+<b class="fc">&nbsp;    </b>
 &nbsp;    /*
 &nbsp;    /**********************************************************
 &nbsp;    /* Life-cycle: creation
@@ -169,31 +168,31 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * convenience modules used by app code: &quot;real&quot; modules should
 &nbsp;     * use actual name and version number information.
 &nbsp;     */
-<b class="fc">&nbsp;    public SimpleModule() {</b>
-&nbsp;        // can&#39;t chain when making reference to &#39;this&#39;
+&nbsp;    public SimpleModule() {
+<b class="fc">&nbsp;        // can&#39;t chain when making reference to &#39;this&#39;</b>
 &nbsp;        // note: generate different name for direct instantiation, sub-classing
-<b class="fc">&nbsp;        _name = (getClass() == SimpleModule.class) ?</b>
+&nbsp;        _name = (getClass() == SimpleModule.class) ?
 <b class="fc">&nbsp;                &quot;SimpleModule-&quot;+System.identityHashCode(this)</b>
 <b class="fc">&nbsp;                : getClass().getName();</b>
 <b class="fc">&nbsp;        _version = Version.unknownVersion();</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /**
 &nbsp;     * Convenience constructor that will default version to
 &nbsp;     * {@link Version#unknownVersion()}.
 &nbsp;     */
 &nbsp;    public SimpleModule(String name) {
-<b class="fc">&nbsp;        this(name, Version.unknownVersion());</b>
-&nbsp;    }
+&nbsp;        this(name, Version.unknownVersion());
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Convenience constructor that will use specified Version,
 &nbsp;     * including name from {@link Version#getArtifactId()}
 &nbsp;     */
-<b class="fc">&nbsp;    public SimpleModule(Version version) {</b>
+&nbsp;    public SimpleModule(Version version) {
 <b class="fc">&nbsp;        _name = version.getArtifactId();</b>
 <b class="fc">&nbsp;        _version = version;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /**
 &nbsp;     * Constructor to use for actual reusable modules.
@@ -204,26 +203,26 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @param name Unique name of the module
 &nbsp;     * @param version Version of the module
 &nbsp;     */
-<b class="fc">&nbsp;    public SimpleModule(String name, Version version) {</b>
+&nbsp;    public SimpleModule(String name, Version version) {
 <b class="fc">&nbsp;        _name = name;</b>
 <b class="fc">&nbsp;        _version = version;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.1
 &nbsp;     */
 &nbsp;    public SimpleModule(String name, Version version,
 &nbsp;            Map&lt;Class&lt;?&gt;,JsonDeserializer&lt;?&gt;&gt; deserializers) {
-<b class="nc">&nbsp;        this(name, version, deserializers, null);</b>
-&nbsp;    }
+&nbsp;        this(name, version, deserializers, null);
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.1
 &nbsp;     */
 &nbsp;    public SimpleModule(String name, Version version,
 &nbsp;            List&lt;JsonSerializer&lt;?&gt;&gt; serializers) {
-<b class="nc">&nbsp;        this(name, version, null, serializers);</b>
-&nbsp;    }
+&nbsp;        this(name, version, null, serializers);
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /**
 &nbsp;     * @since 2.1
@@ -231,15 +230,15 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public SimpleModule(String name, Version version,
 &nbsp;            Map&lt;Class&lt;?&gt;,JsonDeserializer&lt;?&gt;&gt; deserializers,
 &nbsp;            List&lt;JsonSerializer&lt;?&gt;&gt; serializers)
-<b class="nc">&nbsp;    {</b>
+&nbsp;    {
 <b class="nc">&nbsp;        _name = name;</b>
 <b class="nc">&nbsp;        _version = version;</b>
 <b class="nc">&nbsp;        if (deserializers != null) {</b>
 <b class="nc">&nbsp;            _deserializers = new SimpleDeserializers(deserializers);</b>
-&nbsp;        }
-<b class="nc">&nbsp;        if (serializers != null) {</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        if (serializers != null) {
 <b class="nc">&nbsp;            _serializers = new SimpleSerializers(serializers);</b>
-&nbsp;        }
+<b class="nc">&nbsp;        }</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -249,11 +248,11 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Override
 &nbsp;    public Object getTypeId() {
-<b class="fc">&nbsp;        if (getClass() == SimpleModule.class) {</b>
+&nbsp;        if (getClass() == SimpleModule.class) {
 <b class="fc">&nbsp;            return null;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return super.getTypeId();</b>
-&nbsp;    }
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return super.getTypeId();
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /*
 &nbsp;    /**********************************************************
@@ -265,67 +264,67 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * Resets all currently configured serializers.
 &nbsp;     */
 &nbsp;    public void setSerializers(SimpleSerializers s) {
-<b class="nc">&nbsp;        _serializers = s;</b>
-&nbsp;    }
+&nbsp;        _serializers = s;
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Resets all currently configured deserializers.
 &nbsp;     */
 &nbsp;    public void setDeserializers(SimpleDeserializers d) {
-<b class="nc">&nbsp;        _deserializers = d;</b>
-&nbsp;    }
+&nbsp;        _deserializers = d;
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Resets all currently configured key serializers.
 &nbsp;     */
 &nbsp;    public void setKeySerializers(SimpleSerializers ks) {
-<b class="nc">&nbsp;        _keySerializers = ks;</b>
-&nbsp;    }
+&nbsp;        _keySerializers = ks;
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Resets all currently configured key deserializers.
 &nbsp;     */
 &nbsp;    public void setKeyDeserializers(SimpleKeyDeserializers kd) {
-<b class="nc">&nbsp;        _keyDeserializers = kd;</b>
-&nbsp;    }
+&nbsp;        _keyDeserializers = kd;
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Resets currently configured abstract type mappings
 &nbsp;     */
 &nbsp;    public void setAbstractTypes(SimpleAbstractTypeResolver atr) {
-<b class="fc">&nbsp;        _abstractTypes = atr;        </b>
-&nbsp;    }
+&nbsp;        _abstractTypes = atr;        
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Resets all currently configured value instantiators
 &nbsp;     */
 &nbsp;    public void setValueInstantiators(SimpleValueInstantiators svi) {
-<b class="nc">&nbsp;        _valueInstantiators = svi;</b>
-&nbsp;    }
+&nbsp;        _valueInstantiators = svi;
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.2
 &nbsp;     */
 &nbsp;    public SimpleModule setDeserializerModifier(BeanDeserializerModifier mod) {
-<b class="fc">&nbsp;        _deserializerModifier = mod;</b>
+&nbsp;        _deserializerModifier = mod;
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.2
 &nbsp;     */
 &nbsp;    public SimpleModule setSerializerModifier(BeanSerializerModifier mod) {
-<b class="fc">&nbsp;        _serializerModifier = mod;</b>
+&nbsp;        _serializerModifier = mod;
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.3
 &nbsp;     */
 &nbsp;    protected SimpleModule setNamingStrategy(PropertyNamingStrategy naming) {
-<b class="nc">&nbsp;        _namingStrategy = naming;</b>
+&nbsp;        _namingStrategy = naming;
 <b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /*
 &nbsp;    /**********************************************************
@@ -335,48 +334,48 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    
 &nbsp;    public SimpleModule addSerializer(JsonSerializer&lt;?&gt; ser)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_serializers == null) {</b>
+&nbsp;        if (_serializers == null) {
 <b class="fc">&nbsp;            _serializers = new SimpleSerializers();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _serializers.addSerializer(ser);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        _serializers.addSerializer(ser);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    public &lt;T&gt; SimpleModule addSerializer(Class&lt;? extends T&gt; type, JsonSerializer&lt;T&gt; ser)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_serializers == null) {</b>
+&nbsp;        if (_serializers == null) {
 <b class="fc">&nbsp;            _serializers = new SimpleSerializers();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _serializers.addSerializer(type, ser);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        _serializers.addSerializer(type, ser);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    public &lt;T&gt; SimpleModule addKeySerializer(Class&lt;? extends T&gt; type, JsonSerializer&lt;T&gt; ser)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_keySerializers == null) {</b>
+&nbsp;        if (_keySerializers == null) {
 <b class="fc">&nbsp;            _keySerializers = new SimpleSerializers();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _keySerializers.addSerializer(type, ser);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        _keySerializers.addSerializer(type, ser);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    public &lt;T&gt; SimpleModule addDeserializer(Class&lt;T&gt; type, JsonDeserializer&lt;? extends T&gt; deser)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_deserializers == null) {</b>
+&nbsp;        if (_deserializers == null) {
 <b class="fc">&nbsp;            _deserializers = new SimpleDeserializers();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _deserializers.addDeserializer(type, deser);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        _deserializers.addDeserializer(type, deser);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    public SimpleModule addKeyDeserializer(Class&lt;?&gt; type, KeyDeserializer deser)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_keyDeserializers == null) {</b>
+&nbsp;        if (_keyDeserializers == null) {
 <b class="fc">&nbsp;            _keyDeserializers = new SimpleKeyDeserializers();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _keyDeserializers.addDeserializer(type, deser);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        _keyDeserializers.addDeserializer(type, deser);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Lazily-constructed resolver used for storing mappings from
@@ -386,13 +385,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; SimpleModule addAbstractTypeMapping(Class&lt;T&gt; superType,
 &nbsp;            Class&lt;? extends T&gt; subType)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_abstractTypes == null) {</b>
+&nbsp;        if (_abstractTypes == null) {
 <b class="fc">&nbsp;            _abstractTypes = new SimpleAbstractTypeResolver();</b>
-&nbsp;        }
+<b class="fc">&nbsp;        }</b>
 &nbsp;        // note: addMapping() will verify arguments
-<b class="fc">&nbsp;        _abstractTypes = _abstractTypes.addMapping(superType, subType);</b>
+&nbsp;        _abstractTypes = _abstractTypes.addMapping(superType, subType);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method for registering {@link ValueInstantiator} to use when deserializing
@@ -403,12 +402,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public SimpleModule addValueInstantiator(Class&lt;?&gt; beanType, ValueInstantiator inst)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_valueInstantiators == null) {</b>
+&nbsp;        if (_valueInstantiators == null) {
 <b class="fc">&nbsp;            _valueInstantiators = new SimpleValueInstantiators();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _valueInstantiators = _valueInstantiators.addValueInstantiator(beanType, inst);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        _valueInstantiators = _valueInstantiators.addValueInstantiator(beanType, inst);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method for adding set of subtypes to be registered with
@@ -417,14 +416,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public SimpleModule registerSubtypes(Class&lt;?&gt; ... subtypes)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_subtypes == null) {</b>
+&nbsp;        if (_subtypes == null) {
 <b class="fc">&nbsp;            _subtypes = new LinkedHashSet&lt;NamedType&gt;(Math.max(16, subtypes.length));</b>
-&nbsp;        }
-<b class="fc">&nbsp;        for (Class&lt;?&gt; subtype : subtypes) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        for (Class&lt;?&gt; subtype : subtypes) {
 <b class="fc">&nbsp;            _subtypes.add(new NamedType(subtype));</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return this;
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method for adding set of subtypes (along with type name to use) to be registered with
@@ -433,14 +432,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public SimpleModule registerSubtypes(NamedType ... subtypes)
 &nbsp;    {
-<b class="nc">&nbsp;        if (_subtypes == null) {</b>
+&nbsp;        if (_subtypes == null) {
 <b class="nc">&nbsp;            _subtypes = new LinkedHashSet&lt;NamedType&gt;(Math.max(16, subtypes.length));</b>
-&nbsp;        }
-<b class="nc">&nbsp;        for (NamedType subtype : subtypes) {</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        for (NamedType subtype : subtypes) {
 <b class="nc">&nbsp;            _subtypes.add(subtype);</b>
-&nbsp;        }
-<b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="nc">&nbsp;        }</b>
+&nbsp;        return this;
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /**
 &nbsp;     * Method for specifying that annotations define by &lt;code&gt;mixinClass&lt;/code&gt;
@@ -452,12 +451,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public SimpleModule setMixInAnnotation(Class&lt;?&gt; targetType, Class&lt;?&gt; mixinClass)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_mixins == null) {</b>
+&nbsp;        if (_mixins == null) {
 <b class="fc">&nbsp;            _mixins = new HashMap&lt;Class&lt;?&gt;, Class&lt;?&gt;&gt;();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _mixins.put(targetType, mixinClass);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        _mixins.put(targetType, mixinClass);
 <b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /*
 &nbsp;    /**********************************************************
@@ -467,8 +466,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    
 &nbsp;    @Override
 &nbsp;    public String getModuleName() {
-<b class="fc">&nbsp;        return _name;</b>
-&nbsp;    }
+&nbsp;        return _name;
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Standard implementation handles registration of all configured
@@ -480,46 +479,46 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    public void setupModule(SetupContext context)
 &nbsp;    {
-<b class="fc">&nbsp;        if (_serializers != null) {</b>
+&nbsp;        if (_serializers != null) {
 <b class="fc">&nbsp;            context.addSerializers(_serializers);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_deserializers != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_deserializers != null) {
 <b class="fc">&nbsp;            context.addDeserializers(_deserializers);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_keySerializers != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_keySerializers != null) {
 <b class="fc">&nbsp;            context.addKeySerializers(_keySerializers);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_keyDeserializers != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_keyDeserializers != null) {
 <b class="fc">&nbsp;            context.addKeyDeserializers(_keyDeserializers);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_abstractTypes != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_abstractTypes != null) {
 <b class="fc">&nbsp;            context.addAbstractTypeResolver(_abstractTypes);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_valueInstantiators != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_valueInstantiators != null) {
 <b class="fc">&nbsp;            context.addValueInstantiators(_valueInstantiators);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_deserializerModifier != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_deserializerModifier != null) {
 <b class="fc">&nbsp;            context.addBeanDeserializerModifier(_deserializerModifier);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_serializerModifier != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_serializerModifier != null) {
 <b class="fc">&nbsp;            context.addBeanSerializerModifier(_serializerModifier);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_subtypes != null &amp;&amp; _subtypes.size() &gt; 0) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_subtypes != null &amp;&amp; _subtypes.size() &gt; 0) {
 <b class="fc">&nbsp;            context.registerSubtypes(_subtypes.toArray(new NamedType[_subtypes.size()]));</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_namingStrategy != null) {</b>
-<b class="nc">&nbsp;            context.setNamingStrategy(_namingStrategy);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_mixins != null) {</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_namingStrategy != null) {
+<b class="fc">&nbsp;            context.setNamingStrategy(_namingStrategy);</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        if (_mixins != null) {
 <b class="fc">&nbsp;            for (Map.Entry&lt;Class&lt;?&gt;,Class&lt;?&gt;&gt; entry : _mixins.entrySet()) {</b>
 <b class="fc">&nbsp;                context.setMixInAnnotations(entry.getKey(), entry.getValue());</b>
 <b class="fc">&nbsp;            }</b>
-&nbsp;        }
+<b class="fc">&nbsp;        }</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    @Override
-<b class="fc">&nbsp;    public Version version() { return _version; }</b>
-&nbsp;}
+&nbsp;    public Version version() { return _version; }
+<b class="fc">&nbsp;}</b>
 </code>
 </pre>
 </div>
@@ -543,7 +542,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

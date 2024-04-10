@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > NoClass</title>
+  <title>Coverage Report > JsonNaming</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.annotation</a>
 </div>
 
-<h1>Coverage Summary for Class: NoClass (com.fasterxml.jackson.databind.annotation)</h1>
+<h1>Coverage Summary for Class: JsonNaming (com.fasterxml.jackson.databind.annotation)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">NoClass</td>
+  <td class="name">JsonNaming</td>
 </tr>
 
 </table>
@@ -41,21 +41,31 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.annotation;
 &nbsp;
+&nbsp;import java.lang.annotation.*;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+&nbsp;
 &nbsp;/**
-&nbsp; * Marker class used with annotations to indicate &quot;no class&quot;. This is
-&nbsp; * a silly but necessary work-around -- annotations can not take nulls
-&nbsp; * as either default or explicit values. Hence for class values we must
-&nbsp; * explicitly use a bogus placeholder to denote equivalent of
-&nbsp; * &quot;no class&quot; (for which &#39;null&#39; is usually the natural choice).
-&nbsp; *&lt;p&gt;
-&nbsp; * Note that since 2.4, most (but not all!
-&nbsp; * {@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl} is
-&nbsp; * a notable exception}) usage should start using
-&nbsp; * {@link java.lang.Void} instead as the &quot;not defined&quot; marker.
+&nbsp; * Annotation that can be used to indicate a {@link PropertyNamingStrategy}
+&nbsp; * to use for annotated class. Overrides the global (default) strategy.
+&nbsp; * Note that if the {@link #value} property is omitted, its default value
+&nbsp; * means &quot;use default naming&quot; (that is, no alternate naming method is used).
+&nbsp; * This can be used as an override with mix-ins.
+&nbsp; * 
+&nbsp; * @since 2.1
 &nbsp; */
-&nbsp;public final class NoClass
+&nbsp;@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+&nbsp;@Retention(RetentionPolicy.RUNTIME)
+&nbsp;@com.fasterxml.jackson.annotation.JacksonAnnotation
+&nbsp;public @interface JsonNaming
 &nbsp;{
-&nbsp;    private NoClass() { }
+&nbsp;    /**
+&nbsp;     * @return Type of {@link PropertyNamingStrategy} to use, if any; default value of
+&nbsp;     *    &lt;code&gt;PropertyNamingStrategy.class&lt;/code&gt; means &quot;no strategy specified&quot;
+&nbsp;     *    (and may also be used for overriding to remove otherwise applicable
+&nbsp;     *    naming strategy)
+&nbsp;     */
+&nbsp;    public Class&lt;? extends PropertyNamingStrategy&gt; value() default PropertyNamingStrategy.class;
 &nbsp;}
 </code>
 </pre>
@@ -80,7 +90,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

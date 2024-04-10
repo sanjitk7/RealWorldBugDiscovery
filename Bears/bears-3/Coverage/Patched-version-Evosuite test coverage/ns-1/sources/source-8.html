@@ -44,26 +44,26 @@ Current scope:     <a href="../../index.html">all classes</a>
   <td class="name">FieldProperty</td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    100%
   </span>
   <span class="absValue">
-    (0/1)
+    (1/1)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    7.1%
   </span>
   <span class="absValue">
-    (0/14)
+    (1/14)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    8.2%
   </span>
   <span class="absValue">
-    (0/42)
+    (4/49)
   </span>
 </td>
 </tr>
@@ -112,22 +112,22 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public FieldProperty(BeanPropertyDefinition propDef, JavaType type,
 &nbsp;            TypeDeserializer typeDeser, Annotations contextAnnotations, AnnotatedField field)
 &nbsp;    {
-<b class="nc">&nbsp;        super(propDef, type, typeDeser, contextAnnotations);</b>
-<b class="nc">&nbsp;        _annotated = field;</b>
-<b class="nc">&nbsp;        _field = field.getAnnotated();</b>
-&nbsp;    }
+<b class="fc">&nbsp;        super(propDef, type, typeDeser, contextAnnotations);</b>
+<b class="fc">&nbsp;        _annotated = field;</b>
+<b class="fc">&nbsp;        _field = field.getAnnotated();</b>
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    protected FieldProperty(FieldProperty src, JsonDeserializer&lt;?&gt; deser) {
 <b class="nc">&nbsp;        super(src, deser);</b>
 <b class="nc">&nbsp;        _annotated = src._annotated;</b>
 <b class="nc">&nbsp;        _field = src._field;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    protected FieldProperty(FieldProperty src, PropertyName newName) {
 <b class="nc">&nbsp;        super(src, newName);</b>
 <b class="nc">&nbsp;        _annotated = src._annotated;</b>
 <b class="nc">&nbsp;        _field = src._field;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Constructor used for JDK Serialization when reading persisted object
@@ -141,7 +141,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Missing field (broken JDK (de)serialization?)&quot;);</b>
 &nbsp;        }
 <b class="nc">&nbsp;        _field = f;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    @Override
 &nbsp;    public FieldProperty withName(PropertyName newName) {
@@ -157,7 +157,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public void fixAccess(DeserializationConfig config) {
 <b class="nc">&nbsp;        ClassUtil.checkAndFixAccess(_field,</b>
 <b class="nc">&nbsp;                config.isEnabled(MapperFeature.OVERRIDE_PUBLIC_ACCESS_MODIFIERS));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /*
 &nbsp;    /**********************************************************
@@ -188,7 +188,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;        } catch (Exception e) {</b>
 <b class="nc">&nbsp;            _throwAsIOE(p, e, value);</b>
 <b class="nc">&nbsp;        }</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    @Override
 &nbsp;    public Object deserializeSetAndReturn(JsonParser p,
@@ -212,7 +212,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            // 15-Sep-2015, tatu: How could we get a ref to JsonParser?
 <b class="nc">&nbsp;            _throwAsIOE(e, value);</b>
 <b class="nc">&nbsp;        }</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    @Override
 &nbsp;    public Object setAndReturn(Object instance, Object value) throws IOException
@@ -259,7 +259,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 18:41</div>
+    <div style="float:right;">generated on 2024-04-09 22:13</div>
 </div>
 </body>
 </html>

@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > MappingJsonFactory</title>
+  <title>Coverage Report > ObjectIdReferenceProperty</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -19,18 +19,15 @@
 <div class="breadCrumbs">
 Current scope:     <a href="../../index.html">all classes</a>
     <span class="separator">|</span>
-    <a href="../index.html">com.fasterxml.jackson.databind</a>
+    <a href="../index.html">com.fasterxml.jackson.databind.deser.impl</a>
 </div>
 
-<h1>Coverage Summary for Class: MappingJsonFactory (com.fasterxml.jackson.databind)</h1>
+<h1>Coverage Summary for Class: ObjectIdReferenceProperty (com.fasterxml.jackson.databind.deser.impl)</h1>
 
 <table class="coverageStats">
+
 <tr>
   <th class="name">Class</th>
-<th class="coverageStat 
-">
-  Class, %
-</th>
 <th class="coverageStat 
 ">
   Method, %
@@ -41,13 +38,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 </th>
 </tr>
 <tr>
-  <td class="name">MappingJsonFactory</td>
+  <td class="name">ObjectIdReferenceProperty</td>
 <td class="coverageStat">
   <span class="percent">
     0%
   </span>
   <span class="absValue">
-    (0/1)
+    (0/12)
   </span>
 </td>
 <td class="coverageStat">
@@ -55,9 +52,31 @@ Current scope:     <a href="../../index.html">all classes</a>
     0%
   </span>
   <span class="absValue">
-    (0/7)
+    (0/29)
   </span>
 </td>
+</tr>
+  <tr>
+    <td class="name">ObjectIdReferenceProperty$PropertyReferring</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/8)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
 <td class="coverageStat">
   <span class="percent">
     0%
@@ -66,8 +85,15 @@ Current scope:     <a href="../../index.html">all classes</a>
     (0/14)
   </span>
 </td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/37)
+  </span>
+</td>
 </tr>
-
 </table>
 
 <br/>
@@ -75,92 +101,129 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 
 <pre>
-<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind;
+<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.deser.impl;
 &nbsp;
 &nbsp;import java.io.IOException;
+&nbsp;import java.lang.annotation.Annotation;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.core.*;
-&nbsp;import com.fasterxml.jackson.core.format.InputAccessor;
-&nbsp;import com.fasterxml.jackson.core.format.MatchStrength;
+&nbsp;import com.fasterxml.jackson.core.JsonParser;
+&nbsp;import com.fasterxml.jackson.databind.*;
+&nbsp;import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
+&nbsp;import com.fasterxml.jackson.databind.deser.UnresolvedForwardReference;
+&nbsp;import com.fasterxml.jackson.databind.deser.impl.ReadableObjectId.Referring;
+&nbsp;import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+&nbsp;import com.fasterxml.jackson.databind.introspect.ObjectIdInfo;
 &nbsp;
-&nbsp;/**
-&nbsp; * Sub-class of {@link JsonFactory} that will create a proper
-&nbsp; * {@link ObjectCodec} to allow seam-less conversions between
-&nbsp; * JSON content and Java objects (POJOs).
-&nbsp; * The only addition to regular {@link JsonFactory} currently
-&nbsp; * is that {@link ObjectMapper} is constructed and passed as
-&nbsp; * the codec to use.
-&nbsp; */
-&nbsp;public class MappingJsonFactory
-&nbsp;    extends JsonFactory
+&nbsp;public class ObjectIdReferenceProperty extends SettableBeanProperty
 &nbsp;{
-&nbsp;    private static final long serialVersionUID = -1; // since 2.7
+&nbsp;    private static final long serialVersionUID = 1L;
 &nbsp;
-&nbsp;    public MappingJsonFactory()
+&nbsp;    private final SettableBeanProperty _forward;
+&nbsp;
+&nbsp;    public ObjectIdReferenceProperty(SettableBeanProperty forward, ObjectIdInfo objectIdInfo)
 &nbsp;    {
-<b class="nc">&nbsp;        this(null);</b>
+<b class="nc">&nbsp;        super(forward);</b>
+<b class="nc">&nbsp;        _forward = forward;</b>
+<b class="nc">&nbsp;        _objectIdInfo = objectIdInfo;</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    public ObjectIdReferenceProperty(ObjectIdReferenceProperty src, JsonDeserializer&lt;?&gt; deser)
+&nbsp;    {
+<b class="nc">&nbsp;        super(src, deser);</b>
+<b class="nc">&nbsp;        _forward = src._forward;</b>
+<b class="nc">&nbsp;        _objectIdInfo = src._objectIdInfo;</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    public ObjectIdReferenceProperty(ObjectIdReferenceProperty src, PropertyName newName)
+&nbsp;    {
+<b class="nc">&nbsp;        super(src, newName);</b>
+<b class="nc">&nbsp;        _forward = src._forward;</b>
+<b class="nc">&nbsp;        _objectIdInfo = src._objectIdInfo;</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public SettableBeanProperty withValueDeserializer(JsonDeserializer&lt;?&gt; deser) {
+<b class="nc">&nbsp;        return new ObjectIdReferenceProperty(this, deser);</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    public MappingJsonFactory(ObjectMapper mapper)
-&nbsp;    {
-<b class="nc">&nbsp;        super(mapper);</b>
-<b class="nc">&nbsp;        if (mapper == null) {</b>
-<b class="nc">&nbsp;            setCodec(new ObjectMapper(this));</b>
+&nbsp;    @Override
+&nbsp;    public SettableBeanProperty withName(PropertyName newName) {
+<b class="nc">&nbsp;        return new ObjectIdReferenceProperty(this, newName);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void fixAccess(DeserializationConfig config) {
+<b class="nc">&nbsp;        if (_forward != null) {</b>
+&nbsp;            _forward.fixAccess(config);
 &nbsp;        }
 &nbsp;    }
 &nbsp;
-&nbsp;    public MappingJsonFactory(JsonFactory src, ObjectMapper mapper)
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public &lt;A extends Annotation&gt; A getAnnotation(Class&lt;A&gt; acls) {
+&nbsp;        return _forward.getAnnotation(acls);
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public AnnotatedMember getMember() {
+&nbsp;        return _forward.getMember();
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    @Override</b>
+<b class="nc">&nbsp;    public int getCreatorIndex() {</b>
+&nbsp;        return _forward.getCreatorIndex();
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void deserializeAndSet(JsonParser p, DeserializationContext ctxt, Object instance) throws IOException {
+<b class="nc">&nbsp;        deserializeSetAndReturn(p, ctxt, instance);</b>
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    @Override</b>
+<b class="nc">&nbsp;    public Object deserializeSetAndReturn(JsonParser p, DeserializationContext ctxt, Object instance) throws IOException</b>
 &nbsp;    {
-<b class="nc">&nbsp;        super(src, mapper);</b>
-<b class="nc">&nbsp;        if (mapper == null) {</b>
-<b class="nc">&nbsp;            setCodec(new ObjectMapper(this));</b>
+<b class="nc">&nbsp;        try {</b>
+<b class="nc">&nbsp;            return setAndReturn(instance, deserialize(p, ctxt));</b>
+&nbsp;        } catch (UnresolvedForwardReference reference) {
+&nbsp;            boolean usingIdentityInfo = (_objectIdInfo != null) || (_valueDeserializer.getObjectIdReader() != null);
+&nbsp;            if (!usingIdentityInfo) {
+&nbsp;                throw JsonMappingException.from(p, &quot;Unresolved forward reference but no identity info.&quot;, reference);
+&nbsp;            }
+<b class="nc">&nbsp;            reference.getRoid().appendReferring(new PropertyReferring(this, reference, _type.getRawClass(), instance));</b>
+<b class="nc">&nbsp;            return null;</b>
 &nbsp;        }
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * We&#39;ll override the method to return more specific type; co-variance
-&nbsp;     * helps here
-&nbsp;     */
-&nbsp;    @Override
-<b class="nc">&nbsp;    public final ObjectMapper getCodec() { return (ObjectMapper) _objectCodec; }</b>
-&nbsp;
-&nbsp;    // @since 2.1
-&nbsp;    @Override
-&nbsp;    public JsonFactory copy()
-&nbsp;    {
-<b class="nc">&nbsp;        _checkInvalidCopy(MappingJsonFactory.class);</b>
-&nbsp;        // note: as with base class, must NOT copy mapper reference
-<b class="nc">&nbsp;        return new MappingJsonFactory(this, null);</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Format detection functionality (since 1.8)
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * Sub-classes need to override this method
-&nbsp;     */
-&nbsp;    @Override
-&nbsp;    public String getFormatName()
-&nbsp;    {
-&nbsp;        /* since non-JSON factories typically should not extend this class,
-&nbsp;         * let&#39;s just always return JSON as name.
-&nbsp;         */
-<b class="nc">&nbsp;        return FORMAT_NAME_JSON;</b>
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public void set(Object instance, Object value) throws IOException {
+&nbsp;        _forward.set(instance, value);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Sub-classes need to override this method
-&nbsp;     */
 &nbsp;    @Override
-&nbsp;    public MatchStrength hasFormat(InputAccessor acc) throws IOException
-&nbsp;    {
-<b class="nc">&nbsp;        if (getClass() == MappingJsonFactory.class) {</b>
-<b class="nc">&nbsp;            return hasJSONFormat(acc);</b>
+&nbsp;    public Object setAndReturn(Object instance, Object value) throws IOException {
+&nbsp;        return _forward.setAndReturn(instance, value);
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    public final static class PropertyReferring extends Referring {</b>
+<b class="nc">&nbsp;        private final ObjectIdReferenceProperty _parent;</b>
+<b class="nc">&nbsp;        public final Object _pojo;</b>
+<b class="nc">&nbsp;</b>
+&nbsp;        public PropertyReferring(ObjectIdReferenceProperty parent,
+&nbsp;                UnresolvedForwardReference ref, Class&lt;?&gt; type, Object ob)
+&nbsp;        {
+&nbsp;            super(ref, type);
+<b class="nc">&nbsp;            _parent = parent;</b>
+<b class="nc">&nbsp;            _pojo = ob;</b>
 &nbsp;        }
-<b class="nc">&nbsp;        return null;</b>
+&nbsp;
+<b class="nc">&nbsp;        @Override</b>
+<b class="nc">&nbsp;        public void handleResolvedForwardReference(Object id, Object value) throws IOException</b>
+&nbsp;        {
+&nbsp;            if (!hasId(id)) {
+&nbsp;                throw new IllegalArgumentException(&quot;Trying to resolve a forward reference with id [&quot; + id
+&nbsp;                        + &quot;] that wasn&#39;t previously seen as unresolved.&quot;);
+&nbsp;            }
+&nbsp;            _parent.set(_pojo, value);
+&nbsp;        }
 &nbsp;    }
 &nbsp;}
 </code>
@@ -186,7 +249,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 19:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:42</div>
 </div>
 </body>
 </html>

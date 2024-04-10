@@ -144,7 +144,6 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            TimeZone.class,
 &nbsp;            InetAddress.class,
 &nbsp;            InetSocketAddress.class,
-&nbsp;            StringBuilder.class,
 &nbsp;        };
 &nbsp;    }
 &nbsp;    
@@ -155,8 +154,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    
 &nbsp;    protected FromStringDeserializer(Class&lt;?&gt; vc) {
-<b class="fc">&nbsp;        super(vc);</b>
-&nbsp;    }
+&nbsp;        super(vc);
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Factory method for trying to find a deserializer for one of supported
@@ -164,7 +163,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public static Std findDeserializer(Class&lt;?&gt; rawType)
 &nbsp;    {
-<b class="fc">&nbsp;        int kind = 0;</b>
+&nbsp;        int kind = 0;
 <b class="fc">&nbsp;        if (rawType == File.class) {</b>
 <b class="fc">&nbsp;            kind = Std.STD_FILE;</b>
 <b class="fc">&nbsp;        } else if (rawType == URL.class) {</b>
@@ -189,15 +188,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;            kind = Std.STD_INET_ADDRESS;</b>
 <b class="fc">&nbsp;        } else if (rawType == InetSocketAddress.class) {</b>
 <b class="fc">&nbsp;            kind = Std.STD_INET_SOCKET_ADDRESS;</b>
-<b class="fc">&nbsp;        } else if (rawType == StringBuilder.class) {</b>
-<b class="fc">&nbsp;            kind = Std.STD_STRING_BUILDER;</b>
-&nbsp;        } else {
+<b class="fc">&nbsp;        } else {</b>
 <b class="fc">&nbsp;            return null;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return new Std(rawType, kind);</b>
-&nbsp;    }
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return new Std(rawType, kind);
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
-&nbsp;    /*
+<b class="fc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Deserializer implementations
 &nbsp;    /**********************************************************
@@ -208,21 +205,21 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException
 &nbsp;    {
 &nbsp;        // 22-Sep-2012, tatu: For 2.1, use this new method, may force coercion:
-<b class="fc">&nbsp;        String text = p.getValueAsString();</b>
-<b class="fc">&nbsp;        if (text != null) { // has String representation</b>
-<b class="fc">&nbsp;            if (text.length() == 0 || (text = text.trim()).length() == 0) {</b>
-&nbsp;                // 04-Feb-2013, tatu: Usually should become null; but not always
+&nbsp;        String text = p.getValueAsString();
+&nbsp;        if (text != null) { // has String representation
+&nbsp;            if (text.length() == 0 || (text = text.trim()).length() == 0) {
+<b class="fc">&nbsp;                // 04-Feb-2013, tatu: Usually should become null; but not always</b>
 <b class="fc">&nbsp;                return _deserializeFromEmptyString();</b>
-&nbsp;            }
-<b class="fc">&nbsp;            Exception cause = null;</b>
-&nbsp;            try {
-<b class="fc">&nbsp;                T result = _deserialize(text, ctxt);</b>
+<b class="fc">&nbsp;            }</b>
+&nbsp;            Exception cause = null;
+<b class="fc">&nbsp;            try {</b>
+&nbsp;                T result = _deserialize(text, ctxt);
 <b class="fc">&nbsp;                if (result != null) {</b>
-<b class="fc">&nbsp;                    return result;</b>
-&nbsp;                }
+&nbsp;                    return result;
+<b class="fc">&nbsp;                }</b>
 <b class="fc">&nbsp;            } catch (IllegalArgumentException iae) {</b>
 <b class="fc">&nbsp;                cause = iae;</b>
-<b class="fc">&nbsp;            } catch (MalformedURLException me) {</b>
+&nbsp;            } catch (MalformedURLException me) {
 <b class="fc">&nbsp;                cause = me;</b>
 <b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            String msg = &quot;not a valid textual representation&quot;;</b>
@@ -230,54 +227,54 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;                String m2 = cause.getMessage();</b>
 <b class="fc">&nbsp;                if (m2 != null) {</b>
 <b class="fc">&nbsp;                    msg = msg + &quot;, problem: &quot;+m2;</b>
-&nbsp;                }
-&nbsp;            }
-&nbsp;            // 05-May-2016, tatu: Unlike most usage, this seems legit, so...
-<b class="fc">&nbsp;            JsonMappingException e = ctxt.weirdStringException(text, _valueClass, msg);</b>
-<b class="fc">&nbsp;            if (cause != null) {</b>
-<b class="fc">&nbsp;                e.initCause(cause);</b>
-&nbsp;            }
+<b class="fc">&nbsp;                }</b>
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;            // 05-May-2016, tatu: Unlike most usage, this seems legit, so...</b>
+&nbsp;            JsonMappingException e = ctxt.weirdStringException(text, _valueClass, msg);
+&nbsp;            if (cause != null) {
+&nbsp;                e.initCause(cause);
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            throw e;</b>
-&nbsp;            // nothing to do here, yet? We&#39;ll fail anyway
+<b class="fc">&nbsp;            // nothing to do here, yet? We&#39;ll fail anyway</b>
 &nbsp;        }
 <b class="fc">&nbsp;        JsonToken t = p.getCurrentToken();</b>
 &nbsp;        // [databind#381]
-<b class="fc">&nbsp;        if (t == JsonToken.START_ARRAY &amp;&amp; ctxt.isEnabled(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS)) {</b>
+&nbsp;        if (t == JsonToken.START_ARRAY &amp;&amp; ctxt.isEnabled(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS)) {
 <b class="fc">&nbsp;            p.nextToken();</b>
-<b class="fc">&nbsp;            final T value = deserialize(p, ctxt);</b>
+&nbsp;            final T value = deserialize(p, ctxt);
 <b class="fc">&nbsp;            if (p.nextToken() != JsonToken.END_ARRAY) {</b>
 <b class="fc">&nbsp;                handleMissingEndArrayForSingle(p, ctxt);</b>
-&nbsp;            }
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            return value;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (t == JsonToken.VALUE_EMBEDDED_OBJECT) {</b>
-&nbsp;            // Trivial cases; null to null, instance of type itself returned as is
-<b class="fc">&nbsp;            Object ob = p.getEmbeddedObject();</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (t == JsonToken.VALUE_EMBEDDED_OBJECT) {
+<b class="fc">&nbsp;            // Trivial cases; null to null, instance of type itself returned as is</b>
+&nbsp;            Object ob = p.getEmbeddedObject();
 <b class="fc">&nbsp;            if (ob == null) {</b>
-<b class="nc">&nbsp;                return null;</b>
-&nbsp;            }
+&nbsp;                return null;
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            if (_valueClass.isAssignableFrom(ob.getClass())) {</b>
-<b class="fc">&nbsp;                return (T) ob;</b>
+<b class="nc">&nbsp;                return (T) ob;</b>
 &nbsp;            }
-<b class="nc">&nbsp;            return _deserializeEmbedded(ob, ctxt);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return (T) ctxt.handleUnexpectedToken(_valueClass, p);</b>
-&nbsp;    }
+<b class="fc">&nbsp;            return _deserializeEmbedded(ob, ctxt);</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return (T) ctxt.handleUnexpectedToken(_valueClass, p);
+<b class="nc">&nbsp;    }</b>
 &nbsp;        
-&nbsp;    protected abstract T _deserialize(String value, DeserializationContext ctxt) throws IOException;
+<b class="fc">&nbsp;    protected abstract T _deserialize(String value, DeserializationContext ctxt) throws IOException;</b>
 &nbsp;
 &nbsp;    protected T _deserializeEmbedded(Object ob, DeserializationContext ctxt) throws IOException {
 &nbsp;        // default impl: error out
-<b class="nc">&nbsp;        ctxt.reportMappingException(&quot;Don&#39;t know how to convert embedded Object of type %s into %s&quot;,</b>
-<b class="nc">&nbsp;                ob.getClass().getName(), _valueClass.getName());</b>
-<b class="nc">&nbsp;        return null;</b>
+&nbsp;        ctxt.reportMappingException(&quot;Don&#39;t know how to convert embedded Object of type %s into %s&quot;,
+&nbsp;                ob.getClass().getName(), _valueClass.getName());
+&nbsp;        return null;
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    protected T _deserializeFromEmptyString() throws IOException {</b>
+&nbsp;        return null;
 &nbsp;    }
 &nbsp;
-&nbsp;    protected T _deserializeFromEmptyString() throws IOException {
-<b class="nc">&nbsp;        return null;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /*
+<b class="nc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* A general-purpose implementation
 &nbsp;    /**********************************************************
@@ -305,118 +302,113 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        public final static int STD_TIME_ZONE = 10;
 &nbsp;        public final static int STD_INET_ADDRESS = 11;
 &nbsp;        public final static int STD_INET_SOCKET_ADDRESS = 12;
-&nbsp;        public final static int STD_STRING_BUILDER = 13;
 &nbsp;
 &nbsp;        protected final int _kind;
 &nbsp;        
 &nbsp;        protected Std(Class&lt;?&gt; valueType, int kind) {
-<b class="fc">&nbsp;            super(valueType);</b>
-<b class="fc">&nbsp;            _kind = kind;</b>
+&nbsp;            super(valueType);
+&nbsp;            _kind = kind;
 &nbsp;        }
 &nbsp;
-&nbsp;        @Override
-&nbsp;        protected Object _deserialize(String value, DeserializationContext ctxt) throws IOException
+<b class="fc">&nbsp;        @Override</b>
+<b class="fc">&nbsp;        protected Object _deserialize(String value, DeserializationContext ctxt) throws IOException</b>
 &nbsp;        {
-<b class="fc">&nbsp;            switch (_kind) {</b>
+&nbsp;            switch (_kind) {
 &nbsp;            case STD_FILE:
-<b class="fc">&nbsp;                return new File(value);</b>
+&nbsp;                return new File(value);
 &nbsp;            case STD_URL:
 <b class="fc">&nbsp;                return new URL(value);</b>
 &nbsp;            case STD_URI:
 <b class="fc">&nbsp;                return URI.create(value);</b>
 &nbsp;            case STD_CLASS:
-&nbsp;                try {
-<b class="fc">&nbsp;                    return ctxt.findClass(value);</b>
-<b class="nc">&nbsp;                } catch (Exception e) {</b>
-<b class="nc">&nbsp;                    return ctxt.handleInstantiationProblem(_valueClass, value,</b>
-<b class="nc">&nbsp;                            ClassUtil.getRootCause(e));</b>
-&nbsp;                }
-&nbsp;            case STD_JAVA_TYPE:
-<b class="fc">&nbsp;                return ctxt.getTypeFactory().constructFromCanonical(value);</b>
-&nbsp;            case STD_CURRENCY:
+<b class="fc">&nbsp;                try {</b>
+&nbsp;                    return ctxt.findClass(value);
+<b class="fc">&nbsp;                } catch (Exception e) {</b>
+&nbsp;                    return ctxt.handleInstantiationProblem(_valueClass, value,
+&nbsp;                            ClassUtil.getRootCause(e));
+<b class="fc">&nbsp;                }</b>
+<b class="nc">&nbsp;            case STD_JAVA_TYPE:</b>
+<b class="nc">&nbsp;                return ctxt.getTypeFactory().constructFromCanonical(value);</b>
+<b class="nc">&nbsp;            case STD_CURRENCY:</b>
 &nbsp;                // will throw IAE if unknown:
-<b class="fc">&nbsp;                return Currency.getInstance(value);</b>
-&nbsp;            case STD_PATTERN:
+&nbsp;                return Currency.getInstance(value);
+<b class="fc">&nbsp;            case STD_PATTERN:</b>
 &nbsp;                // will throw IAE (or its subclass) if malformed
-<b class="fc">&nbsp;                return Pattern.compile(value);</b>
-&nbsp;            case STD_LOCALE:
+&nbsp;                return Pattern.compile(value);
+<b class="fc">&nbsp;            case STD_LOCALE:</b>
 &nbsp;                {
-<b class="fc">&nbsp;                    int ix = _firstHyphenOrUnderscore(value);</b>
+&nbsp;                    int ix = _firstHyphenOrUnderscore(value);
 <b class="fc">&nbsp;                    if (ix &lt; 0) { // single argument</b>
-<b class="fc">&nbsp;                        return new Locale(value);</b>
+&nbsp;                        return new Locale(value);
 &nbsp;                    }
 <b class="fc">&nbsp;                    String first = value.substring(0, ix);</b>
 <b class="fc">&nbsp;                    value = value.substring(ix+1);</b>
 <b class="fc">&nbsp;                    ix = _firstHyphenOrUnderscore(value);</b>
-<b class="fc">&nbsp;                    if (ix &lt; 0) { // two pieces</b>
+&nbsp;                    if (ix &lt; 0) { // two pieces
 <b class="fc">&nbsp;                        return new Locale(first, value);</b>
-&nbsp;                    }
+<b class="fc">&nbsp;                    }</b>
 <b class="fc">&nbsp;                    String second = value.substring(0, ix);</b>
 <b class="fc">&nbsp;                    return new Locale(first, second, value.substring(ix+1));</b>
-&nbsp;                }
+<b class="fc">&nbsp;                }</b>
 &nbsp;            case STD_CHARSET:
 <b class="fc">&nbsp;                return Charset.forName(value);</b>
-&nbsp;            case STD_TIME_ZONE:
-<b class="fc">&nbsp;                return TimeZone.getTimeZone(value);</b>
+<b class="fc">&nbsp;            case STD_TIME_ZONE:</b>
+&nbsp;                return TimeZone.getTimeZone(value);
 &nbsp;            case STD_INET_ADDRESS:
 <b class="fc">&nbsp;                return InetAddress.getByName(value);</b>
 &nbsp;            case STD_INET_SOCKET_ADDRESS:
 <b class="fc">&nbsp;                if (value.startsWith(&quot;[&quot;)) {</b>
 &nbsp;                    // bracketed IPv6 (with port number)
-&nbsp;
-<b class="fc">&nbsp;                    int i = value.lastIndexOf(&#39;]&#39;);</b>
+<b class="fc">&nbsp;</b>
+&nbsp;                    int i = value.lastIndexOf(&#39;]&#39;);
 <b class="fc">&nbsp;                    if (i == -1) {</b>
-<b class="nc">&nbsp;                        throw new InvalidFormatException(ctxt.getParser(),</b>
+&nbsp;                        throw new InvalidFormatException(ctxt.getParser(),
 &nbsp;                                &quot;Bracketed IPv6 address must contain closing bracket&quot;,
-&nbsp;                                value, InetSocketAddress.class);
-&nbsp;                    }
-&nbsp;
-<b class="fc">&nbsp;                    int j = value.indexOf(&#39;:&#39;, i);</b>
-<b class="fc">&nbsp;                    int port = j &gt; -1 ? Integer.parseInt(value.substring(j + 1)) : 0;</b>
-<b class="fc">&nbsp;                    return new InetSocketAddress(value.substring(0, i + 1), port);</b>
+<b class="fc">&nbsp;                                value, InetSocketAddress.class);</b>
+<b class="fc">&nbsp;                    }</b>
+<b class="nc">&nbsp;</b>
+&nbsp;                    int j = value.indexOf(&#39;:&#39;, i);
+&nbsp;                    int port = j &gt; -1 ? Integer.parseInt(value.substring(j + 1)) : 0;
+&nbsp;                    return new InetSocketAddress(value.substring(0, i + 1), port);
 &nbsp;                }
 <b class="fc">&nbsp;                int ix = value.indexOf(&#39;:&#39;);</b>
 <b class="fc">&nbsp;                if (ix &gt;= 0 &amp;&amp; value.indexOf(&#39;:&#39;, ix + 1) &lt; 0) {</b>
-&nbsp;                    // host:port
-<b class="fc">&nbsp;                    int port = Integer.parseInt(value.substring(ix+1));</b>
+<b class="fc">&nbsp;                    // host:port</b>
+&nbsp;                    int port = Integer.parseInt(value.substring(ix+1));
 <b class="fc">&nbsp;                    return new InetSocketAddress(value.substring(0, ix), port);</b>
-&nbsp;                }
+<b class="fc">&nbsp;                }</b>
 &nbsp;                // host or unbracketed IPv6, without port number
 <b class="fc">&nbsp;                return new InetSocketAddress(value, 0);</b>
-&nbsp;            case STD_STRING_BUILDER:
-<b class="fc">&nbsp;                return new StringBuilder(value);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            throw new IllegalArgumentException();</b>
+<b class="fc">&nbsp;            }</b>
+&nbsp;            throw new IllegalArgumentException();
 &nbsp;        }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;        @Override
-&nbsp;        protected Object _deserializeFromEmptyString() throws IOException {
+<b class="fc">&nbsp;        protected Object _deserializeFromEmptyString() throws IOException {</b>
 &nbsp;            // As per [databind#398], URI requires special handling
-<b class="fc">&nbsp;            if (_kind == STD_URI) {</b>
-<b class="fc">&nbsp;                return URI.create(&quot;&quot;);</b>
+<b class="nc">&nbsp;            if (_kind == STD_URI) {</b>
+&nbsp;                return URI.create(&quot;&quot;);
 &nbsp;            }
 &nbsp;            // As per [databind#1123], Locale too
-<b class="fc">&nbsp;            if (_kind == STD_LOCALE) {</b>
-<b class="fc">&nbsp;                return Locale.ROOT;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            if (_kind == STD_STRING_BUILDER) {</b>
-<b class="nc">&nbsp;                return new StringBuilder();</b>
-&nbsp;            }
-<b class="nc">&nbsp;            return super._deserializeFromEmptyString();</b>
+&nbsp;            if (_kind == STD_LOCALE) {
+&nbsp;                return Locale.ROOT;
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;            return super._deserializeFromEmptyString();</b>
 &nbsp;        }
 &nbsp;
-&nbsp;        protected int _firstHyphenOrUnderscore(String str)
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;        protected int _firstHyphenOrUnderscore(String str)</b>
 &nbsp;        {
-<b class="fc">&nbsp;            for (int i = 0, end = str.length(); i &lt; end; ++i) {</b>
-<b class="fc">&nbsp;                char c = str.charAt(i);</b>
-<b class="fc">&nbsp;                if (c == &#39;_&#39; || c == &#39;-&#39;) {</b>
-<b class="fc">&nbsp;                    return i;</b>
+<b class="nc">&nbsp;            for (int i = 0, end = str.length(); i &lt; end; ++i) {</b>
+<b class="nc">&nbsp;                char c = str.charAt(i);</b>
+&nbsp;                if (c == &#39;_&#39; || c == &#39;-&#39;) {
+<b class="nc">&nbsp;                    return i;</b>
 &nbsp;                }
 &nbsp;            }
-<b class="fc">&nbsp;            return -1;</b>
+&nbsp;            return -1;
 &nbsp;        }
-&nbsp;    }
-&nbsp;}
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;}</b>
 </code>
 </pre>
 </div>
@@ -440,7 +432,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

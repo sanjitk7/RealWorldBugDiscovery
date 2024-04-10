@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > MapperFeature</title>
+  <title>Coverage Report > BasicBeanDescription</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -19,10 +19,10 @@
 <div class="breadCrumbs">
 Current scope:     <a href="../../index.html">all classes</a>
     <span class="separator">|</span>
-    <a href="../index.html">com.fasterxml.jackson.databind</a>
+    <a href="../index.html">com.fasterxml.jackson.databind.introspect</a>
 </div>
 
-<h1>Coverage Summary for Class: MapperFeature (com.fasterxml.jackson.databind)</h1>
+<h1>Coverage Summary for Class: BasicBeanDescription (com.fasterxml.jackson.databind.introspect)</h1>
 
 <table class="coverageStats">
 <tr>
@@ -41,29 +41,29 @@ Current scope:     <a href="../../index.html">all classes</a>
 </th>
 </tr>
 <tr>
-  <td class="name">MapperFeature</td>
+  <td class="name">BasicBeanDescription</td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    100%
   </span>
   <span class="absValue">
-    (0/1)
+    (1/1)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    6.5%
   </span>
   <span class="absValue">
-    (0/5)
+    (3/46)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    4.5%
   </span>
   <span class="absValue">
-    (0/32)
+    (11/245)
   </span>
 </td>
 </tr>
@@ -75,503 +75,702 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 
 <pre>
-<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind;
+<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.introspect;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-&nbsp;import com.fasterxml.jackson.databind.cfg.ConfigFeature;
+&nbsp;import java.lang.reflect.Constructor;
+&nbsp;import java.lang.reflect.Method;
+&nbsp;import java.util.*;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.annotation.JsonFormat;
+&nbsp;import com.fasterxml.jackson.annotation.JsonInclude;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.databind.*;
+&nbsp;import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+&nbsp;import com.fasterxml.jackson.databind.cfg.HandlerInstantiator;
+&nbsp;import com.fasterxml.jackson.databind.cfg.MapperConfig;
+&nbsp;import com.fasterxml.jackson.databind.type.TypeBindings;
+&nbsp;import com.fasterxml.jackson.databind.util.Annotations;
+&nbsp;import com.fasterxml.jackson.databind.util.ClassUtil;
+&nbsp;import com.fasterxml.jackson.databind.util.Converter;
 &nbsp;
 &nbsp;/**
-&nbsp; * Enumeration that defines simple on/off features to set
-&nbsp; * for {@link ObjectMapper}, and accessible (but not changeable)
-&nbsp; * via {@link ObjectReader} and {@link ObjectWriter} (as well as
-&nbsp; * through various convenience methods through context objects).
+&nbsp; * Default {@link BeanDescription} implementation used by Jackson.
 &nbsp; *&lt;p&gt;
-&nbsp; * Note that in addition to being only mutable via {@link ObjectMapper},
-&nbsp; * changes only take effect when done &lt;b&gt;before any serialization or
-&nbsp; * deserialization&lt;/b&gt; calls -- that is, caller must follow
-&nbsp; * &quot;configure-then-use&quot; pattern.
+&nbsp; * Although sub-classing is a theoretical possibility there are no known
+&nbsp; * use cases for that, nor is such usage tested or supported.
+&nbsp; * Separation from API is mostly to isolate some implementation details
+&nbsp; * here and keep API simple.
 &nbsp; */
-<b class="nc">&nbsp;public enum MapperFeature implements ConfigFeature</b>
+&nbsp;public class BasicBeanDescription extends BeanDescription
 &nbsp;{
 &nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* General introspection features
-&nbsp;    /******************************************************
+&nbsp;    /**********************************************************
+<b class="fc">&nbsp;    /* General configuration</b>
+&nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Feature that determines whether annotation introspection
-&nbsp;     * is used for configuration; if enabled, configured
-&nbsp;     * {@link AnnotationIntrospector} will be used: if disabled,
-&nbsp;     * no annotations are considered.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
+&nbsp;     * We will hold a reference to the collector in cases where
+&nbsp;     * information is lazily accessed and constructed; properties
+&nbsp;     * are only accessed when they are actually needed.
 &nbsp;     */
-<b class="nc">&nbsp;    USE_ANNOTATIONS(true),</b>
+&nbsp;    final protected POJOPropertiesCollector _propCollector;
+&nbsp;    
+&nbsp;    final protected MapperConfig&lt;?&gt; _config;
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether otherwise regular &quot;getter&quot;
-&nbsp;     * methods (but only ones that handle Collections and Maps,
-&nbsp;     * not getters of other type)
-&nbsp;     * can be used for purpose of getting a reference to a Collection
-&nbsp;     * and Map to modify the property, without requiring a setter
-&nbsp;     * method.
-&nbsp;     * This is similar to how JAXB framework sets Collections and
-&nbsp;     * Maps: no setter is involved, just setter.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that such getters-as-setters methods have lower
-&nbsp;     * precedence than setters, so they are only used if no
-&nbsp;     * setter is found for the Map/Collection property.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    USE_GETTERS_AS_SETTERS(true),</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines how &lt;code&gt;transient&lt;/code&gt; modifier for fields
-&nbsp;     * is handled: if disabled, it is only taken to mean exclusion of the field
-&nbsp;     * as accessor; if true, it is taken to imply removal of the whole property.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default, meaning that existence of `transient`
-&nbsp;     * for a field does not necessarily lead to ignoral of getters or setters
-&nbsp;     * but just ignoring the use of field for access.
-&nbsp;     *
-&nbsp;     * @since 2.6
-&nbsp;     */
-<b class="nc">&nbsp;    PROPAGATE_TRANSIENT_MARKER(false),</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* Introspection-based property auto-detection
-&nbsp;    /******************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether &quot;creator&quot; methods are
-&nbsp;     * automatically detected by consider public constructors,
-&nbsp;     * and static single argument methods with name &quot;valueOf&quot;.
-&nbsp;     * If disabled, only methods explicitly annotated are considered
-&nbsp;     * creator methods (except for the no-arg default constructor which
-&nbsp;     * is always considered a factory method).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this feature has lower precedence than per-class
-&nbsp;     * annotations, and is only used if there isn&#39;t more granular
-&nbsp;     * configuration available.
-&nbsp;     *&lt;P&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    AUTO_DETECT_CREATORS(true),</b>
+&nbsp;    final protected AnnotationIntrospector _annotationIntrospector;
 &nbsp;    
 &nbsp;    /**
-&nbsp;     * Feature that determines whether non-static fields are recognized as
-&nbsp;     * properties.
-&nbsp;     * If yes, then all public member fields
-&nbsp;     * are considered as properties. If disabled, only fields explicitly
-&nbsp;     * annotated are considered property fields.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this feature has lower precedence than per-class
-&nbsp;     * annotations, and is only used if there isn&#39;t more granular
-&nbsp;     * configuration available.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
+&nbsp;     * Information collected about the class introspected.
 &nbsp;     */
-<b class="nc">&nbsp;    AUTO_DETECT_FIELDS(true),</b>
+&nbsp;    final protected AnnotatedClass _classInfo;
+&nbsp;
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Member information
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Properties collected for the POJO; initialized as needed.
+&nbsp;     */
+&nbsp;    protected List&lt;BeanPropertyDefinition&gt; _properties;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Details of Object Id to include, if any
+&nbsp;     */
+&nbsp;    protected ObjectIdInfo _objectIdInfo;
+&nbsp;
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Life-cycle
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;
+&nbsp;    protected BasicBeanDescription(POJOPropertiesCollector coll,
+&nbsp;            JavaType type, AnnotatedClass classDef)
+&nbsp;    {
+&nbsp;        super(type);
+&nbsp;        _propCollector = coll;
+&nbsp;        _config = coll.getConfig();
+&nbsp;        // NOTE: null config only for some pre-constructed types
+&nbsp;        if (_config == null) {
+&nbsp;            _annotationIntrospector = null;
+&nbsp;        } else {
+&nbsp;            _annotationIntrospector = _config.getAnnotationIntrospector();
+&nbsp;        }
+&nbsp;        _classInfo = classDef;
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Alternate constructor used in cases where property information is not needed,
+&nbsp;     * only class info.
+&nbsp;     */
+&nbsp;    protected BasicBeanDescription(MapperConfig&lt;?&gt; config,
+&nbsp;            JavaType type, AnnotatedClass classDef, List&lt;BeanPropertyDefinition&gt; props)
+&nbsp;    {
+&nbsp;        super(type);
+<b class="nc">&nbsp;        _propCollector = null;</b>
+<b class="nc">&nbsp;        _config = config;</b>
+<b class="nc">&nbsp;        // NOTE: null config only for some pre-constructed types</b>
+&nbsp;        if (_config == null) {
+<b class="nc">&nbsp;            _annotationIntrospector = null;</b>
+<b class="nc">&nbsp;        } else {</b>
+&nbsp;            _annotationIntrospector = _config.getAnnotationIntrospector();
+<b class="nc">&nbsp;        }</b>
+&nbsp;        _classInfo = classDef;
+<b class="nc">&nbsp;        _properties = props;</b>
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
-&nbsp;    /**
-&nbsp;     * Feature that determines whether regular &quot;getter&quot; methods are
-&nbsp;     * automatically detected based on standard Bean naming convention
-&nbsp;     * or not. If yes, then all public zero-argument methods that
-&nbsp;     * start with prefix &quot;get&quot; 
-&nbsp;     * are considered as getters.
-&nbsp;     * If disabled, only methods explicitly  annotated are considered getters.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that since version 1.3, this does &lt;b&gt;NOT&lt;/b&gt; include
-&nbsp;     * &quot;is getters&quot; (see {@link #AUTO_DETECT_IS_GETTERS} for details)
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this feature has lower precedence than per-class
-&nbsp;     * annotations, and is only used if there isn&#39;t more granular
-&nbsp;     * configuration available.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    AUTO_DETECT_GETTERS(true),</b>
+&nbsp;    protected BasicBeanDescription(POJOPropertiesCollector coll)
+&nbsp;    {
+&nbsp;        this(coll, coll.getType(), coll.getClassDef());
+&nbsp;        _objectIdInfo = coll.getObjectIdInfo();
+&nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Feature that determines whether &quot;is getter&quot; methods are
-&nbsp;     * automatically detected based on standard Bean naming convention
-&nbsp;     * or not. If yes, then all public zero-argument methods that
-&nbsp;     * start with prefix &quot;is&quot;, and whose return type is boolean
-&nbsp;     * are considered as &quot;is getters&quot;.
-&nbsp;     * If disabled, only methods explicitly annotated are considered getters.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this feature has lower precedence than per-class
-&nbsp;     * annotations, and is only used if there isn&#39;t more granular
-&nbsp;     * configuration available.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    AUTO_DETECT_IS_GETTERS(true),</b>
+<b class="fc">&nbsp;     * Factory method to use for constructing an instance to use for building</b>
+<b class="fc">&nbsp;     * deserializers.</b>
+<b class="fc">&nbsp;     */</b>
+&nbsp;    public static BasicBeanDescription forDeserialization(POJOPropertiesCollector coll) {
+<b class="fc">&nbsp;        return new BasicBeanDescription(coll);</b>
+<b class="fc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether &quot;setter&quot; methods are
-&nbsp;     * automatically detected based on standard Bean naming convention
-&nbsp;     * or not. If yes, then all public one-argument methods that
-&nbsp;     * start with prefix &quot;set&quot;
-&nbsp;     * are considered setters. If disabled, only methods explicitly
-&nbsp;     * annotated are considered setters.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this feature has lower precedence than per-class
-&nbsp;     * annotations, and is only used if there isn&#39;t more granular
-&nbsp;     * configuration available.
-&nbsp;     *&lt;P&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    AUTO_DETECT_SETTERS(true),</b>
+<b class="nc">&nbsp;    /**</b>
+&nbsp;     * Factory method to use for constructing an instance to use for building
+<b class="fc">&nbsp;     * serializers.</b>
+<b class="fc">&nbsp;     */</b>
+<b class="fc">&nbsp;    public static BasicBeanDescription forSerialization(POJOPropertiesCollector coll) {</b>
+&nbsp;        return new BasicBeanDescription(coll);
+&nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether getters (getter methods)
-&nbsp;     * can be auto-detected if there is no matching mutator (setter,
-&nbsp;     * constructor parameter or field) or not: if set to true,
-&nbsp;     * only getters that match a mutator are auto-discovered; if
-&nbsp;     * false, all auto-detectable getters can be discovered.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default.
+<b class="nc">&nbsp;    /**</b>
+<b class="nc">&nbsp;     * Factory method to use for constructing an instance to use for purposes</b>
+<b class="nc">&nbsp;     * other than building serializers or deserializers; will only have information</b>
+&nbsp;     * on class, not on properties.
 &nbsp;     */
-<b class="nc">&nbsp;    REQUIRE_SETTERS_FOR_GETTERS(false),</b>
+&nbsp;    public static BasicBeanDescription forOtherUse(MapperConfig&lt;?&gt; config,
+&nbsp;            JavaType type, AnnotatedClass ac)
+&nbsp;    {
+&nbsp;        return new BasicBeanDescription(config, type,
+<b class="nc">&nbsp;                ac, Collections.&lt;BeanPropertyDefinition&gt;emptyList());</b>
+&nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether member fields declared as &#39;final&#39; may
-&nbsp;     * be auto-detected to be used mutators (used to change value of the logical
-&nbsp;     * property) or not. If enabled, &#39;final&#39; access modifier has no effect, and
-&nbsp;     * such fields may be detected according to usual visibility and inference
-&nbsp;     * rules; if disabled, such fields are NOT used as mutators except if
-&nbsp;     * explicitly annotated for such use.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default, for backwards compatibility reasons.
-&nbsp;     *
-&nbsp;     * @since 2.2
-&nbsp;     */
-<b class="nc">&nbsp;    ALLOW_FINAL_FIELDS_AS_MUTATORS(true),</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether member mutators (fields and
-&nbsp;     * setters) may be &quot;pulled in&quot; even if they are not visible,
-&nbsp;     * as long as there is a visible accessor (getter or field) with same name.
-&nbsp;     * For example: field &quot;value&quot; may be inferred as mutator,
-&nbsp;     * if there is visible or explicitly marked getter &quot;getValue()&quot;.
-&nbsp;     * If enabled, inferring is enabled; otherwise (disabled) only visible and
-&nbsp;     * explicitly annotated accessors are ever used.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that &#39;getters&#39; are never inferred and need to be either visible (including
-&nbsp;     * bean-style naming) or explicitly annotated.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     *
-&nbsp;     * @since 2.2
-&nbsp;     */
-<b class="nc">&nbsp;    INFER_PROPERTY_MUTATORS(true),</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines handling of &lt;code&gt;java.beans.ConstructorProperties&lt;code&gt;
-&nbsp;     * annotation: when enabled, it is considered as alias of
-&nbsp;     * {@link com.fasterxml.jackson.annotation.JsonCreator}, to mean that constructor
-&nbsp;     * should be considered a property-based Creator; when disabled, only constructor
-&nbsp;     * parameter name information is used, but constructor is NOT considered an explicit
-&nbsp;     * Creator (although may be discovered as one using other annotations or heuristics).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is mostly used to help interoperability with frameworks like Lombok
-&nbsp;     * that may automatically generate &lt;code&gt;ConstructorProperties&lt;/code&gt; annotation
-&nbsp;     * but without necessarily meaning that constructor should be used as Creator
-&nbsp;     * for deserialization.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     *
-&nbsp;     * @since 2.9
-&nbsp;     */
-<b class="nc">&nbsp;    INFER_CREATOR_FROM_CONSTRUCTOR_PROPERTIES(true),</b>
+&nbsp;    protected List&lt;BeanPropertyDefinition&gt; _properties() {
+&nbsp;        if (_properties == null) {
+&nbsp;            _properties = _propCollector.getProperties();
+&nbsp;        }
+&nbsp;        return _properties;
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* Access modifier handling
-&nbsp;    /******************************************************
+&nbsp;    /**********************************************************
+&nbsp;    /* Limited modifications by core databind functionality
+&nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Feature that determines whether method and field access
-&nbsp;     * modifier settings can be overridden when accessing
-&nbsp;     * properties. If enabled, method
-&nbsp;     * {@link java.lang.reflect.AccessibleObject#setAccessible}
-&nbsp;     * may be called to enable access to otherwise unaccessible objects.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this setting may have significant performance implications,
-&nbsp;     * since access override helps remove costly access checks on each
-&nbsp;     * and every Reflection access. If you are considering disabling
-&nbsp;     * this feature, be sure to verify performance consequences if usage
-&nbsp;     * is performance sensitive.
-&nbsp;     * Also note that performance effects vary between Java platforms
-&nbsp;     * (JavaSE vs Android, for example), as well as JDK versions: older
-&nbsp;     * versions seemed to have more significant performance difference.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Conversely, on some platforms, it may be necessary to disable this feature
-&nbsp;     * as platform does not allow such calls. For example, when developing
-&nbsp;     * Applets (or other Java code that runs on tightly restricted sandbox),
-&nbsp;     * it may be necessary to disable the feature regardless of performance effects.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    CAN_OVERRIDE_ACCESS_MODIFIERS(true),</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines that forces call to
-&nbsp;     * {@link java.lang.reflect.AccessibleObject#setAccessible} even for
-&nbsp;     * &lt;code&gt;public&lt;/code&gt; accessors -- that is, even if no such call is
-&nbsp;     * needed from functionality perspective -- if call is allowed
-&nbsp;     * (that is, {@link #CAN_OVERRIDE_ACCESS_MODIFIERS} is set to true).
-&nbsp;     * The main reason to enable this feature is possible performance
-&nbsp;     * improvement as JDK does not have to perform access checks; these
-&nbsp;     * checks are otherwise made for all accessors, including public ones,
-&nbsp;     * and may result in slower Reflection calls. Exact impact (if any)
-&nbsp;     * depends on Java platform (Java SE, Android) as well as JDK version.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default, for legacy reasons (it was the behavior
-&nbsp;     * until 2.6)
-&nbsp;     *
-&nbsp;     * @since 2.7
-&nbsp;     */
-<b class="nc">&nbsp;    OVERRIDE_PUBLIC_ACCESS_MODIFIERS(true),</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* Type-handling features
-&nbsp;    /******************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether the type detection for
-&nbsp;     * serialization should be using actual dynamic runtime type,
-&nbsp;     * or declared static type.
-&nbsp;     * Note that deserialization always uses declared static types
-&nbsp;     * since no runtime types are available (as we are creating
-&nbsp;     * instances after using type information).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * This global default value can be overridden at class, method
-&nbsp;     * or field level by using {@link JsonSerialize#typing} annotation
-&nbsp;     * property.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default which means that dynamic runtime types
-&nbsp;     * are used (instead of declared static types) for serialization.
-&nbsp;     */
-<b class="nc">&nbsp;    USE_STATIC_TYPING(false),</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* View-related features
-&nbsp;    /******************************************************
-&nbsp;     */
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * Feature that determines whether properties that have no view
-&nbsp;     * annotations are included in JSON serialization views (see
-&nbsp;     * {@link com.fasterxml.jackson.annotation.JsonView} for more
-&nbsp;     * details on JSON Views).
-&nbsp;     * If enabled, non-annotated properties will be included;
-&nbsp;     * when disabled, they will be excluded. So this feature
-&nbsp;     * changes between &quot;opt-in&quot; (feature disabled) and
-&nbsp;     * &quot;opt-out&quot; (feature enabled) modes.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Default value is enabled, meaning that non-annotated
-&nbsp;     * properties are included in all views if there is no
-&nbsp;     * {@link com.fasterxml.jackson.annotation.JsonView} annotation.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    DEFAULT_VIEW_INCLUSION(true),</b>
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* Generic output features
-&nbsp;    /******************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that defines default property serialization order used
-&nbsp;     * for POJO fields (note: does &lt;b&gt;not&lt;/b&gt; apply to {@link java.util.Map}
-&nbsp;     * serialization!):
-&nbsp;     * if enabled, default ordering is alphabetic (similar to
-&nbsp;     * how {@link com.fasterxml.jackson.annotation.JsonPropertyOrder#alphabetic()}
-&nbsp;     * works); if disabled, order is unspecified (based on what JDK gives
-&nbsp;     * us, which may be declaration order, but is not guaranteed).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this is just the default behavior, and can be overridden by
-&nbsp;     * explicit overrides in classes (for example with
-&nbsp;     * {@link com.fasterxml.jackson.annotation.JsonPropertyOrder} annotation)
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default.
-&nbsp;     */
-<b class="nc">&nbsp;    SORT_PROPERTIES_ALPHABETICALLY(false),</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* Name-related features
-&nbsp;    /******************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that will allow for more forgiving deserialization of incoming JSON.
-&nbsp;     * If enabled, the bean properties will be matched using their lower-case equivalents,
-&nbsp;     * meaning that any case-combination (incoming and matching names are canonicalized
-&nbsp;     * by lower-casing) should work.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that there is additional performance overhead since incoming property
-&nbsp;     * names need to be lower-cased before comparison, for cases where there are upper-case
-&nbsp;     * letters. Overhead for names that are already lower-case should be negligible however.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default.
-&nbsp;     * 
-&nbsp;     * @since 2.5
-&nbsp;     */
-<b class="nc">&nbsp;    ACCEPT_CASE_INSENSITIVE_PROPERTIES(false),</b>
-&nbsp;
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines if Enum deserialization should be case sensitive or not.
-&nbsp;     * If enabled, Enum deserialization will ignore case, that is, case of incoming String
-&nbsp;     * value and enum id (dependant on other settings, either `name()`, `toString()`, or
-&nbsp;     * explicit override) do not need to match.
-&nbsp;     * &lt;p&gt;
-&nbsp;     * Feature is disabled by default.
-&nbsp;     *
-&nbsp;     * @since 2.9
-&nbsp;     */
-<b class="nc">&nbsp;    ACCEPT_CASE_INSENSITIVE_ENUMS(false),</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that can be enabled to make property names be
-&nbsp;     * overridden by wrapper name (usually detected with annotations
-&nbsp;     * as defined by {@link AnnotationIntrospector#findWrapperName}.
-&nbsp;     * If enabled, all properties that have associated non-empty Wrapper
-&nbsp;     * name will use that wrapper name instead of property name.
-&nbsp;     * If disabled, wrapper name is only used for wrapping (if anything).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default.
-&nbsp;     * 
+&nbsp;     * Method that can be used to prune unwanted properties, during
+&nbsp;     * construction of serializers and deserializers.
+<b class="fc">&nbsp;     * Use with utmost care, if at all...</b>
+<b class="fc">&nbsp;     * </b>
 &nbsp;     * @since 2.1
 &nbsp;     */
-<b class="nc">&nbsp;    USE_WRAPPER_NAME_AS_PROPERTY_NAME(false),</b>
+&nbsp;    public boolean removeProperty(String propName)
+<b class="nc">&nbsp;    {</b>
+<b class="nc">&nbsp;        Iterator&lt;BeanPropertyDefinition&gt; it = _properties().iterator();</b>
+&nbsp;        while (it.hasNext()) {
+<b class="nc">&nbsp;            BeanPropertyDefinition prop = it.next();</b>
+&nbsp;            if (prop.getName().equals(propName)) {
+&nbsp;                it.remove();
+&nbsp;                return true;
+&nbsp;            }
+&nbsp;        }
+&nbsp;        return false;
+&nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that may be enabled to enforce strict compatibility with
-&nbsp;     * Bean name introspection, instead of slightly different mechanism
-&nbsp;     * Jackson defaults to.
-&nbsp;     * Specific difference is that Jackson always lower cases leading upper-case
-&nbsp;     * letters, so &quot;getURL()&quot; becomes &quot;url&quot; property; whereas standard Bean
-&nbsp;     * naming &lt;b&gt;only&lt;/b&gt; lower-cases the first letter if it is NOT followed by
-&nbsp;     * another upper-case letter (so &quot;getURL()&quot; would result in &quot;URL&quot; property).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default for backwards compatibility purposes: earlier
-&nbsp;     * Jackson versions used Jackson&#39;s own mechanism.
-&nbsp;     *
-&nbsp;     * @since 2.5
+&nbsp;    public boolean addProperty(BeanPropertyDefinition def)
+&nbsp;    {
+&nbsp;        // first: ensure we do not have such property
+&nbsp;        if (hasProperty(def.getFullName())) {
+&nbsp;            return false;
+&nbsp;        }
+&nbsp;        _properties().add(def);
+&nbsp;        return true;
+&nbsp;    }
+<b class="nc">&nbsp;    </b>
+<b class="nc">&nbsp;    /**</b>
+<b class="nc">&nbsp;     * @since 2.6</b>
+<b class="nc">&nbsp;     */</b>
+<b class="nc">&nbsp;    public boolean hasProperty(PropertyName name) {</b>
+<b class="nc">&nbsp;        return findProperty(name) != null;</b>
+&nbsp;    }
+<b class="nc">&nbsp;    </b>
+<b class="nc">&nbsp;    /**</b>
+&nbsp;     * @since 2.6
 &nbsp;     */
-<b class="nc">&nbsp;    USE_STD_BEAN_NAMING(false),</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that when enabled will allow explicitly named properties (i.e., fields or methods
-&nbsp;     * annotated with {@link com.fasterxml.jackson.annotation.JsonProperty}(&quot;explicitName&quot;)) to
-&nbsp;     * be re-named by a {@link PropertyNamingStrategy}, if one is configured.
-&nbsp;     * &lt;p&gt;
-&nbsp;     * Feature is disabled by default.
-&nbsp;     *
-&nbsp;     * @since 2.7
-&nbsp;     */
-<b class="nc">&nbsp;    ALLOW_EXPLICIT_PROPERTY_RENAMING(false),</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* Coercion features
-&nbsp;    /******************************************************
-&nbsp;     */
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * Feature that determines whether coercions from secondary representations are allowed
-&nbsp;     * for simple non-textual scalar types: numbers and booleans. This includes `primitive`
-&nbsp;     * types and their wrappers, but excludes `java.lang.String` and date/time types.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * When feature is disabled, only strictly compatible input may be bound: numbers for
-&nbsp;     * numbers, boolean values for booleans. When feature is enabled, conversions from
-&nbsp;     * JSON String are allowed, as long as textual value matches (for example, String
-&nbsp;     * &quot;true&quot; is allowed as equivalent of JSON boolean token `true`; or String &quot;1.0&quot;
-&nbsp;     * for `double`).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that it is possible that other configurability options can override this
-&nbsp;     * in closer scope (like on per-type or per-property basis); this is just the global
-&nbsp;     * default.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default (for backwards compatibility since this was the
-&nbsp;     * default behavior)
-&nbsp;     *
-&nbsp;     * @since 2.9
-&nbsp;     */
-<b class="nc">&nbsp;    ALLOW_COERCION_OF_SCALARS(true),</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /******************************************************
-&nbsp;    /* Other features
-&nbsp;    /******************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Feature that determines whether multiple registrations of same module
-&nbsp;     * should be ignored or not; if enabled, only the first registration call
-&nbsp;     * results in module being called, and possible duplicate calls are silently
-&nbsp;     * ignored; if disabled, no checking is done and all registration calls are
-&nbsp;     * dispatched to module.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Definition of &quot;same module&quot; is based on using {@link Module#getTypeId()};
-&nbsp;     * modules with same non-null &lt;code&gt;type id&lt;/code&gt; are considered same for
-&nbsp;     * purposes of duplicate registration. This also avoids having to keep track
-&nbsp;     * of actual module instances; only ids will be kept track of (and only if
-&nbsp;     * this feature is enabled).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is enabled by default.
-&nbsp;     *
-&nbsp;     * @since 2.5
-&nbsp;     */
-<b class="nc">&nbsp;    IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Setting that determines what happens if an attempt is made to explicitly
-&nbsp;     * &quot;merge&quot; value of a property, where value does not support merging; either
-&nbsp;     * merging is skipped and new value is created (&lt;code&gt;true&lt;/code&gt;) or
-&nbsp;     * an exception is thrown (false).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Feature is disabled by default since non-mergeable property types are ignored
-&nbsp;     * even if defaults call for merging, and usually explicit per-type or per-property
-&nbsp;     * settings for such types should result in an exception.
-&nbsp;     *
-&nbsp;     * @since 2.9
-&nbsp;     */
-<b class="nc">&nbsp;    IGNORE_MERGE_FOR_UNMERGEABLE(true)</b>
-&nbsp;
-&nbsp;    ;
-&nbsp;
-&nbsp;    private final boolean _defaultState;
-&nbsp;    private final int _mask;
-&nbsp;    
-<b class="nc">&nbsp;    private MapperFeature(boolean defaultState) {</b>
-<b class="nc">&nbsp;        _defaultState = defaultState;</b>
-<b class="nc">&nbsp;        _mask = (1 &lt;&lt; ordinal());</b>
+&nbsp;    public BeanPropertyDefinition findProperty(PropertyName name)
+&nbsp;    {
+&nbsp;        for (BeanPropertyDefinition prop : _properties()) {
+<b class="nc">&nbsp;            if (prop.hasName(name)) {</b>
+<b class="nc">&nbsp;                return prop;</b>
+&nbsp;            }
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return null;</b>
 &nbsp;    }
 &nbsp;    
-&nbsp;    @Override
-<b class="nc">&nbsp;    public boolean enabledByDefault() { return _defaultState; }</b>
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Simple accessors from BeanDescription
+&nbsp;    /**********************************************************
+<b class="nc">&nbsp;     */</b>
 &nbsp;
 &nbsp;    @Override
-<b class="nc">&nbsp;    public int getMask() { return _mask; }</b>
+&nbsp;    public AnnotatedClass getClassInfo() { return _classInfo; }
 &nbsp;
 &nbsp;    @Override
-<b class="nc">&nbsp;    public boolean enabledIn(int flags) { return (flags &amp; _mask) != 0; }</b>
-&nbsp;}
+&nbsp;    public ObjectIdInfo getObjectIdInfo() { return  _objectIdInfo; }
+&nbsp;
+<b class="nc">&nbsp;    @Override</b>
+<b class="nc">&nbsp;    public List&lt;BeanPropertyDefinition&gt; findProperties() {</b>
+<b class="nc">&nbsp;        return _properties();</b>
+&nbsp;    }
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public AnnotatedMethod findJsonValueMethod() {
+&nbsp;        return (_propCollector == null) ? null
+&nbsp;                : _propCollector.getJsonValueMethod();
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Set&lt;String&gt; getIgnoredPropertyNames() {
+&nbsp;        Set&lt;String&gt; ign = (_propCollector == null) ? null
+&nbsp;                : _propCollector.getIgnoredPropertyNames();
+<b class="nc">&nbsp;        if (ign == null) {</b>
+&nbsp;            return Collections.emptySet();
+&nbsp;        }
+<b class="nc">&nbsp;        return ign;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+<b class="nc">&nbsp;    public boolean hasKnownClassAnnotations() {</b>
+&nbsp;        return _classInfo.hasAnnotations();
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Annotations getClassAnnotations() {
+<b class="nc">&nbsp;        return _classInfo.getAnnotations();</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Deprecated // since 2.7
+&nbsp;    public TypeBindings bindingsForBeanType() {
+<b class="nc">&nbsp;        return _type.getBindings();</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Deprecated // since 2.8
+&nbsp;    public JavaType resolveType(java.lang.reflect.Type jdkType) {
+<b class="nc">&nbsp;        if (jdkType == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return _config.getTypeFactory().constructType(jdkType, _type.getBindings());</b>
+&nbsp;    }
+<b class="nc">&nbsp;</b>
+&nbsp;    @Override
+&nbsp;    public AnnotatedConstructor findDefaultConstructor() {
+&nbsp;        return _classInfo.getDefaultConstructor();
+&nbsp;    }
+<b class="nc">&nbsp;</b>
+&nbsp;    @Override
+&nbsp;    public AnnotatedMethod findAnySetter() throws IllegalArgumentException
+&nbsp;    {
+&nbsp;        AnnotatedMethod anySetter = (_propCollector == null) ? null
+<b class="nc">&nbsp;                : _propCollector.getAnySetterMethod();</b>
+&nbsp;        if (anySetter != null) {
+&nbsp;            /* Also, let&#39;s be somewhat strict on how field name is to be
+&nbsp;             * passed; String, Object make sense, others not
+&nbsp;             * so much.
+&nbsp;             */
+<b class="nc">&nbsp;            /* !!! 18-May-2009, tatu: how about enums? Can add support if</b>
+&nbsp;             *  requested; easy enough for devs to add support within
+&nbsp;             *  method.
+&nbsp;             */
+&nbsp;            Class&lt;?&gt; type = anySetter.getRawParameterType(0);
+&nbsp;            if (type != String.class &amp;&amp; type != Object.class) {
+<b class="nc">&nbsp;                throw new IllegalArgumentException(&quot;Invalid &#39;any-setter&#39; annotation on method &quot;+anySetter.getName()+&quot;(): first argument not of type String or Object, but &quot;+type.getName());</b>
+<b class="nc">&nbsp;            }</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return anySetter;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Map&lt;Object, AnnotatedMember&gt; findInjectables() {
+<b class="nc">&nbsp;        if (_propCollector != null) {</b>
+&nbsp;            return _propCollector.getInjectables();
+&nbsp;        }
+&nbsp;        return Collections.emptyMap();
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    @Override</b>
+<b class="nc">&nbsp;    public List&lt;AnnotatedConstructor&gt; getConstructors() {</b>
+<b class="nc">&nbsp;        return _classInfo.getConstructors();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Object instantiateBean(boolean fixAccess) {
+&nbsp;        AnnotatedConstructor ac = _classInfo.getDefaultConstructor();
+&nbsp;        if (ac == null) {
+<b class="nc">&nbsp;            return null;</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        if (fixAccess) {</b>
+&nbsp;            ac.fixAccess(_config.isEnabled(MapperFeature.OVERRIDE_PUBLIC_ACCESS_MODIFIERS));
+<b class="nc">&nbsp;        }</b>
+&nbsp;        try {
+<b class="nc">&nbsp;            return ac.getAnnotated().newInstance();</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            Throwable t = e;</b>
+<b class="nc">&nbsp;            while (t.getCause() != null) {</b>
+&nbsp;                t = t.getCause();
+&nbsp;            }
+<b class="nc">&nbsp;            if (t instanceof Error) throw (Error) t;</b>
+<b class="nc">&nbsp;            if (t instanceof RuntimeException) throw (RuntimeException) t;</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Failed to instantiate bean of type &quot;+_classInfo.getAnnotated().getName()+&quot;: (&quot;+t.getClass().getName()+&quot;) &quot;+t.getMessage(), t);</b>
+&nbsp;        }
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+<b class="nc">&nbsp;    /*</b>
+&nbsp;    /**********************************************************
+&nbsp;    /* Simple accessors, extended
+<b class="nc">&nbsp;    /**********************************************************</b>
+&nbsp;     */
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public AnnotatedMethod findMethod(String name, Class&lt;?&gt;[] paramTypes) {
+<b class="nc">&nbsp;        return _classInfo.findMethod(name, paramTypes);</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+<b class="nc">&nbsp;    /*</b>
+&nbsp;    /**********************************************************
+&nbsp;    /* General per-class annotation introspection
+&nbsp;    /**********************************************************
+&nbsp;     */
+<b class="nc">&nbsp;</b>
+&nbsp;    @Override
+&nbsp;    public JsonFormat.Value findExpectedFormat(JsonFormat.Value defValue)
+&nbsp;    {
+&nbsp;        // 15-Apr-2016, tatu: Let&#39;s check both per-type defaults and annotations; per-type
+<b class="nc">&nbsp;        //   defaults having higher precedence, so start with that</b>
+<b class="nc">&nbsp;        if (_annotationIntrospector != null) {</b>
+<b class="nc">&nbsp;            JsonFormat.Value v = _annotationIntrospector.findFormat(_classInfo);</b>
+&nbsp;            if (v != null) {
+<b class="nc">&nbsp;                if (defValue == null) {</b>
+<b class="nc">&nbsp;                    defValue = v;</b>
+&nbsp;                } else {
+&nbsp;                    defValue = defValue.withOverrides(v);
+<b class="nc">&nbsp;                }</b>
+<b class="nc">&nbsp;            }</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        JsonFormat.Value v = _config.getDefaultPropertyFormat(_classInfo.getRawType());</b>
+<b class="nc">&nbsp;        if (v != null) {</b>
+&nbsp;            if (defValue == null) {
+<b class="nc">&nbsp;                defValue = v;</b>
+<b class="nc">&nbsp;            } else {</b>
+<b class="nc">&nbsp;                defValue = defValue.withOverrides(v);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;        return defValue;
+&nbsp;    }
+&nbsp;    
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Introspection for serialization
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public Converter&lt;Object,Object&gt; findSerializationConverter()
+&nbsp;    {
+&nbsp;        if (_annotationIntrospector == null) {
+&nbsp;            return null;
+&nbsp;        }
+&nbsp;        return _createConverter(_annotationIntrospector.findSerializationConverter(_classInfo));
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Method for determining whether null properties should be written
+&nbsp;     * out for a Bean of introspected type. This is based on global
+&nbsp;     * feature (lowest priority, passed as argument)
+&nbsp;     * and per-class annotation (highest priority).
+<b class="nc">&nbsp;     */</b>
+<b class="nc">&nbsp;    @Override</b>
+<b class="nc">&nbsp;    public JsonInclude.Value findPropertyInclusion(JsonInclude.Value defValue) {</b>
+<b class="nc">&nbsp;        if (_annotationIntrospector != null) {</b>
+<b class="nc">&nbsp;            JsonInclude.Value incl = _annotationIntrospector.findPropertyInclusion(_classInfo);</b>
+&nbsp;            if (incl != null) {
+<b class="nc">&nbsp;                return (defValue == null) ? incl : defValue.withOverrides(incl);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;        return defValue;
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    /**</b>
+<b class="nc">&nbsp;     * Method used to locate the method of introspected class that</b>
+&nbsp;     * implements {@link com.fasterxml.jackson.annotation.JsonAnyGetter}.
+<b class="nc">&nbsp;     * If no such method exists null is returned.</b>
+&nbsp;     * If more than one are found, an exception is thrown.
+&nbsp;     */
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public AnnotatedMember findAnyGetter() throws IllegalArgumentException
+&nbsp;    {
+&nbsp;        AnnotatedMember anyGetter = (_propCollector == null) ? null
+&nbsp;                : _propCollector.getAnyGetter();
+&nbsp;        if (anyGetter != null) {
+<b class="nc">&nbsp;            /* For now let&#39;s require a Map; in future can add support for other</b>
+<b class="nc">&nbsp;             * types like perhaps Iterable&lt;Map.Entry&gt;?</b>
+<b class="nc">&nbsp;             */</b>
+<b class="nc">&nbsp;            Class&lt;?&gt; type = anyGetter.getRawType();</b>
+&nbsp;            if (!Map.class.isAssignableFrom(type)) {
+<b class="nc">&nbsp;                throw new IllegalArgumentException(&quot;Invalid &#39;any-getter&#39; annotation on method &quot;+anyGetter.getName()+&quot;(): return type is not instance of java.util.Map&quot;);</b>
+<b class="nc">&nbsp;            }</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        return anyGetter;
+&nbsp;    }
+<b class="nc">&nbsp;</b>
+&nbsp;    @Override
+<b class="nc">&nbsp;    public AnnotatedMember findAnySetterField() throws IllegalArgumentException {</b>
+&nbsp;        AnnotatedMember anySetter = (_propCollector == null) ? null : _propCollector.getAnySetterField();
+&nbsp;		if (anySetter != null) {
+&nbsp;			/*
+&nbsp;			 * For now let&#39;s require a Map; in future can add support for other
+&nbsp;			 * types like perhaps Iterable&lt;Map.Entry&gt;?
+&nbsp;			 */
+&nbsp;			Class&lt;?&gt; type = anySetter.getRawType();
+&nbsp;			if (!Map.class.isAssignableFrom(type)) {
+&nbsp;				throw new IllegalArgumentException(&quot;Invalid &#39;any-setter&#39; annotation on field &quot; + anySetter.getName()
+&nbsp;				        + &quot;(): type is not instance of java.util.Map&quot;);
+&nbsp;			}
+<b class="nc">&nbsp;		}</b>
+<b class="nc">&nbsp;		return anySetter;</b>
+&nbsp;	}
+<b class="nc">&nbsp;</b>
+&nbsp;    @Override
+&nbsp;    public Map&lt;String,AnnotatedMember&gt; findBackReferenceProperties()
+&nbsp;    {
+&nbsp;        HashMap&lt;String,AnnotatedMember&gt; result = null;
+&nbsp;//        boolean hasIgnored = (_ignoredPropertyNames != null);
+&nbsp;
+&nbsp;        for (BeanPropertyDefinition property : _properties()) {
+&nbsp;            /* 23-Sep-2014, tatu: As per [Databind#426], we _should_ try to avoid
+&nbsp;             *   calling accessor, as it triggers exception from seeming conflict.
+&nbsp;             *   But the problem is that _ignoredPropertyNames here only contains
+<b class="nc">&nbsp;             *   ones ignored on per-property annotations, but NOT class annotations...</b>
+<b class="nc">&nbsp;             *   so commented out part does not work, alas</b>
+<b class="nc">&nbsp;             */</b>
+<b class="nc">&nbsp;            /*</b>
+&nbsp;            if (hasIgnored &amp;&amp; _ignoredPropertyNames.contains(property.getName())) {
+&nbsp;                continue;
+<b class="nc">&nbsp;            }</b>
+&nbsp;            */
+&nbsp;            AnnotatedMember am = property.getMutator();
+&nbsp;            if (am == null) {
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;            AnnotationIntrospector.ReferenceProperty refDef = _annotationIntrospector.findReferenceType(am);
+&nbsp;            if (refDef != null &amp;&amp; refDef.isBackReference()) {
+&nbsp;                if (result == null) {
+&nbsp;                    result = new HashMap&lt;String,AnnotatedMember&gt;();
+&nbsp;                }
+&nbsp;                String refName = refDef.getName();
+<b class="nc">&nbsp;                if (result.put(refName, am) != null) {</b>
+<b class="nc">&nbsp;                    throw new IllegalArgumentException(&quot;Multiple back-reference properties with name &#39;&quot;+refName+&quot;&#39;&quot;);</b>
+<b class="nc">&nbsp;                }</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;        return result;
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    /*</b>
+&nbsp;    /**********************************************************
+&nbsp;    /* Introspection for deserialization, factories
+<b class="nc">&nbsp;    /**********************************************************</b>
+&nbsp;     */
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;AnnotatedMethod&gt; getFactoryMethods()
+&nbsp;    {
+<b class="nc">&nbsp;        // must filter out anything that clearly is not a factory method</b>
+<b class="nc">&nbsp;        List&lt;AnnotatedMethod&gt; candidates = _classInfo.getStaticMethods();</b>
+<b class="nc">&nbsp;        if (candidates.isEmpty()) {</b>
+<b class="nc">&nbsp;            return candidates;</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        ArrayList&lt;AnnotatedMethod&gt; result = new ArrayList&lt;AnnotatedMethod&gt;();</b>
+&nbsp;        for (AnnotatedMethod am : candidates) {
+<b class="nc">&nbsp;            if (isFactoryMethod(am)) {</b>
+<b class="nc">&nbsp;                result.add(am);</b>
+<b class="nc">&nbsp;            }</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return result;</b>
+&nbsp;    }
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public Constructor&lt;?&gt; findSingleArgConstructor(Class&lt;?&gt;... argTypes)
+&nbsp;    {
+<b class="nc">&nbsp;        for (AnnotatedConstructor ac : _classInfo.getConstructors()) {</b>
+<b class="nc">&nbsp;            // This list is already filtered to only include accessible</b>
+<b class="nc">&nbsp;            /* (note: for now this is a redundant check; but in future</b>
+&nbsp;             * that may change; thus leaving here for now)
+&nbsp;             */
+&nbsp;            if (ac.getParameterCount() == 1) {
+&nbsp;                Class&lt;?&gt; actArg = ac.getRawParameterType(0);
+&nbsp;                for (Class&lt;?&gt; expArg : argTypes) {
+&nbsp;                    if (expArg == actArg) {
+<b class="nc">&nbsp;                        return ac.getAnnotated();</b>
+<b class="nc">&nbsp;                    }</b>
+<b class="nc">&nbsp;                }</b>
+&nbsp;            }
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return null;</b>
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    @Override</b>
+&nbsp;    public Method findFactoryMethod(Class&lt;?&gt;... expArgTypes)
+&nbsp;    {
+&nbsp;        // So, of all single-arg static methods:
+&nbsp;        for (AnnotatedMethod am : _classInfo.getStaticMethods()) {
+&nbsp;            if (isFactoryMethod(am)) {
+&nbsp;                // And must take one of expected arg types (or supertype)
+&nbsp;                Class&lt;?&gt; actualArgType = am.getRawParameterType(0);
+&nbsp;                for (Class&lt;?&gt; expArgType : expArgTypes) {
+&nbsp;                    // And one that matches what we would pass in
+&nbsp;                    if (actualArgType.isAssignableFrom(expArgType)) {
+&nbsp;                        return am.getAnnotated();
+&nbsp;                    }
+<b class="nc">&nbsp;                }</b>
+<b class="nc">&nbsp;            }</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        return null;
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    protected boolean isFactoryMethod(AnnotatedMethod am)</b>
+<b class="nc">&nbsp;    {</b>
+&nbsp;        /* First: return type must be compatible with the introspected class
+<b class="nc">&nbsp;         * (i.e. allowed to be sub-class, although usually is the same</b>
+<b class="nc">&nbsp;         * class)</b>
+&nbsp;         */
+&nbsp;        Class&lt;?&gt; rt = am.getRawReturnType();
+&nbsp;        if (!getBeanClass().isAssignableFrom(rt)) {
+&nbsp;            return false;
+&nbsp;        }
+<b class="nc">&nbsp;</b>
+&nbsp;        /* Also: must be a recognized factory method, meaning:
+&nbsp;         * (a) marked with @JsonCreator annotation, or
+&nbsp;         * (b) &quot;valueOf&quot; (at this point, need not be public)
+&nbsp;         */
+<b class="nc">&nbsp;        if (_annotationIntrospector.hasCreatorAnnotation(am)) {</b>
+<b class="nc">&nbsp;            return true;</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        final String name = am.getName();</b>
+<b class="nc">&nbsp;        if (&quot;valueOf&quot;.equals(name)) {</b>
+&nbsp;            return true;
+&nbsp;        }
+&nbsp;        // [databind#208] Also accept &quot;fromString()&quot;, if takes String or CharSequence
+<b class="nc">&nbsp;        if (&quot;fromString&quot;.equals(name)) {</b>
+<b class="nc">&nbsp;            if (1 == am.getParameterCount()) {</b>
+&nbsp;                Class&lt;?&gt; cls = am.getRawParameterType(0);
+&nbsp;                if (cls == String.class || CharSequence.class.isAssignableFrom(cls)) {
+&nbsp;                    return true;
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+<b class="nc">&nbsp;        return false;</b>
+&nbsp;    }
+<b class="nc">&nbsp;</b>
+&nbsp;    /**
+<b class="nc">&nbsp;     * @deprecated since 2.8</b>
+<b class="nc">&nbsp;     */</b>
+&nbsp;    @Deprecated // since 2.8, not used at least since 2.7
+<b class="nc">&nbsp;    protected PropertyName _findCreatorPropertyName(AnnotatedParameter param)</b>
+<b class="nc">&nbsp;    {</b>
+&nbsp;        PropertyName name = _annotationIntrospector.findNameForDeserialization(param);
+&nbsp;        if (name == null || name.isEmpty()) {
+&nbsp;            String str = _annotationIntrospector.findImplicitPropertyName(param);
+<b class="nc">&nbsp;            if (str != null &amp;&amp; !str.isEmpty()) {</b>
+<b class="nc">&nbsp;                name = PropertyName.construct(str);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;        return name;
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+<b class="nc">&nbsp;    /**********************************************************</b>
+<b class="nc">&nbsp;    /* Introspection for deserialization, other</b>
+<b class="nc">&nbsp;    /**********************************************************</b>
+&nbsp;     */
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Class&lt;?&gt; findPOJOBuilder() {
+&nbsp;        return (_annotationIntrospector == null) ?
+<b class="nc">&nbsp;    			null : _annotationIntrospector.findPOJOBuilder(_classInfo);</b>
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+&nbsp;    @Override
+<b class="nc">&nbsp;    public JsonPOJOBuilder.Value findPOJOBuilderConfig()</b>
+&nbsp;    {
+<b class="nc">&nbsp;        return (_annotationIntrospector == null) ?</b>
+<b class="nc">&nbsp;                null : _annotationIntrospector.findPOJOBuilderConfig(_classInfo);</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Converter&lt;Object,Object&gt; findDeserializationConverter()
+<b class="nc">&nbsp;    {</b>
+<b class="nc">&nbsp;        if (_annotationIntrospector == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return _createConverter(_annotationIntrospector.findDeserializationConverter(_classInfo));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+<b class="nc">&nbsp;    public String findClassDescription() {</b>
+&nbsp;        return (_annotationIntrospector == null) ?
+&nbsp;                null : _annotationIntrospector.findClassDescription(_classInfo);
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Helper methods for field introspection
+&nbsp;    /**********************************************************
+<b class="nc">&nbsp;     */</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    /**</b>
+<b class="nc">&nbsp;     * @param ignoredProperties (optional) names of properties to ignore;</b>
+<b class="nc">&nbsp;     *   any fields that would be recognized as one of these properties</b>
+&nbsp;     *   is ignored.
+&nbsp;     * @param forSerialization If true, will collect serializable property
+<b class="nc">&nbsp;     *    fields; if false, deserializable</b>
+&nbsp;     *
+&nbsp;     * @return Ordered Map with logical property name as key, and
+&nbsp;     *    matching field as value.
+&nbsp;     *
+&nbsp;     * @deprecated Since 2.7.2, does not seem to be used?
+&nbsp;     */
+&nbsp;    @Deprecated
+&nbsp;    public LinkedHashMap&lt;String,AnnotatedField&gt; _findPropertyFields(
+&nbsp;            Collection&lt;String&gt; ignoredProperties, boolean forSerialization)
+&nbsp;    {
+<b class="nc">&nbsp;        LinkedHashMap&lt;String,AnnotatedField&gt; results = new LinkedHashMap&lt;String,AnnotatedField&gt;();</b>
+<b class="nc">&nbsp;        for (BeanPropertyDefinition property : _properties()) {</b>
+&nbsp;            AnnotatedField f = property.getField();
+&nbsp;            if (f != null) {
+&nbsp;                String name = property.getName();
+&nbsp;                if (ignoredProperties != null) {
+&nbsp;                    if (ignoredProperties.contains(name)) {
+<b class="nc">&nbsp;                        continue;</b>
+<b class="nc">&nbsp;                    }</b>
+&nbsp;                }
+&nbsp;                results.put(name, f);
+&nbsp;            }
+&nbsp;        }
+&nbsp;        return results;
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+&nbsp;    /*
+<b class="nc">&nbsp;    /**********************************************************</b>
+&nbsp;    /* Helper methods, other
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;    
+<b class="nc">&nbsp;    @SuppressWarnings(&quot;unchecked&quot;)</b>
+<b class="nc">&nbsp;    public Converter&lt;Object,Object&gt; _createConverter(Object converterDef)</b>
+&nbsp;    {
+&nbsp;        if (converterDef == null) {
+&nbsp;            return null;
+&nbsp;        }
+&nbsp;        if (converterDef instanceof Converter&lt;?,?&gt;) {
+&nbsp;            return (Converter&lt;Object,Object&gt;) converterDef;
+&nbsp;        }
+&nbsp;        if (!(converterDef instanceof Class)) {
+&nbsp;            throw new IllegalStateException(&quot;AnnotationIntrospector returned Converter definition of type &quot;
+&nbsp;                    +converterDef.getClass().getName()+&quot;; expected type Converter or Class&lt;Converter&gt; instead&quot;);
+&nbsp;        }
+&nbsp;        Class&lt;?&gt; converterClass = (Class&lt;?&gt;)converterDef;
+&nbsp;        // there are some known &quot;no class&quot; markers to consider too:
+&nbsp;        if (converterClass == Converter.None.class || ClassUtil.isBogusClass(converterClass)) {
+&nbsp;            return null;
+&nbsp;        }
+&nbsp;        if (!Converter.class.isAssignableFrom(converterClass)) {
+&nbsp;            throw new IllegalStateException(&quot;AnnotationIntrospector returned Class &quot;
+&nbsp;                    +converterClass.getName()+&quot;; expected Class&lt;Converter&gt;&quot;);
+&nbsp;        }
+&nbsp;        HandlerInstantiator hi = _config.getHandlerInstantiator();
+&nbsp;        Converter&lt;?,?&gt; conv = (hi == null) ? null : hi.converterInstance(_config, _classInfo, converterClass);
+&nbsp;        if (conv == null) {
+&nbsp;            conv = (Converter&lt;?,?&gt;) ClassUtil.createInstance(converterClass,
+<b class="nc">&nbsp;                    _config.canOverrideAccessModifiers());</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return (Converter&lt;Object,Object&gt;) conv;</b>
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;}</b>
 </code>
 </pre>
 </div>
@@ -595,7 +794,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:18</div>
+    <div style="float:right;">generated on 2024-04-09 23:25</div>
 </div>
 </body>
 </html>

@@ -60,10 +60,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    69.7%
+    69.4%
   </span>
   <span class="absValue">
-    (278/399)
+    (277/399)
   </span>
 </td>
 </tr>
@@ -830,26 +830,23 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    {
 <b class="fc">&nbsp;        if (value == _valueToUpdate) return this;</b>
 <b class="fc">&nbsp;        if (value == null) {</b>
-&nbsp;            // 18-Oct-2016, tatu: Actually, should be allowed, to remove value
-&nbsp;            //   to update, if any
-<b class="fc">&nbsp;            return _new(this, _config, _valueType, _rootDeserializer, null,</b>
-&nbsp;                    _schema, _injectableValues, _dataFormatReaders);
+&nbsp;            throw new IllegalArgumentException(&quot;cat not update null value&quot;);
 &nbsp;        }
-&nbsp;        JavaType t;
+<b class="fc">&nbsp;        JavaType t;</b>
 &nbsp;        
 &nbsp;        /* no real benefit from pre-fetching, as updating readers are much
 &nbsp;         * less likely to be reused, and value type may also be forced
 &nbsp;         * with a later chained call...
 &nbsp;         */
-<b class="fc">&nbsp;        if (_valueType == null) {</b>
-<b class="fc">&nbsp;            t = _config.constructType(value.getClass());</b>
+&nbsp;        if (_valueType == null) {
+&nbsp;            t = _config.constructType(value.getClass());
 &nbsp;        } else {
 <b class="fc">&nbsp;            t = _valueType;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return _new(this, _config, t, _rootDeserializer, value,</b>
-&nbsp;                _schema, _injectableValues, _dataFormatReaders);
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return _new(this, _config, t, _rootDeserializer, value,
+<b class="fc">&nbsp;                _schema, _injectableValues, _dataFormatReaders);</b>
 &nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Method for constructing a new instance with configuration that
 &nbsp;     * uses specified View for filtering.
@@ -858,26 +855,26 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * rather construct and returns a newly configured instance.
 &nbsp;     */
 &nbsp;    public ObjectReader withView(Class&lt;?&gt; activeView) {
-<b class="fc">&nbsp;        return _with(_config.withView(activeView));</b>
+&nbsp;        return _with(_config.withView(activeView));
 &nbsp;    }
 &nbsp;
-&nbsp;    public ObjectReader with(Locale l) {
-<b class="fc">&nbsp;        return _with(_config.with(l));</b>
+<b class="fc">&nbsp;    public ObjectReader with(Locale l) {</b>
+&nbsp;        return _with(_config.with(l));
 &nbsp;    }
 &nbsp;
-&nbsp;    public ObjectReader with(TimeZone tz) {
-<b class="nc">&nbsp;        return _with(_config.with(tz));</b>
+<b class="fc">&nbsp;    public ObjectReader with(TimeZone tz) {</b>
+&nbsp;        return _with(_config.with(tz));
 &nbsp;    }
 &nbsp;
-&nbsp;    public ObjectReader withHandler(DeserializationProblemHandler h) {
-<b class="fc">&nbsp;        return _with(_config.withHandler(h));</b>
+<b class="nc">&nbsp;    public ObjectReader withHandler(DeserializationProblemHandler h) {</b>
+&nbsp;        return _with(_config.withHandler(h));
 &nbsp;    }
 &nbsp;
-&nbsp;    public ObjectReader with(Base64Variant defaultBase64) {
-<b class="fc">&nbsp;        return _with(_config.with(defaultBase64));</b>
+<b class="fc">&nbsp;    public ObjectReader with(Base64Variant defaultBase64) {</b>
+&nbsp;        return _with(_config.with(defaultBase64));
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Fluent factory method for constructing a reader that will try to
 &nbsp;     * auto-detect underlying data format, using specified list of
 &nbsp;     * {@link JsonFactory} instances, and default {@link DataFormatReaders} settings
@@ -900,10 +897,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.1
 &nbsp;     */
 &nbsp;    public ObjectReader withFormatDetection(ObjectReader... readers) {
-<b class="fc">&nbsp;        return withFormatDetection(new DataFormatReaders(readers));</b>
+&nbsp;        return withFormatDetection(new DataFormatReaders(readers));
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Fluent factory method for constructing a reader that will try to
 &nbsp;     * auto-detect underlying data format, using specified
 &nbsp;     * {@link DataFormatReaders}.
@@ -919,107 +916,107 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.1
 &nbsp;     */
 &nbsp;    public ObjectReader withFormatDetection(DataFormatReaders readers) {
-<b class="fc">&nbsp;        return _new(this, _config, _valueType, _rootDeserializer, _valueToUpdate,</b>
+&nbsp;        return _new(this, _config, _valueType, _rootDeserializer, _valueToUpdate,
 &nbsp;                _schema, _injectableValues, readers);
 &nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * @since 2.3
 &nbsp;     */
 &nbsp;    public ObjectReader with(ContextAttributes attrs) {
-<b class="fc">&nbsp;        return _with(_config.with(attrs));</b>
+&nbsp;        return _with(_config.with(attrs));
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.3
 &nbsp;     */
 &nbsp;    public ObjectReader withAttributes(Map&lt;?,?&gt; attrs) {
-<b class="fc">&nbsp;        return _with(_config.withAttributes(attrs));</b>
+&nbsp;        return _with(_config.withAttributes(attrs));
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.3
 &nbsp;     */
 &nbsp;    public ObjectReader withAttribute(Object key, Object value) {
-<b class="fc">&nbsp;        return _with( _config.withAttribute(key, value));</b>
+&nbsp;        return _with( _config.withAttribute(key, value));
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.3
 &nbsp;     */
 &nbsp;    public ObjectReader withoutAttribute(Object key) {
-<b class="nc">&nbsp;        return _with(_config.withoutAttribute(key));</b>
+&nbsp;        return _with(_config.withoutAttribute(key));
 &nbsp;    }
 &nbsp;
-&nbsp;    /*
+<b class="nc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Overridable factory methods may override
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;    
 &nbsp;    protected ObjectReader _with(DeserializationConfig newConfig) {
-<b class="fc">&nbsp;        if (newConfig == _config) {</b>
-<b class="fc">&nbsp;            return this;</b>
+&nbsp;        if (newConfig == _config) {
+&nbsp;            return this;
 &nbsp;        }
 <b class="fc">&nbsp;        ObjectReader r = _new(this, newConfig);</b>
 <b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            r  = r.withFormatDetection(_dataFormatReaders.with(newConfig));</b>
-&nbsp;        }
+&nbsp;            r  = r.withFormatDetection(_dataFormatReaders.with(newConfig));
+<b class="fc">&nbsp;        }</b>
 <b class="fc">&nbsp;        return r;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
-&nbsp;    /*
+<b class="fc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Simple accessors
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;    
 &nbsp;    public boolean isEnabled(DeserializationFeature f) {
-<b class="fc">&nbsp;        return _config.isEnabled(f);</b>
+&nbsp;        return _config.isEnabled(f);
 &nbsp;    }
 &nbsp;
-&nbsp;    public boolean isEnabled(MapperFeature f) {
-<b class="nc">&nbsp;        return _config.isEnabled(f);</b>
+<b class="fc">&nbsp;    public boolean isEnabled(MapperFeature f) {</b>
+&nbsp;        return _config.isEnabled(f);
 &nbsp;    }
 &nbsp;
-&nbsp;    public boolean isEnabled(JsonParser.Feature f) {
-<b class="nc">&nbsp;        return _parserFactory.isEnabled(f);</b>
+<b class="nc">&nbsp;    public boolean isEnabled(JsonParser.Feature f) {</b>
+&nbsp;        return _parserFactory.isEnabled(f);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * @since 2.2
 &nbsp;     */
 &nbsp;    public DeserializationConfig getConfig() {
-<b class="fc">&nbsp;        return _config;</b>
+&nbsp;        return _config;
 &nbsp;    }
 &nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.1
 &nbsp;     */
 &nbsp;    @Override
 &nbsp;    public JsonFactory getFactory() {
-<b class="fc">&nbsp;        return _parserFactory;</b>
+&nbsp;        return _parserFactory;
 &nbsp;    }
 &nbsp;
-&nbsp;    public TypeFactory getTypeFactory() {
-<b class="fc">&nbsp;        return _config.getTypeFactory();</b>
+<b class="fc">&nbsp;    public TypeFactory getTypeFactory() {</b>
+&nbsp;        return _config.getTypeFactory();
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.3
 &nbsp;     */
 &nbsp;    public ContextAttributes getAttributes() {
-<b class="fc">&nbsp;        return _config.getAttributes();</b>
+&nbsp;        return _config.getAttributes();
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.6
 &nbsp;     */
 &nbsp;    public InjectableValues getInjectableValues() {
-<b class="fc">&nbsp;        return _injectableValues;</b>
+&nbsp;        return _injectableValues;
 &nbsp;    }
 &nbsp;
-&nbsp;    /*
+<b class="fc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Deserialization methods; basic ones to support ObjectCodec first
 &nbsp;    /* (ones that take JsonParser)
@@ -1038,10 +1035,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @SuppressWarnings(&quot;unchecked&quot;)
 &nbsp;    public &lt;T&gt; T readValue(JsonParser p) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        return (T) _bind(p, _valueToUpdate);</b>
+&nbsp;        return (T) _bind(p, _valueToUpdate);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that binds content read using given parser, using
 &nbsp;     * configuration of this reader, except that expected value type
 &nbsp;     * is specified with the call (instead of currently configured root type).
@@ -1055,10 +1052,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    public &lt;T&gt; T readValue(JsonParser p, Class&lt;T&gt; valueType) throws IOException
 &nbsp;    {
-<b class="nc">&nbsp;        return (T) forType(valueType).readValue(p);</b>
+&nbsp;        return (T) forType(valueType).readValue(p);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that binds content read using given parser, using
 &nbsp;     * configuration of this reader, except that expected value type
 &nbsp;     * is specified with the call (instead of currently configured root type).
@@ -1072,10 +1069,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    public &lt;T&gt; T readValue(JsonParser p, TypeReference&lt;?&gt; valueTypeRef) throws IOException
 &nbsp;    {
-<b class="nc">&nbsp;        return (T) forType(valueTypeRef).readValue(p);</b>
+&nbsp;        return (T) forType(valueTypeRef).readValue(p);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that binds content read using given parser, using
 &nbsp;     * configuration of this reader, except that expected value type
 &nbsp;     * is specified with the call (instead of currently configured root type).
@@ -1088,10 +1085,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    @SuppressWarnings(&quot;unchecked&quot;)
 &nbsp;    public &lt;T&gt; T readValue(JsonParser p, ResolvedType valueType) throws IOException, JsonProcessingException {
-<b class="nc">&nbsp;        return (T) forType((JavaType)valueType).readValue(p);</b>
+&nbsp;        return (T) forType((JavaType)valueType).readValue(p);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Type-safe overloaded method, basically alias for {@link #readValue(JsonParser, ResolvedType)}.
 &nbsp;     *&lt;p&gt;
 &nbsp;     * NOTE: this method never tries to auto-detect format, since actual
@@ -1099,10 +1096,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @SuppressWarnings(&quot;unchecked&quot;)
 &nbsp;    public &lt;T&gt; T readValue(JsonParser p, JavaType valueType) throws IOException {
-<b class="nc">&nbsp;        return (T) forType(valueType).readValue(p);</b>
+&nbsp;        return (T) forType(valueType).readValue(p);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that is equivalent to:
 &nbsp;     *&lt;pre&gt;
 &nbsp;     *   withType(valueType).readValues(p);
@@ -1123,10 +1120,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Override
 &nbsp;    public &lt;T&gt; Iterator&lt;T&gt; readValues(JsonParser p, Class&lt;T&gt; valueType) throws IOException {
-<b class="nc">&nbsp;        return forType(valueType).readValues(p);</b>
+&nbsp;        return forType(valueType).readValues(p);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that is equivalent to:
 &nbsp;     *&lt;pre&gt;
 &nbsp;     *   withType(valueTypeRef).readValues(p);
@@ -1147,10 +1144,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Override
 &nbsp;    public &lt;T&gt; Iterator&lt;T&gt; readValues(JsonParser p, TypeReference&lt;?&gt; valueTypeRef) throws IOException {
-<b class="nc">&nbsp;        return forType(valueTypeRef).readValues(p);</b>
+&nbsp;        return forType(valueTypeRef).readValues(p);
 &nbsp;    }
 &nbsp;    
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that is equivalent to:
 &nbsp;     *&lt;pre&gt;
 &nbsp;     *   withType(valueType).readValues(p);
@@ -1171,10 +1168,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Override
 &nbsp;    public &lt;T&gt; Iterator&lt;T&gt; readValues(JsonParser p, ResolvedType valueType) throws IOException {
-<b class="nc">&nbsp;        return readValues(p, (JavaType) valueType);</b>
+&nbsp;        return readValues(p, (JavaType) valueType);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that is equivalent to:
 &nbsp;     *&lt;pre&gt;
 &nbsp;     *   withType(valueType).readValues(p);
@@ -1194,10 +1191,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * (data-format specific) parser is given.
 &nbsp;     */
 &nbsp;    public &lt;T&gt; Iterator&lt;T&gt; readValues(JsonParser p, JavaType valueType) throws IOException {
-<b class="nc">&nbsp;        return forType(valueType).readValues(p);</b>
+&nbsp;        return forType(valueType).readValues(p);
 &nbsp;    }
 &nbsp;
-&nbsp;    /*
+<b class="nc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* TreeCodec impl
 &nbsp;    /**********************************************************
@@ -1205,20 +1202,20 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;    @Override
 &nbsp;    public JsonNode createArrayNode() {
-<b class="fc">&nbsp;        return _config.getNodeFactory().arrayNode();</b>
+&nbsp;        return _config.getNodeFactory().arrayNode();
 &nbsp;    }
 &nbsp;
-&nbsp;    @Override
+<b class="fc">&nbsp;    @Override</b>
 &nbsp;    public JsonNode createObjectNode() {
-<b class="fc">&nbsp;        return _config.getNodeFactory().objectNode();</b>
+&nbsp;        return _config.getNodeFactory().objectNode();
 &nbsp;    }
 &nbsp;
-&nbsp;    @Override
+<b class="fc">&nbsp;    @Override</b>
 &nbsp;    public JsonParser treeAsTokens(TreeNode n) {
-<b class="fc">&nbsp;        return new TreeTraversingParser((JsonNode) n, this);</b>
+&nbsp;        return new TreeTraversingParser((JsonNode) n, this);
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Convenience method that binds content read using given parser, using
 &nbsp;     * configuration of this reader, except that content is bound as
 &nbsp;     * JSON tree instead of configured root value type.
@@ -1232,15 +1229,15 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @SuppressWarnings(&quot;unchecked&quot;)
 &nbsp;    @Override
 &nbsp;    public &lt;T extends TreeNode&gt; T readTree(JsonParser p) throws IOException {
-<b class="fc">&nbsp;        return (T) _bindAsTree(p);</b>
+&nbsp;        return (T) _bindAsTree(p);
 &nbsp;    }
 &nbsp;     
-&nbsp;    @Override
+<b class="fc">&nbsp;    @Override</b>
 &nbsp;    public void writeTree(JsonGenerator jgen, TreeNode rootNode) {
-<b class="nc">&nbsp;        throw new UnsupportedOperationException();</b>
+&nbsp;        throw new UnsupportedOperationException();
 &nbsp;    }
 &nbsp;    
-&nbsp;    /*
+<b class="nc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Deserialization methods; others similar to what ObjectMapper has
 &nbsp;    /**********************************************************
@@ -1256,14 +1253,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T readValue(InputStream src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return (T) _detectBindAndClose(_dataFormatReaders.findFormat(src), false);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return (T) _detectBindAndClose(_dataFormatReaders.findFormat(src), false);
 &nbsp;        }
-&nbsp;        
-<b class="fc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
+<b class="fc">&nbsp;        </b>
+<b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that binds content read from given input source,
 &nbsp;     * using configuration of this reader.
 &nbsp;     * Value return is either newly constructed, or root value that
@@ -1273,14 +1270,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T readValue(Reader src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(src);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(src);
 &nbsp;        }
-&nbsp;
-<b class="fc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
+<b class="fc">&nbsp;</b>
+<b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
 &nbsp;    }
 &nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that binds content read from given JSON string,
 &nbsp;     * using configuration of this reader.
 &nbsp;     * Value return is either newly constructed, or root value that
@@ -1290,14 +1287,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T readValue(String src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(src);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(src);
 &nbsp;        }
-&nbsp;        
-<b class="fc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
+<b class="fc">&nbsp;        </b>
+<b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that binds content read from given byte array,
 &nbsp;     * using configuration of this reader.
 &nbsp;     * Value return is either newly constructed, or root value that
@@ -1307,14 +1304,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T readValue(byte[] src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="fc">&nbsp;            return (T) _detectBindAndClose(src, 0, src.length);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return (T) _detectBindAndClose(src, 0, src.length);
 &nbsp;        }
-&nbsp;        
-<b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
+<b class="fc">&nbsp;        </b>
+<b class="fc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method that binds content read from given byte array,
 &nbsp;     * using configuration of this reader.
 &nbsp;     * Value return is either newly constructed, or root value that
@@ -1324,26 +1321,26 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T readValue(byte[] src, int offset, int length)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return (T) _detectBindAndClose(src, offset, length);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return (T) _detectBindAndClose(src, offset, length);
 &nbsp;        }
-&nbsp;
+<b class="nc">&nbsp;</b>
 <b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src, offset, length),</b>
 &nbsp;                false));
 &nbsp;    }
-&nbsp;    
+<b class="nc">&nbsp;    </b>
 &nbsp;    @SuppressWarnings(&quot;unchecked&quot;)
 &nbsp;    public &lt;T&gt; T readValue(File src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return (T) _detectBindAndClose(_dataFormatReaders.findFormat(_inputStream(src)), true);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return (T) _detectBindAndClose(_dataFormatReaders.findFormat(_inputStream(src)), true);
 &nbsp;        }
-&nbsp;
+<b class="nc">&nbsp;</b>
 <b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method that binds content read from given input source,
 &nbsp;     * using configuration of this reader.
 &nbsp;     * Value return is either newly constructed, or root value that
@@ -1353,14 +1350,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T readValue(URL src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return (T) _detectBindAndClose(_dataFormatReaders.findFormat(_inputStream(src)), true);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return (T) _detectBindAndClose(_dataFormatReaders.findFormat(_inputStream(src)), true);
 &nbsp;        }
-&nbsp;
+<b class="nc">&nbsp;</b>
 <b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Convenience method for converting results from given JSON tree into given
 &nbsp;     * value type. Basically short-cut for:
 &nbsp;     *&lt;pre&gt;
@@ -1371,26 +1368,26 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T readValue(JsonNode src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(src);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(src);
 &nbsp;        }
-&nbsp;        
-<b class="fc">&nbsp;        return (T) _bindAndClose(_considerFilter(treeAsTokens(src), false));</b>
+<b class="fc">&nbsp;        </b>
+<b class="nc">&nbsp;        return (T) _bindAndClose(_considerFilter(treeAsTokens(src), false));</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.8
 &nbsp;     */
 &nbsp;    @SuppressWarnings(&quot;unchecked&quot;)
 &nbsp;    public &lt;T&gt; T readValue(DataInput src) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(src);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(src);
 &nbsp;        }
 <b class="fc">&nbsp;        return (T) _bindAndClose(_considerFilter(_parserFactory.createParser(src), false));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that reads content from given input source,
 &nbsp;     * using configuration of this reader, and binds it as JSON Tree.
 &nbsp;     *&lt;p&gt;
@@ -1402,13 +1399,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public JsonNode readTree(InputStream in)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return _detectBindAndCloseAsTree(in);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return _detectBindAndCloseAsTree(in);
 &nbsp;        }
 <b class="nc">&nbsp;        return _bindAndCloseAsTree(_considerFilter(_parserFactory.createParser(in), false));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method that reads content from given input source,
 &nbsp;     * using configuration of this reader, and binds it as JSON Tree.
 &nbsp;     *&lt;p&gt;
@@ -1420,13 +1417,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public JsonNode readTree(Reader r)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(r);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(r);
 &nbsp;        }
 <b class="nc">&nbsp;        return _bindAndCloseAsTree(_considerFilter(_parserFactory.createParser(r), false));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method that reads content from given JSON input String,
 &nbsp;     * using configuration of this reader, and binds it as JSON Tree.
 &nbsp;     *&lt;p&gt;
@@ -1438,21 +1435,21 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public JsonNode readTree(String json)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(json);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(json);
 &nbsp;        }
 <b class="fc">&nbsp;        return _bindAndCloseAsTree(_considerFilter(_parserFactory.createParser(json), false));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    public JsonNode readTree(DataInput src) throws IOException
+<b class="fc">&nbsp;    public JsonNode readTree(DataInput src) throws IOException</b>
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(src);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(src);
 &nbsp;        }
 <b class="fc">&nbsp;        return _bindAndCloseAsTree(_considerFilter(_parserFactory.createParser(src), false));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /*
+<b class="fc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Deserialization methods; reading sequence of values
 &nbsp;    /**********************************************************
@@ -1472,12 +1469,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(JsonParser p)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);</b>
+&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);
 &nbsp;        // false -&gt; do not close as caller gave parser instance
-<b class="fc">&nbsp;        return _newIterator(p, ctxt, _findRootDeserializer(ctxt), false);</b>
-&nbsp;    }
+&nbsp;        return _newIterator(p, ctxt, _findRootDeserializer(ctxt), false);
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method for reading sequence of Objects from parser stream.
 &nbsp;     *&lt;p&gt;
 &nbsp;     * Sequence can be either wrapped or unwrapped root-level sequence:
@@ -1500,31 +1497,31 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(InputStream src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return _detectBindAndReadValues(_dataFormatReaders.findFormat(src), false);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return _detectBindAndReadValues(_dataFormatReaders.findFormat(src), false);
 &nbsp;        }
-&nbsp;        
-<b class="fc">&nbsp;        return _bindAndReadValues(_considerFilter(_parserFactory.createParser(src), true));</b>
+<b class="fc">&nbsp;        </b>
+<b class="nc">&nbsp;        return _bindAndReadValues(_considerFilter(_parserFactory.createParser(src), true));</b>
 &nbsp;    }
 &nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Overloaded version of {@link #readValue(InputStream)}.
 &nbsp;     */
 &nbsp;    @SuppressWarnings(&quot;resource&quot;)
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(Reader src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(src);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(src);
 &nbsp;        }
 <b class="fc">&nbsp;        JsonParser p = _considerFilter(_parserFactory.createParser(src), true);</b>
-<b class="fc">&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);</b>
-<b class="fc">&nbsp;        _initForMultiRead(ctxt, p);</b>
+<b class="nc">&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);</b>
+&nbsp;        _initForMultiRead(ctxt, p);
 <b class="fc">&nbsp;        p.nextToken();</b>
 <b class="fc">&nbsp;        return _newIterator(p, ctxt, _findRootDeserializer(ctxt), true);</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;    </b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Overloaded version of {@link #readValue(InputStream)}.
 &nbsp;     * 
 &nbsp;     * @param json String that contains JSON content to parse
@@ -1533,51 +1530,51 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(String json)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(json);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(json);
 &nbsp;        }
 <b class="fc">&nbsp;        JsonParser p = _considerFilter(_parserFactory.createParser(json), true);</b>
-<b class="fc">&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);</b>
-<b class="fc">&nbsp;        _initForMultiRead(ctxt, p);</b>
+<b class="nc">&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);</b>
+&nbsp;        _initForMultiRead(ctxt, p);
 <b class="fc">&nbsp;        p.nextToken();</b>
 <b class="fc">&nbsp;        return _newIterator(p, ctxt, _findRootDeserializer(ctxt), true);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Overloaded version of {@link #readValue(InputStream)}.
 &nbsp;     */
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(byte[] src, int offset, int length)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return _detectBindAndReadValues(_dataFormatReaders.findFormat(src, offset, length), false);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return _detectBindAndReadValues(_dataFormatReaders.findFormat(src, offset, length), false);
 &nbsp;        }
 <b class="fc">&nbsp;        return _bindAndReadValues(_considerFilter(_parserFactory.createParser(src, offset, length),</b>
-&nbsp;                true));
+<b class="nc">&nbsp;                true));</b>
 &nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Overloaded version of {@link #readValue(InputStream)}.
 &nbsp;     */
 &nbsp;    public final &lt;T&gt; MappingIterator&lt;T&gt; readValues(byte[] src)
 &nbsp;            throws IOException, JsonProcessingException {
-<b class="fc">&nbsp;        return readValues(src, 0, src.length);</b>
+&nbsp;        return readValues(src, 0, src.length);
 &nbsp;    }
 &nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Overloaded version of {@link #readValue(InputStream)}.
 &nbsp;     */
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(File src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return _detectBindAndReadValues(</b>
-<b class="nc">&nbsp;                    _dataFormatReaders.findFormat(_inputStream(src)), false);</b>
-&nbsp;        }
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return _detectBindAndReadValues(
+&nbsp;                    _dataFormatReaders.findFormat(_inputStream(src)), false);
+<b class="nc">&nbsp;        }</b>
 <b class="nc">&nbsp;        return _bindAndReadValues(_considerFilter(_parserFactory.createParser(src), true));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Overloaded version of {@link #readValue(InputStream)}.
 &nbsp;     * 
 &nbsp;     * @param src URL to read to access JSON content to parse.
@@ -1585,25 +1582,25 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(URL src)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            return _detectBindAndReadValues(</b>
-<b class="nc">&nbsp;                    _dataFormatReaders.findFormat(_inputStream(src)), true);</b>
-&nbsp;        }
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            return _detectBindAndReadValues(
+&nbsp;                    _dataFormatReaders.findFormat(_inputStream(src)), true);
+<b class="nc">&nbsp;        }</b>
 <b class="nc">&nbsp;        return _bindAndReadValues(_considerFilter(_parserFactory.createParser(src), true));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * @since 2.8
 &nbsp;     */
 &nbsp;    public &lt;T&gt; MappingIterator&lt;T&gt; readValues(DataInput src) throws IOException
 &nbsp;    {
-<b class="nc">&nbsp;        if (_dataFormatReaders != null) {</b>
-<b class="nc">&nbsp;            _reportUndetectableSource(src);</b>
+&nbsp;        if (_dataFormatReaders != null) {
+&nbsp;            _reportUndetectableSource(src);
 &nbsp;        }
 <b class="nc">&nbsp;        return _bindAndReadValues(_considerFilter(_parserFactory.createParser(src), true));</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /*
+<b class="nc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Implementation of rest of ObjectCodec methods
 &nbsp;    /**********************************************************
@@ -1613,20 +1610,20 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public &lt;T&gt; T treeToValue(TreeNode n, Class&lt;T&gt; valueType) throws JsonProcessingException
 &nbsp;    {
 &nbsp;        try {
-<b class="nc">&nbsp;            return readValue(treeAsTokens(n), valueType);</b>
-<b class="nc">&nbsp;        } catch (JsonProcessingException e) {</b>
-<b class="nc">&nbsp;            throw e;</b>
+&nbsp;            return readValue(treeAsTokens(n), valueType);
+&nbsp;        } catch (JsonProcessingException e) {
+&nbsp;            throw e;
 <b class="nc">&nbsp;        } catch (IOException e) { // should not occur, no real i/o...</b>
 <b class="nc">&nbsp;            throw new IllegalArgumentException(e.getMessage(), e);</b>
-&nbsp;        }
-&nbsp;    }    
-&nbsp;
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;    }    </b>
+<b class="nc">&nbsp;</b>
 &nbsp;    @Override
 &nbsp;    public void writeValue(JsonGenerator gen, Object value) throws IOException, JsonProcessingException {
-<b class="nc">&nbsp;        throw new UnsupportedOperationException(&quot;Not implemented for ObjectReader&quot;);</b>
+&nbsp;        throw new UnsupportedOperationException(&quot;Not implemented for ObjectReader&quot;);
 &nbsp;    }
 &nbsp;
-&nbsp;    /*
+<b class="nc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Helper methods, data-binding
 &nbsp;    /**********************************************************
@@ -1641,154 +1638,154 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;         * before first read from parser, or after previous token has been cleared)
 &nbsp;         */
 &nbsp;        Object result;
-<b class="fc">&nbsp;        final DeserializationContext ctxt = createDeserializationContext(p);</b>
-<b class="fc">&nbsp;        JsonToken t = _initForReading(ctxt, p);</b>
-<b class="fc">&nbsp;        if (t == JsonToken.VALUE_NULL) {</b>
-<b class="nc">&nbsp;            if (valueToUpdate == null) {</b>
-<b class="nc">&nbsp;                result = _findRootDeserializer(ctxt).getNullValue(ctxt);</b>
-&nbsp;            } else {
+&nbsp;        final DeserializationContext ctxt = createDeserializationContext(p);
+&nbsp;        JsonToken t = _initForReading(ctxt, p);
+&nbsp;        if (t == JsonToken.VALUE_NULL) {
+<b class="fc">&nbsp;            if (valueToUpdate == null) {</b>
+<b class="fc">&nbsp;                result = _findRootDeserializer(ctxt).getNullValue(ctxt);</b>
+<b class="fc">&nbsp;            } else {</b>
 <b class="nc">&nbsp;                result = valueToUpdate;</b>
-&nbsp;            }
-<b class="fc">&nbsp;        } else if (t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {</b>
+<b class="nc">&nbsp;            }</b>
+&nbsp;        } else if (t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {
 <b class="nc">&nbsp;            result = valueToUpdate;</b>
 &nbsp;        } else { // pointing to event other than null
 <b class="fc">&nbsp;            JsonDeserializer&lt;Object&gt; deser = _findRootDeserializer(ctxt);</b>
-<b class="fc">&nbsp;            if (_unwrapRoot) {</b>
-<b class="nc">&nbsp;                result = _unwrapAndDeserialize(p, ctxt, _valueType, deser);</b>
-&nbsp;            } else {
+<b class="nc">&nbsp;            if (_unwrapRoot) {</b>
+&nbsp;                result = _unwrapAndDeserialize(p, ctxt, _valueType, deser);
+<b class="fc">&nbsp;            } else {</b>
 <b class="fc">&nbsp;                if (valueToUpdate == null) {</b>
-<b class="fc">&nbsp;                    result = deser.deserialize(p, ctxt);</b>
+<b class="nc">&nbsp;                    result = deser.deserialize(p, ctxt);</b>
 &nbsp;                } else {
-<b class="nc">&nbsp;                    deser.deserialize(p, ctxt, valueToUpdate);</b>
-<b class="nc">&nbsp;                    result = valueToUpdate;</b>
+<b class="fc">&nbsp;                    deser.deserialize(p, ctxt, valueToUpdate);</b>
+<b class="fc">&nbsp;                    result = valueToUpdate;</b>
 &nbsp;                }
-&nbsp;            }
-&nbsp;        }
+<b class="nc">&nbsp;            }</b>
+<b class="nc">&nbsp;        }</b>
 &nbsp;        // Need to consume the token too
-<b class="fc">&nbsp;        p.clearCurrentToken();</b>
-<b class="fc">&nbsp;        return result;</b>
+&nbsp;        p.clearCurrentToken();
+&nbsp;        return result;
 &nbsp;    }
-&nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    </b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Consider filter when creating JsonParser.  
 &nbsp;     */
 &nbsp;    protected JsonParser _considerFilter(final JsonParser p, boolean multiValue) {
 &nbsp;        // 26-Mar-2016, tatu: Need to allow multiple-matches at least if we have
 &nbsp;        //    have a multiple-value read (that is, &quot;readValues()&quot;).
-<b class="fc">&nbsp;        return ((_filter == null) || FilteringParserDelegate.class.isInstance(p))</b>
+&nbsp;        return ((_filter == null) || FilteringParserDelegate.class.isInstance(p))
 &nbsp;                ? p : new FilteringParserDelegate(p, _filter, false, multiValue);
 &nbsp;    }
-&nbsp;    
+<b class="fc">&nbsp;    </b>
 &nbsp;    protected Object _bindAndClose(JsonParser p0) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        try (JsonParser p = p0) {</b>
+&nbsp;        try (JsonParser p = p0) {
 &nbsp;            Object result;
 &nbsp;
 <b class="fc">&nbsp;            DeserializationContext ctxt = createDeserializationContext(p);</b>
-<b class="fc">&nbsp;            JsonToken t = _initForReading(ctxt, p);</b>
-<b class="fc">&nbsp;            if (t == JsonToken.VALUE_NULL) {</b>
+&nbsp;            JsonToken t = _initForReading(ctxt, p);
+&nbsp;            if (t == JsonToken.VALUE_NULL) {
 <b class="fc">&nbsp;                if (_valueToUpdate == null) {</b>
 <b class="fc">&nbsp;                    result = _findRootDeserializer(ctxt).getNullValue(ctxt);</b>
-&nbsp;                } else {
-<b class="nc">&nbsp;                    result = _valueToUpdate;</b>
-&nbsp;                }
-<b class="fc">&nbsp;            } else if (t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {</b>
+<b class="fc">&nbsp;                } else {</b>
+<b class="fc">&nbsp;                    result = _valueToUpdate;</b>
+<b class="fc">&nbsp;                }</b>
+&nbsp;            } else if (t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {
 <b class="nc">&nbsp;                result = _valueToUpdate;</b>
 &nbsp;            } else {
 <b class="fc">&nbsp;                JsonDeserializer&lt;Object&gt; deser = _findRootDeserializer(ctxt);</b>
-<b class="fc">&nbsp;                if (_unwrapRoot) {</b>
-<b class="fc">&nbsp;                    result = _unwrapAndDeserialize(p, ctxt, _valueType, deser);</b>
-&nbsp;                } else {
+<b class="nc">&nbsp;                if (_unwrapRoot) {</b>
+&nbsp;                    result = _unwrapAndDeserialize(p, ctxt, _valueType, deser);
+<b class="fc">&nbsp;                } else {</b>
 <b class="fc">&nbsp;                    if (_valueToUpdate == null) {</b>
 <b class="fc">&nbsp;                        result = deser.deserialize(p, ctxt);</b>
 &nbsp;                    } else {
 <b class="fc">&nbsp;                        deser.deserialize(p, ctxt, _valueToUpdate);</b>
 <b class="fc">&nbsp;                        result = _valueToUpdate;                    </b>
 &nbsp;                    }
-&nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;            return result;</b>
-<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;                }</b>
+<b class="fc">&nbsp;            }</b>
+&nbsp;            return result;
+&nbsp;        }
 &nbsp;    }
-&nbsp;
-&nbsp;    protected JsonNode _bindAndCloseAsTree(JsonParser p0) throws IOException {
-<b class="fc">&nbsp;        try (JsonParser p = p0) {</b>
-<b class="fc">&nbsp;            return _bindAsTree(p);</b>
-<b class="fc">&nbsp;        }</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    protected JsonNode _bindAsTree(JsonParser p) throws IOException
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    protected JsonNode _bindAndCloseAsTree(JsonParser p0) throws IOException {</b>
+&nbsp;        try (JsonParser p = p0) {
+&nbsp;            return _bindAsTree(p);
+&nbsp;        }
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;    </b>
+<b class="fc">&nbsp;    protected JsonNode _bindAsTree(JsonParser p) throws IOException</b>
 &nbsp;    {
 &nbsp;        JsonNode result;
-<b class="fc">&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);</b>
-<b class="fc">&nbsp;        JsonToken t = _initForReading(ctxt, p);</b>
-<b class="fc">&nbsp;        if (t == JsonToken.VALUE_NULL || t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {</b>
+&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);
+&nbsp;        JsonToken t = _initForReading(ctxt, p);
+&nbsp;        if (t == JsonToken.VALUE_NULL || t == JsonToken.END_ARRAY || t == JsonToken.END_OBJECT) {
 <b class="fc">&nbsp;            result = NullNode.instance;</b>
-&nbsp;        } else {
+<b class="fc">&nbsp;        } else {</b>
 <b class="fc">&nbsp;            JsonDeserializer&lt;Object&gt; deser = _findTreeDeserializer(ctxt);</b>
 <b class="fc">&nbsp;            if (_unwrapRoot) {</b>
-<b class="nc">&nbsp;                result = (JsonNode) _unwrapAndDeserialize(p, ctxt, JSON_NODE_TYPE, deser);</b>
-&nbsp;            } else {
+&nbsp;                result = (JsonNode) _unwrapAndDeserialize(p, ctxt, JSON_NODE_TYPE, deser);
+<b class="fc">&nbsp;            } else {</b>
 <b class="fc">&nbsp;                result = (JsonNode) deser.deserialize(p, ctxt);</b>
-&nbsp;            }
+<b class="nc">&nbsp;            }</b>
 &nbsp;        }
-&nbsp;        // Need to consume the token too
-<b class="fc">&nbsp;        p.clearCurrentToken();</b>
-<b class="fc">&nbsp;        return result;</b>
+<b class="fc">&nbsp;        // Need to consume the token too</b>
+&nbsp;        p.clearCurrentToken();
+&nbsp;        return result;
 &nbsp;    }
-&nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    </b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.1
 &nbsp;     */
 &nbsp;    protected &lt;T&gt; MappingIterator&lt;T&gt; _bindAndReadValues(JsonParser p) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);</b>
-<b class="fc">&nbsp;        _initForMultiRead(ctxt, p);</b>
-<b class="fc">&nbsp;        p.nextToken();</b>
+&nbsp;        DeserializationContext ctxt = createDeserializationContext(p);
+&nbsp;        _initForMultiRead(ctxt, p);
+&nbsp;        p.nextToken();
 <b class="fc">&nbsp;        return _newIterator(p, ctxt, _findRootDeserializer(ctxt), true);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    protected Object _unwrapAndDeserialize(JsonParser p, DeserializationContext ctxt,
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    protected Object _unwrapAndDeserialize(JsonParser p, DeserializationContext ctxt,</b>
 &nbsp;            JavaType rootType, JsonDeserializer&lt;Object&gt; deser) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        PropertyName expRootName = _config.findRootName(rootType);</b>
+&nbsp;        PropertyName expRootName = _config.findRootName(rootType);
 &nbsp;        // 12-Jun-2015, tatu: Should try to support namespaces etc but...
-<b class="fc">&nbsp;        String expSimpleName = expRootName.getSimpleName();</b>
-&nbsp;
-<b class="fc">&nbsp;        if (p.getCurrentToken() != JsonToken.START_OBJECT) {</b>
-<b class="nc">&nbsp;            ctxt.reportWrongTokenException(p, JsonToken.START_OBJECT,</b>
+&nbsp;        String expSimpleName = expRootName.getSimpleName();
+<b class="fc">&nbsp;</b>
+&nbsp;        if (p.getCurrentToken() != JsonToken.START_OBJECT) {
+<b class="fc">&nbsp;            ctxt.reportWrongTokenException(p, JsonToken.START_OBJECT,</b>
 &nbsp;                    &quot;Current token not START_OBJECT (needed to unwrap root name &#39;%s&#39;), but %s&quot;,
-<b class="nc">&nbsp;                    expSimpleName, p.getCurrentToken());</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (p.nextToken() != JsonToken.FIELD_NAME) {</b>
+<b class="fc">&nbsp;                    expSimpleName, p.getCurrentToken());</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        if (p.nextToken() != JsonToken.FIELD_NAME) {
 <b class="nc">&nbsp;            ctxt.reportWrongTokenException(p, JsonToken.FIELD_NAME,</b>
 &nbsp;                    &quot;Current token not FIELD_NAME (to contain expected root name &#39;%s&#39;), but %s&quot;, 
-<b class="nc">&nbsp;                    expSimpleName, p.getCurrentToken());</b>
-&nbsp;        }
-<b class="fc">&nbsp;        String actualName = p.getCurrentName();</b>
-<b class="fc">&nbsp;        if (!expSimpleName.equals(actualName)) {</b>
-<b class="fc">&nbsp;            ctxt.reportMappingException(&quot;Root name &#39;%s&#39; does not match expected (&#39;%s&#39;) for type %s&quot;,</b>
-&nbsp;                    actualName, expSimpleName, rootType);
-&nbsp;        }
-&nbsp;        // ok, then move to value itself....
-<b class="fc">&nbsp;        p.nextToken();</b>
+<b class="fc">&nbsp;                    expSimpleName, p.getCurrentToken());</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        String actualName = p.getCurrentName();
+<b class="nc">&nbsp;        if (!expSimpleName.equals(actualName)) {</b>
+&nbsp;            ctxt.reportMappingException(&quot;Root name &#39;%s&#39; does not match expected (&#39;%s&#39;) for type %s&quot;,
+<b class="fc">&nbsp;                    actualName, expSimpleName, rootType);</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        // ok, then move to value itself....</b>
+&nbsp;        p.nextToken();
 &nbsp;        Object result;
-<b class="fc">&nbsp;        if (_valueToUpdate == null) {</b>
+&nbsp;        if (_valueToUpdate == null) {
 <b class="fc">&nbsp;            result = deser.deserialize(p, ctxt);</b>
 &nbsp;        } else {
-<b class="nc">&nbsp;            deser.deserialize(p, ctxt, _valueToUpdate);</b>
-<b class="nc">&nbsp;            result = _valueToUpdate;                    </b>
+<b class="fc">&nbsp;            deser.deserialize(p, ctxt, _valueToUpdate);</b>
+<b class="fc">&nbsp;            result = _valueToUpdate;                    </b>
 &nbsp;        }
-&nbsp;        // and last, verify that we now get matching END_OBJECT
-<b class="fc">&nbsp;        if (p.nextToken() != JsonToken.END_OBJECT) {</b>
-<b class="nc">&nbsp;            ctxt.reportWrongTokenException(p, JsonToken.END_OBJECT,</b>
+<b class="nc">&nbsp;        // and last, verify that we now get matching END_OBJECT</b>
+<b class="nc">&nbsp;        if (p.nextToken() != JsonToken.END_OBJECT) {</b>
+&nbsp;            ctxt.reportWrongTokenException(p, JsonToken.END_OBJECT,
 &nbsp;                    &quot;Current token not END_OBJECT (to match wrapper object with root name &#39;%s&#39;), but %s&quot;,
-<b class="nc">&nbsp;                    expSimpleName, p.getCurrentToken());</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return result;</b>
-&nbsp;    }
+<b class="fc">&nbsp;                    expSimpleName, p.getCurrentToken());</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        return result;
+<b class="nc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /*
+<b class="fc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Internal methods, format auto-detection
 &nbsp;    /**********************************************************
@@ -1797,72 +1794,72 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @SuppressWarnings(&quot;resource&quot;)
 &nbsp;    protected Object _detectBindAndClose(byte[] src, int offset, int length) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        DataFormatReaders.Match match = _dataFormatReaders.findFormat(src, offset, length);</b>
-<b class="fc">&nbsp;        if (!match.hasMatch()) {</b>
-<b class="fc">&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);</b>
-&nbsp;        }
+&nbsp;        DataFormatReaders.Match match = _dataFormatReaders.findFormat(src, offset, length);
+&nbsp;        if (!match.hasMatch()) {
+&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);
+<b class="fc">&nbsp;        }</b>
 <b class="fc">&nbsp;        JsonParser p = match.createParserWithMatch();</b>
 <b class="fc">&nbsp;        return match.getReader()._bindAndClose(p);</b>
 &nbsp;    }
-&nbsp;
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    @SuppressWarnings(&quot;resource&quot;)</b>
 &nbsp;    protected Object _detectBindAndClose(DataFormatReaders.Match match, boolean forceClosing)
 &nbsp;        throws IOException
 &nbsp;    {
-<b class="nc">&nbsp;        if (!match.hasMatch()) {</b>
-<b class="nc">&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);</b>
+&nbsp;        if (!match.hasMatch()) {
+&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);
 &nbsp;        }
 <b class="nc">&nbsp;        JsonParser p = match.createParserWithMatch();</b>
-&nbsp;        // One more thing: we Own the input stream now; and while it&#39;s 
+<b class="nc">&nbsp;        // One more thing: we Own the input stream now; and while it&#39;s </b>
 &nbsp;        // not super clean way to do it, we must ensure closure so:
 <b class="nc">&nbsp;        if (forceClosing) {</b>
-<b class="nc">&nbsp;            p.enable(JsonParser.Feature.AUTO_CLOSE_SOURCE);</b>
+&nbsp;            p.enable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
 &nbsp;        }
-&nbsp;        // important: use matching ObjectReader (may not be &#39;this&#39;)
+<b class="nc">&nbsp;        // important: use matching ObjectReader (may not be &#39;this&#39;)</b>
 <b class="nc">&nbsp;        return match.getReader()._bindAndClose(p);</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
+<b class="nc">&nbsp;    @SuppressWarnings(&quot;resource&quot;)</b>
 &nbsp;    protected &lt;T&gt; MappingIterator&lt;T&gt; _detectBindAndReadValues(DataFormatReaders.Match match, boolean forceClosing)
 &nbsp;        throws IOException, JsonProcessingException
 &nbsp;    {
-<b class="nc">&nbsp;        if (!match.hasMatch()) {</b>
-<b class="nc">&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);</b>
+&nbsp;        if (!match.hasMatch()) {
+&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);
 &nbsp;        }
 <b class="nc">&nbsp;        JsonParser p = match.createParserWithMatch();</b>
-&nbsp;        // One more thing: we Own the input stream now; and while it&#39;s 
+<b class="nc">&nbsp;        // One more thing: we Own the input stream now; and while it&#39;s </b>
 &nbsp;        // not super clean way to do it, we must ensure closure so:
 <b class="nc">&nbsp;        if (forceClosing) {</b>
-<b class="nc">&nbsp;            p.enable(JsonParser.Feature.AUTO_CLOSE_SOURCE);</b>
+&nbsp;            p.enable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
 &nbsp;        }
-&nbsp;        // important: use matching ObjectReader (may not be &#39;this&#39;)
+<b class="nc">&nbsp;        // important: use matching ObjectReader (may not be &#39;this&#39;)</b>
 <b class="nc">&nbsp;        return match.getReader()._bindAndReadValues(p);</b>
 &nbsp;    }
 &nbsp;    
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
+<b class="nc">&nbsp;    @SuppressWarnings(&quot;resource&quot;)</b>
 &nbsp;    protected JsonNode _detectBindAndCloseAsTree(InputStream in) throws IOException
 &nbsp;    {
-<b class="nc">&nbsp;        DataFormatReaders.Match match = _dataFormatReaders.findFormat(in);</b>
-<b class="nc">&nbsp;        if (!match.hasMatch()) {</b>
-<b class="nc">&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);</b>
-&nbsp;        }
+&nbsp;        DataFormatReaders.Match match = _dataFormatReaders.findFormat(in);
+&nbsp;        if (!match.hasMatch()) {
+&nbsp;            _reportUnkownFormat(_dataFormatReaders, match);
+<b class="nc">&nbsp;        }</b>
 <b class="nc">&nbsp;        JsonParser p = match.createParserWithMatch();</b>
 <b class="nc">&nbsp;        p.enable(JsonParser.Feature.AUTO_CLOSE_SOURCE);</b>
-<b class="nc">&nbsp;        return match.getReader()._bindAndCloseAsTree(p);</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /**
+&nbsp;        return match.getReader()._bindAndCloseAsTree(p);
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;    </b>
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method called to indicate that format detection failed to detect format
 &nbsp;     * of given input
 &nbsp;     */
 &nbsp;    protected void _reportUnkownFormat(DataFormatReaders detector, DataFormatReaders.Match match) throws JsonProcessingException
 &nbsp;    {
 &nbsp;        // 17-Aug-2015, tatu: Unfortunately, no parser/generator available so:
-<b class="fc">&nbsp;        throw new JsonParseException(null, &quot;Can not detect format from input, does not look like any of detectable formats &quot;</b>
-<b class="fc">&nbsp;                +detector.toString());</b>
+&nbsp;        throw new JsonParseException(null, &quot;Can not detect format from input, does not look like any of detectable formats &quot;
+&nbsp;                +detector.toString());
 &nbsp;    }
-&nbsp;
-&nbsp;    /*
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Internal methods, other
 &nbsp;    /**********************************************************
@@ -1873,13 +1870,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    protected void _verifySchemaType(FormatSchema schema)
 &nbsp;    {
-<b class="fc">&nbsp;        if (schema != null) {</b>
-<b class="fc">&nbsp;            if (!_parserFactory.canUseSchema(schema)) {</b>
-<b class="fc">&nbsp;                    throw new IllegalArgumentException(&quot;Can not use FormatSchema of type &quot;+schema.getClass().getName()</b>
+&nbsp;        if (schema != null) {
+&nbsp;            if (!_parserFactory.canUseSchema(schema)) {
+&nbsp;                    throw new IllegalArgumentException(&quot;Can not use FormatSchema of type &quot;+schema.getClass().getName()
 <b class="fc">&nbsp;                            +&quot; for format &quot;+_parserFactory.getFormatName());</b>
-&nbsp;            }
-&nbsp;        }
-&nbsp;    }
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Internal helper method called to create an instance of {@link DeserializationContext}
@@ -1887,25 +1884,25 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * Can be overridden if a custom context is needed.
 &nbsp;     */
 &nbsp;    protected DefaultDeserializationContext createDeserializationContext(JsonParser p) {
-<b class="fc">&nbsp;        return _context.createInstance(_config, p, _injectableValues);</b>
+&nbsp;        return _context.createInstance(_config, p, _injectableValues);
 &nbsp;    }
 &nbsp;
-&nbsp;    protected void _reportUndetectableSource(Object src) throws JsonProcessingException
+<b class="fc">&nbsp;    protected void _reportUndetectableSource(Object src) throws JsonProcessingException</b>
 &nbsp;    {
 &nbsp;        // 17-Aug-2015, tatu: Unfortunately, no parser/generator available so:
-<b class="nc">&nbsp;        throw new JsonParseException(null, &quot;Can not use source of type &quot;</b>
-<b class="nc">&nbsp;                +src.getClass().getName()+&quot; with format auto-detection: must be byte- not char-based&quot;);</b>
+&nbsp;        throw new JsonParseException(null, &quot;Can not use source of type &quot;
+&nbsp;                +src.getClass().getName()+&quot; with format auto-detection: must be byte- not char-based&quot;);
+&nbsp;    }
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    protected InputStream _inputStream(URL src) throws IOException {</b>
+&nbsp;        return src.openStream();
 &nbsp;    }
 &nbsp;
-&nbsp;    protected InputStream _inputStream(URL src) throws IOException {
-<b class="nc">&nbsp;        return src.openStream();</b>
+<b class="nc">&nbsp;    protected InputStream _inputStream(File f) throws IOException {</b>
+&nbsp;        return new FileInputStream(f);
 &nbsp;    }
 &nbsp;
-&nbsp;    protected InputStream _inputStream(File f) throws IOException {
-<b class="nc">&nbsp;        return new FileInputStream(f);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /*
+<b class="nc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Helper methods, locating deserializers etc
 &nbsp;    /**********************************************************
@@ -1917,75 +1914,75 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    protected JsonDeserializer&lt;Object&gt; _findRootDeserializer(DeserializationContext ctxt)
 &nbsp;        throws JsonMappingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_rootDeserializer != null) {</b>
-<b class="fc">&nbsp;            return _rootDeserializer;</b>
+&nbsp;        if (_rootDeserializer != null) {
+&nbsp;            return _rootDeserializer;
 &nbsp;        }
-&nbsp;
-&nbsp;        // Sanity check: must have actual type...
-<b class="fc">&nbsp;        JavaType t = _valueType;</b>
-<b class="fc">&nbsp;        if (t == null) {</b>
-<b class="fc">&nbsp;            ctxt.reportMappingException(&quot;No value type configured for ObjectReader&quot;);</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        // First: have we already seen it?
-<b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; deser = _rootDeserializers.get(t);</b>
-<b class="fc">&nbsp;        if (deser != null) {</b>
-<b class="nc">&nbsp;            return deser;</b>
-&nbsp;        }
-&nbsp;        // Nope: need to ask provider to resolve it
-<b class="fc">&nbsp;        deser = ctxt.findRootValueDeserializer(t);</b>
-<b class="fc">&nbsp;        if (deser == null) { // can this happen?</b>
-<b class="nc">&nbsp;            ctxt.reportMappingException(&quot;Can not find a deserializer for type %s&quot;, t);</b>
-&nbsp;        }
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;        // Sanity check: must have actual type...</b>
+&nbsp;        JavaType t = _valueType;
+&nbsp;        if (t == null) {
+&nbsp;            ctxt.reportMappingException(&quot;No value type configured for ObjectReader&quot;);
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        </b>
+<b class="fc">&nbsp;        // First: have we already seen it?</b>
+&nbsp;        JsonDeserializer&lt;Object&gt; deser = _rootDeserializers.get(t);
+&nbsp;        if (deser != null) {
+&nbsp;            return deser;
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        // Nope: need to ask provider to resolve it</b>
+<b class="nc">&nbsp;        deser = ctxt.findRootValueDeserializer(t);</b>
+&nbsp;        if (deser == null) { // can this happen?
+&nbsp;            ctxt.reportMappingException(&quot;Can not find a deserializer for type %s&quot;, t);
+<b class="fc">&nbsp;        }</b>
 <b class="fc">&nbsp;        _rootDeserializers.put(t, deser);</b>
-<b class="fc">&nbsp;        return deser;</b>
+<b class="nc">&nbsp;        return deser;</b>
 &nbsp;    }
-&nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * @since 2.6
 &nbsp;     */
 &nbsp;    protected JsonDeserializer&lt;Object&gt; _findTreeDeserializer(DeserializationContext ctxt)
 &nbsp;        throws JsonMappingException
 &nbsp;    {
-<b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; deser = _rootDeserializers.get(JSON_NODE_TYPE);</b>
-<b class="fc">&nbsp;        if (deser == null) {</b>
+&nbsp;        JsonDeserializer&lt;Object&gt; deser = _rootDeserializers.get(JSON_NODE_TYPE);
+&nbsp;        if (deser == null) {
 &nbsp;            // Nope: need to ask provider to resolve it
 <b class="fc">&nbsp;            deser = ctxt.findRootValueDeserializer(JSON_NODE_TYPE);</b>
 <b class="fc">&nbsp;            if (deser == null) { // can this happen?</b>
-<b class="nc">&nbsp;                ctxt.reportMappingException(&quot;Can not find a deserializer for type %s&quot;,</b>
-&nbsp;                        JSON_NODE_TYPE);
-&nbsp;            }
-<b class="fc">&nbsp;            _rootDeserializers.put(JSON_NODE_TYPE, deser);</b>
+&nbsp;                ctxt.reportMappingException(&quot;Can not find a deserializer for type %s&quot;,
+<b class="fc">&nbsp;                        JSON_NODE_TYPE);</b>
+<b class="fc">&nbsp;            }</b>
+<b class="nc">&nbsp;            _rootDeserializers.put(JSON_NODE_TYPE, deser);</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return deser;</b>
-&nbsp;    }
+&nbsp;        return deser;
+<b class="fc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method called to locate deserializer ahead of time, if permitted
 &nbsp;     * by configuration. Method also is NOT to throw an exception if
 &nbsp;     * access fails.
 &nbsp;     */
 &nbsp;    protected JsonDeserializer&lt;Object&gt; _prefetchRootDeserializer(JavaType valueType)
 &nbsp;    {
-<b class="fc">&nbsp;        if (valueType == null || !_config.isEnabled(DeserializationFeature.EAGER_DESERIALIZER_FETCH)) {</b>
-<b class="fc">&nbsp;            return null;</b>
+&nbsp;        if (valueType == null || !_config.isEnabled(DeserializationFeature.EAGER_DESERIALIZER_FETCH)) {
+&nbsp;            return null;
 &nbsp;        }
-&nbsp;        // already cached?
+<b class="fc">&nbsp;        // already cached?</b>
 <b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; deser = _rootDeserializers.get(valueType);</b>
-<b class="fc">&nbsp;        if (deser == null) {</b>
+&nbsp;        if (deser == null) {
 &nbsp;            try {
-&nbsp;                // If not, need to resolve; for which we need a temporary context as well:
+<b class="fc">&nbsp;                // If not, need to resolve; for which we need a temporary context as well:</b>
 <b class="fc">&nbsp;                DeserializationContext ctxt = createDeserializationContext(null);</b>
-<b class="fc">&nbsp;                deser = ctxt.findRootValueDeserializer(valueType);</b>
-<b class="fc">&nbsp;                if (deser != null) {</b>
+&nbsp;                deser = ctxt.findRootValueDeserializer(valueType);
+&nbsp;                if (deser != null) {
 <b class="fc">&nbsp;                    _rootDeserializers.put(valueType, deser);</b>
-&nbsp;                }
+<b class="fc">&nbsp;                }</b>
 <b class="fc">&nbsp;                return deser;</b>
 <b class="fc">&nbsp;            } catch (JsonProcessingException e) {</b>
 &nbsp;                // need to swallow?
-&nbsp;            }
-&nbsp;        }
-<b class="fc">&nbsp;        return deser;</b>
+<b class="fc">&nbsp;            }</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        return deser;
 &nbsp;    }
 &nbsp;}
 </code>
@@ -2011,7 +2008,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:51</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

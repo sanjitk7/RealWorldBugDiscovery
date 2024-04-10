@@ -52,18 +52,18 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    96.3%
+    100%
   </span>
   <span class="absValue">
-    (26/27)
+    (27/27)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    84.6%
+    92.8%
   </span>
   <span class="absValue">
-    (187/221)
+    (205/221)
   </span>
 </td>
 </tr>
@@ -348,7 +348,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public BeanPropertyMap withoutProperties(Collection&lt;String&gt; toExclude)
 &nbsp;    {
 <b class="fc">&nbsp;        if (toExclude.isEmpty()) {</b>
-<b class="nc">&nbsp;            return this;</b>
+<b class="fc">&nbsp;            return this;</b>
 &nbsp;        }
 <b class="fc">&nbsp;        final int len = _propsInOrder.length;</b>
 <b class="fc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; newProps = new ArrayList&lt;SettableBeanProperty&gt;(len);</b>
@@ -386,7 +386,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            return;
 &nbsp;        }
 &nbsp;        
-<b class="nc">&nbsp;        throw new NoSuchElementException(&quot;No entry &#39;&quot;+key+&quot;&#39; found, can&#39;t replace&quot;);</b>
+<b class="fc">&nbsp;        throw new NoSuchElementException(&quot;No entry &#39;&quot;+key+&quot;&#39; found, can&#39;t replace&quot;);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    private List&lt;SettableBeanProperty&gt; properties() {
@@ -445,7 +445,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public SettableBeanProperty find(String key)
 &nbsp;    {
 <b class="fc">&nbsp;        if (key == null) {</b>
-<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Can not pass null property name&quot;);</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Can not pass null property name&quot;);</b>
 &nbsp;        }
 <b class="fc">&nbsp;        if (_caseInsensitive) {</b>
 <b class="fc">&nbsp;            key = key.toLowerCase();</b>
@@ -521,7 +521,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;            props.add(prop);</b>
 &nbsp;        }
 <b class="fc">&nbsp;        if (!found) {</b>
-<b class="nc">&nbsp;            throw new NoSuchElementException(&quot;No entry &#39;&quot;+propToRm.getName()+&quot;&#39; found, can&#39;t remove&quot;);</b>
+<b class="fc">&nbsp;            throw new NoSuchElementException(&quot;No entry &#39;&quot;+propToRm.getName()+&quot;&#39; found, can&#39;t remove&quot;);</b>
 &nbsp;        }
 <b class="fc">&nbsp;        init(props);</b>
 &nbsp;    }
@@ -581,7 +581,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    protected SettableBeanProperty _rename(SettableBeanProperty prop, NameTransformer xf)
 &nbsp;    {
 <b class="fc">&nbsp;        if (prop == null) {</b>
-<b class="nc">&nbsp;            return prop;</b>
+<b class="fc">&nbsp;            return prop;</b>
 &nbsp;        }
 <b class="fc">&nbsp;        String newName = xf.transform(prop.getName());</b>
 <b class="fc">&nbsp;        prop = prop.withSimpleName(newName);</b>
@@ -601,26 +601,26 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        throws IOException
 &nbsp;    {
 &nbsp;        // inlined &#39;throwOrReturnThrowable&#39;
-<b class="nc">&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {</b>
-<b class="nc">&nbsp;            t = t.getCause();</b>
+<b class="fc">&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {</b>
+<b class="fc">&nbsp;            t = t.getCause();</b>
 &nbsp;        }
 &nbsp;        // Errors to be passed as is
-<b class="nc">&nbsp;        if (t instanceof Error) {</b>
-<b class="nc">&nbsp;            throw (Error) t;</b>
+<b class="fc">&nbsp;        if (t instanceof Error) {</b>
+<b class="fc">&nbsp;            throw (Error) t;</b>
 &nbsp;        }
 &nbsp;        // StackOverflowErrors are tricky ones; need to be careful...
-<b class="nc">&nbsp;        boolean wrap = (ctxt == null) || ctxt.isEnabled(DeserializationFeature.WRAP_EXCEPTIONS);</b>
+<b class="fc">&nbsp;        boolean wrap = (ctxt == null) || ctxt.isEnabled(DeserializationFeature.WRAP_EXCEPTIONS);</b>
 &nbsp;        // Ditto for IOExceptions; except we may want to wrap JSON exceptions
-<b class="nc">&nbsp;        if (t instanceof IOException) {</b>
-<b class="nc">&nbsp;            if (!wrap || !(t instanceof JsonProcessingException)) {</b>
-<b class="nc">&nbsp;                throw (IOException) t;</b>
+<b class="fc">&nbsp;        if (t instanceof IOException) {</b>
+<b class="fc">&nbsp;            if (!wrap || !(t instanceof JsonProcessingException)) {</b>
+<b class="fc">&nbsp;                throw (IOException) t;</b>
 &nbsp;            }
-<b class="nc">&nbsp;        } else if (!wrap) { // allow disabling wrapping for unchecked exceptions</b>
-<b class="nc">&nbsp;            if (t instanceof RuntimeException) {</b>
-<b class="nc">&nbsp;                throw (RuntimeException) t;</b>
+<b class="fc">&nbsp;        } else if (!wrap) { // allow disabling wrapping for unchecked exceptions</b>
+<b class="fc">&nbsp;            if (t instanceof RuntimeException) {</b>
+<b class="fc">&nbsp;                throw (RuntimeException) t;</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        throw JsonMappingException.wrapWithPath(t, bean, fieldName);</b>
+<b class="fc">&nbsp;        throw JsonMappingException.wrapWithPath(t, bean, fieldName);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -653,7 +653,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;                return i+1;</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        return -1;</b>
+<b class="fc">&nbsp;        return -1;</b>
 &nbsp;    }
 &nbsp;    
 &nbsp;    private final int _findFromOrdered(SettableBeanProperty prop) {
@@ -702,7 +702,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:51</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

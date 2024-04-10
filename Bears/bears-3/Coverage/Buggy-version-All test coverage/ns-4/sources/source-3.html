@@ -49,10 +49,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    66.2%
+    64.9%
   </span>
   <span class="absValue">
-    (292/441)
+    (286/441)
   </span>
 </td>
 </tr>
@@ -87,10 +87,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    100%
+    75%
   </span>
   <span class="absValue">
-    (8/8)
+    (6/8)
   </span>
 </td>
   </tr>
@@ -106,10 +106,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    66.9%
+    65.1%
   </span>
   <span class="absValue">
-    (301/450)
+    (293/450)
   </span>
 </td>
 </tr>
@@ -360,8 +360,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;            if (prop != null) { // normal case</b>
 &nbsp;                try {
 <b class="fc">&nbsp;                    prop.deserializeAndSet(p, ctxt, bean);</b>
-<b class="fc">&nbsp;                } catch (Exception e) {</b>
-<b class="fc">&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);</b>
+<b class="nc">&nbsp;                } catch (Exception e) {</b>
+<b class="nc">&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);</b>
 <b class="fc">&nbsp;                }</b>
 <b class="nc">&nbsp;                continue;</b>
 &nbsp;            }
@@ -602,11 +602,11 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        }
 <b class="fc">&nbsp;        if (unknown != null) {</b>
 &nbsp;            // polymorphic?
-<b class="fc">&nbsp;            if (bean.getClass() != _beanType.getRawClass()) {</b>
+<b class="nc">&nbsp;            if (bean.getClass() != _beanType.getRawClass()) {</b>
 <b class="nc">&nbsp;                return handlePolymorphic(null, ctxt, bean, unknown);</b>
 &nbsp;            }
 &nbsp;            // no, just some extra unknown properties
-<b class="fc">&nbsp;            return handleUnknownProperties(ctxt, bean, unknown);</b>
+<b class="nc">&nbsp;            return handleUnknownProperties(ctxt, bean, unknown);</b>
 &nbsp;        }
 <b class="fc">&nbsp;        return bean;</b>
 &nbsp;    }
@@ -754,398 +754,357 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;                handleIgnoredProperty(p, ctxt, bean, propName);</b>
 <b class="nc">&nbsp;                continue;</b>
 &nbsp;            }
-&nbsp;            // 29-Nov-2016, tatu: probably should try to avoid sending content
-&nbsp;            //    both to any setter AND buffer... but, for now, the only thing
-&nbsp;            //    we can do.
+&nbsp;            // but... others should be passed to unwrapped property deserializers
+&nbsp;            tokens.writeFieldName(propName);
+&nbsp;            tokens.copyCurrentStructure(p);
 &nbsp;            // how about any setter? We&#39;ll get copies but...
-<b class="fc">&nbsp;            if (_anySetter == null) {</b>
-&nbsp;                // but... others should be passed to unwrapped property deserializers
-<b class="fc">&nbsp;                tokens.writeFieldName(propName);</b>
-<b class="fc">&nbsp;                tokens.copyCurrentStructure(p);</b>
-&nbsp;            } else {
-&nbsp;                // Need to copy to a separate buffer first
-<b class="fc">&nbsp;                TokenBuffer b2 = new TokenBuffer(p, ctxt);</b>
-<b class="fc">&nbsp;                b2.copyCurrentStructure(p);</b>
-<b class="fc">&nbsp;                tokens.writeFieldName(propName);</b>
-<b class="fc">&nbsp;                tokens.append(b2);</b>
+<b class="fc">&nbsp;            if (_anySetter != null) {</b>
 &nbsp;                try {
-<b class="fc">&nbsp;                    JsonParser p2 = b2.asParser(p);</b>
-<b class="fc">&nbsp;                    p2.nextToken();</b>
-<b class="fc">&nbsp;                    _anySetter.deserializeAndSet(p2, ctxt, bean, propName);</b>
-<b class="nc">&nbsp;                } catch (Exception e) {</b>
-<b class="nc">&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);</b>
-<b class="fc">&nbsp;                }</b>
-<b class="nc">&nbsp;                continue;</b>
-&nbsp;            }
-&nbsp;        }
+<b class="fc">&nbsp;                    _anySetter.deserializeAndSet(p, ctxt, bean, propName);</b>
+<b class="fc">&nbsp;                } catch (Exception e) {</b>
+&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);
+&nbsp;                }
+<b class="fc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;        }</b>
 <b class="fc">&nbsp;        tokens.writeEndObject();</b>
-<b class="fc">&nbsp;        _unwrappedPropertyHandler.processUnwrapped(p, ctxt, bean, tokens);</b>
+&nbsp;        _unwrappedPropertyHandler.processUnwrapped(p, ctxt, bean, tokens);
 <b class="fc">&nbsp;        return bean;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
-&nbsp;    protected Object deserializeWithUnwrapped(JsonParser p, DeserializationContext ctxt, Object bean)
-&nbsp;        throws IOException
-&nbsp;    {
-<b class="nc">&nbsp;        JsonToken t = p.getCurrentToken();</b>
-<b class="nc">&nbsp;        if (t == JsonToken.START_OBJECT) {</b>
-<b class="nc">&nbsp;            t = p.nextToken();</b>
-&nbsp;        }
-<b class="nc">&nbsp;        TokenBuffer tokens = new TokenBuffer(p, ctxt);</b>
-<b class="nc">&nbsp;        tokens.writeStartObject();</b>
-<b class="nc">&nbsp;        final Class&lt;?&gt; activeView = _needViewProcesing ? ctxt.getActiveView() : null;</b>
-<b class="nc">&nbsp;        for (; t == JsonToken.FIELD_NAME; t = p.nextToken()) {</b>
-<b class="nc">&nbsp;            String propName = p.getCurrentName();</b>
-<b class="nc">&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);</b>
-<b class="nc">&nbsp;            p.nextToken();</b>
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="nc">&nbsp;    @SuppressWarnings(&quot;resource&quot;)</b>
+<b class="nc">&nbsp;    protected Object deserializeWithUnwrapped(JsonParser p, DeserializationContext ctxt, Object bean)</b>
+<b class="fc">&nbsp;        throws IOException</b>
+<b class="nc">&nbsp;    {</b>
+&nbsp;        JsonToken t = p.getCurrentToken();
+&nbsp;        if (t == JsonToken.START_OBJECT) {
+<b class="fc">&nbsp;            t = p.nextToken();</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        TokenBuffer tokens = new TokenBuffer(p, ctxt);</b>
+&nbsp;        tokens.writeStartObject();
+&nbsp;        final Class&lt;?&gt; activeView = _needViewProcesing ? ctxt.getActiveView() : null;
+&nbsp;        for (; t == JsonToken.FIELD_NAME; t = p.nextToken()) {
+&nbsp;            String propName = p.getCurrentName();
+&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);
+&nbsp;            p.nextToken();
 <b class="nc">&nbsp;            if (prop != null) { // normal case</b>
 <b class="nc">&nbsp;                if (activeView != null &amp;&amp; !prop.visibleInView(activeView)) {</b>
 <b class="nc">&nbsp;                    p.skipChildren();</b>
-<b class="nc">&nbsp;                    continue;</b>
-&nbsp;                }
-&nbsp;                try {
+&nbsp;                    continue;
+<b class="nc">&nbsp;                }</b>
+<b class="nc">&nbsp;                try {</b>
 <b class="nc">&nbsp;                    prop.deserializeAndSet(p, ctxt, bean);</b>
 <b class="nc">&nbsp;                } catch (Exception e) {</b>
 <b class="nc">&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);</b>
 <b class="nc">&nbsp;                }</b>
 <b class="nc">&nbsp;                continue;</b>
-&nbsp;            }
+<b class="nc">&nbsp;            }</b>
 <b class="nc">&nbsp;            if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
 <b class="nc">&nbsp;                handleIgnoredProperty(p, ctxt, bean, propName);</b>
 <b class="nc">&nbsp;                continue;</b>
 &nbsp;            }
-&nbsp;            // 29-Nov-2016, tatu: probably should try to avoid sending content
-&nbsp;            //    both to any setter AND buffer... but, for now, the only thing
-&nbsp;            //    we can do.
-&nbsp;            // how about any setter? We&#39;ll get copies but...
-<b class="nc">&nbsp;            if (_anySetter == null) {</b>
-&nbsp;                // but... others should be passed to unwrapped property deserializers
-<b class="nc">&nbsp;                tokens.writeFieldName(propName);</b>
-<b class="nc">&nbsp;                tokens.copyCurrentStructure(p);</b>
-&nbsp;            } else {
-&nbsp;                // Need to copy to a separate buffer first
-<b class="nc">&nbsp;                TokenBuffer b2 = new TokenBuffer(p, ctxt);</b>
-<b class="nc">&nbsp;                b2.copyCurrentStructure(p);</b>
-<b class="nc">&nbsp;                tokens.writeFieldName(propName);</b>
-<b class="nc">&nbsp;                tokens.append(b2);</b>
-&nbsp;                try {
-<b class="nc">&nbsp;                    JsonParser p2 = b2.asParser(p);</b>
-<b class="nc">&nbsp;                    p2.nextToken();</b>
-<b class="nc">&nbsp;                    _anySetter.deserializeAndSet(p2, ctxt, bean, propName);</b>
-<b class="nc">&nbsp;                } catch (Exception e) {</b>
-<b class="nc">&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);</b>
-<b class="nc">&nbsp;                }</b>
-<b class="nc">&nbsp;                continue;</b>
+&nbsp;            // but... others should be passed to unwrapped property deserializers
+<b class="nc">&nbsp;            tokens.writeFieldName(propName);</b>
+<b class="nc">&nbsp;            tokens.copyCurrentStructure(p);</b>
+<b class="nc">&nbsp;            // how about any setter? We&#39;ll get copies but...</b>
+<b class="nc">&nbsp;            if (_anySetter != null) {</b>
+<b class="nc">&nbsp;                _anySetter.deserializeAndSet(p, ctxt, bean, propName);</b>
 &nbsp;            }
-&nbsp;        }
+<b class="nc">&nbsp;        }</b>
 <b class="nc">&nbsp;        tokens.writeEndObject();</b>
 <b class="nc">&nbsp;        _unwrappedPropertyHandler.processUnwrapped(p, ctxt, bean, tokens);</b>
-<b class="nc">&nbsp;        return bean;</b>
+&nbsp;        return bean;
 &nbsp;    }
 &nbsp;
 &nbsp;    @SuppressWarnings(&quot;resource&quot;)
 &nbsp;    protected Object deserializeUsingPropertyBasedWithUnwrapped(JsonParser p, DeserializationContext ctxt)
-&nbsp;        throws IOException
+<b class="nc">&nbsp;        throws IOException</b>
 &nbsp;    {
-<b class="fc">&nbsp;        final PropertyBasedCreator creator = _propertyBasedCreator;</b>
-<b class="fc">&nbsp;        PropertyValueBuffer buffer = creator.startBuilding(p, ctxt, _objectIdReader);</b>
+<b class="nc">&nbsp;        final PropertyBasedCreator creator = _propertyBasedCreator;</b>
+<b class="nc">&nbsp;        PropertyValueBuffer buffer = creator.startBuilding(p, ctxt, _objectIdReader);</b>
 &nbsp;
-<b class="fc">&nbsp;        TokenBuffer tokens = new TokenBuffer(p, ctxt);</b>
-<b class="fc">&nbsp;        tokens.writeStartObject();</b>
-&nbsp;
-<b class="fc">&nbsp;        JsonToken t = p.getCurrentToken();</b>
-<b class="fc">&nbsp;        for (; t == JsonToken.FIELD_NAME; t = p.nextToken()) {</b>
-<b class="fc">&nbsp;            String propName = p.getCurrentName();</b>
-<b class="fc">&nbsp;            p.nextToken(); // to point to value</b>
-&nbsp;            // creator property?
-<b class="fc">&nbsp;            SettableBeanProperty creatorProp = creator.findCreatorProperty(propName);</b>
-<b class="fc">&nbsp;            if (creatorProp != null) {</b>
-&nbsp;                // Last creator property to set?
-<b class="fc">&nbsp;                if (buffer.assignParameter(creatorProp, _deserializeWithErrorWrapping(p, ctxt, creatorProp))) {</b>
-<b class="fc">&nbsp;                    t = p.nextToken(); // to move to following FIELD_NAME/END_OBJECT</b>
+&nbsp;        TokenBuffer tokens = new TokenBuffer(p, ctxt);
+<b class="nc">&nbsp;        tokens.writeStartObject();</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;        JsonToken t = p.getCurrentToken();</b>
+<b class="nc">&nbsp;        for (; t == JsonToken.FIELD_NAME; t = p.nextToken()) {</b>
+&nbsp;            String propName = p.getCurrentName();
+<b class="nc">&nbsp;            p.nextToken(); // to point to value</b>
+<b class="nc">&nbsp;            // creator property?</b>
+<b class="nc">&nbsp;            SettableBeanProperty creatorProp = creator.findCreatorProperty(propName);</b>
+<b class="nc">&nbsp;            if (creatorProp != null) {</b>
+<b class="nc">&nbsp;                // Last creator property to set?</b>
+<b class="nc">&nbsp;                if (buffer.assignParameter(creatorProp, _deserializeWithErrorWrapping(p, ctxt, creatorProp))) {</b>
+<b class="nc">&nbsp;                    t = p.nextToken(); // to move to following FIELD_NAME/END_OBJECT</b>
 &nbsp;                    Object bean;
 &nbsp;                    try {
-<b class="fc">&nbsp;                        bean = creator.build(ctxt, buffer);</b>
+<b class="nc">&nbsp;                        bean = creator.build(ctxt, buffer);</b>
 <b class="nc">&nbsp;                    } catch (Exception e) {</b>
 <b class="nc">&nbsp;                        bean = wrapInstantiationProblem(e, ctxt);</b>
-<b class="fc">&nbsp;                    }</b>
+&nbsp;                    }
 &nbsp;                    // [databind#631]: Assign current value, to be accessible by custom serializers
-<b class="fc">&nbsp;                    p.setCurrentValue(bean);</b>
+&nbsp;                    p.setCurrentValue(bean);
 &nbsp;                    // if so, need to copy all remaining tokens into buffer
-<b class="fc">&nbsp;                    while (t == JsonToken.FIELD_NAME) {</b>
-<b class="nc">&nbsp;                        p.nextToken(); // to skip name</b>
-<b class="nc">&nbsp;                        tokens.copyCurrentStructure(p);</b>
-<b class="nc">&nbsp;                        t = p.nextToken();</b>
+&nbsp;                    while (t == JsonToken.FIELD_NAME) {
+&nbsp;                        p.nextToken(); // to skip name
+<b class="fc">&nbsp;                        tokens.copyCurrentStructure(p);</b>
+<b class="fc">&nbsp;                        t = p.nextToken();</b>
 &nbsp;                    }
 <b class="fc">&nbsp;                    tokens.writeEndObject();</b>
 <b class="fc">&nbsp;                    if (bean.getClass() != _beanType.getRawClass()) {</b>
 &nbsp;                        // !!! 08-Jul-2011, tatu: Could probably support; but for now
-&nbsp;                        //   it&#39;s too complicated, so bail out
-<b class="nc">&nbsp;                        tokens.close();</b>
-<b class="nc">&nbsp;                        ctxt.reportMappingException(&quot;Can not create polymorphic instances with unwrapped values&quot;);</b>
-<b class="nc">&nbsp;                        return null;</b>
+<b class="fc">&nbsp;                        //   it&#39;s too complicated, so bail out</b>
+<b class="fc">&nbsp;                        tokens.close();</b>
+<b class="fc">&nbsp;                        ctxt.reportMappingException(&quot;Can not create polymorphic instances with unwrapped values&quot;);</b>
+<b class="fc">&nbsp;                        return null;</b>
 &nbsp;                    }
 <b class="fc">&nbsp;                    return _unwrappedPropertyHandler.processUnwrapped(p, ctxt, bean, tokens);</b>
-&nbsp;                }
+<b class="fc">&nbsp;                }</b>
 &nbsp;                continue;
-&nbsp;            }
-&nbsp;            // Object Id property?
-<b class="fc">&nbsp;            if (buffer.readIdProperty(propName)) {</b>
-<b class="nc">&nbsp;                continue;</b>
-&nbsp;            }
-&nbsp;            // regular property? needs buffering
-<b class="fc">&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);</b>
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;            // Object Id property?</b>
+&nbsp;            if (buffer.readIdProperty(propName)) {
+&nbsp;                continue;
+<b class="fc">&nbsp;            }</b>
+<b class="nc">&nbsp;            // regular property? needs buffering</b>
+<b class="nc">&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);</b>
 <b class="fc">&nbsp;            if (prop != null) {</b>
-<b class="nc">&nbsp;                buffer.bufferProperty(prop, _deserializeWithErrorWrapping(p, ctxt, prop));</b>
-<b class="nc">&nbsp;                continue;</b>
+&nbsp;                buffer.bufferProperty(prop, _deserializeWithErrorWrapping(p, ctxt, prop));
+<b class="fc">&nbsp;                continue;</b>
 &nbsp;            }
-&nbsp;            // Things marked as ignorable should not be passed to any setter
-<b class="fc">&nbsp;            if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
+<b class="fc">&nbsp;            // Things marked as ignorable should not be passed to any setter</b>
+<b class="nc">&nbsp;            if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
 <b class="nc">&nbsp;                handleIgnoredProperty(p, ctxt, handledType(), propName);</b>
 <b class="nc">&nbsp;                continue;</b>
 &nbsp;            }
-&nbsp;            // 29-Nov-2016, tatu: probably should try to avoid sending content
-&nbsp;            //    both to any setter AND buffer... but, for now, the only thing
-&nbsp;            //    we can do.
-&nbsp;            // how about any setter? We&#39;ll get copies but...
-<b class="fc">&nbsp;            if (_anySetter == null) {</b>
-&nbsp;                // but... others should be passed to unwrapped property deserializers
-<b class="fc">&nbsp;                tokens.writeFieldName(propName);</b>
-<b class="fc">&nbsp;                tokens.copyCurrentStructure(p);</b>
-&nbsp;            } else {
-&nbsp;                // Need to copy to a separate buffer first
-<b class="nc">&nbsp;                TokenBuffer b2 = new TokenBuffer(p, ctxt);</b>
-<b class="nc">&nbsp;                b2.copyCurrentStructure(p);</b>
-<b class="nc">&nbsp;                tokens.writeFieldName(propName);</b>
-<b class="nc">&nbsp;                tokens.append(b2);</b>
-&nbsp;                try {
-<b class="nc">&nbsp;                    JsonParser p2 = b2.asParser(p);</b>
-<b class="nc">&nbsp;                    p2.nextToken();</b>
-<b class="nc">&nbsp;                    buffer.bufferAnyProperty(_anySetter, propName,</b>
-<b class="nc">&nbsp;                            _anySetter.deserialize(p2, ctxt));</b>
+<b class="fc">&nbsp;            tokens.writeFieldName(propName);</b>
+<b class="fc">&nbsp;            tokens.copyCurrentStructure(p);</b>
+&nbsp;            // &quot;any property&quot;?
+&nbsp;            if (_anySetter != null) {
+<b class="nc">&nbsp;                try {</b>
+<b class="nc">&nbsp;                    buffer.bufferAnyProperty(_anySetter, propName, _anySetter.deserialize(p, ctxt));</b>
 <b class="nc">&nbsp;                } catch (Exception e) {</b>
-<b class="nc">&nbsp;                    wrapAndThrow(e, _beanType.getRawClass(), propName, ctxt);</b>
-<b class="nc">&nbsp;                }</b>
-<b class="nc">&nbsp;                continue;</b>
+&nbsp;                    wrapAndThrow(e, _beanType.getRawClass(), propName, ctxt);
+<b class="fc">&nbsp;                }</b>
 &nbsp;            }
 &nbsp;        }
 &nbsp;
 &nbsp;        // We hit END_OBJECT, so:
-&nbsp;        Object bean;
-&nbsp;        try {
-<b class="nc">&nbsp;            bean = creator.build(ctxt, buffer);</b>
-<b class="nc">&nbsp;        } catch (Exception e) {</b>
-<b class="nc">&nbsp;            wrapInstantiationProblem(e, ctxt);</b>
-<b class="nc">&nbsp;            return null; // never gets here</b>
+<b class="fc">&nbsp;        Object bean;</b>
+<b class="nc">&nbsp;        try {</b>
+&nbsp;            bean = creator.build(ctxt, buffer);
+&nbsp;        } catch (Exception e) {
+<b class="fc">&nbsp;            wrapInstantiationProblem(e, ctxt);</b>
+<b class="fc">&nbsp;            return null; // never gets here</b>
 <b class="nc">&nbsp;        }</b>
 <b class="nc">&nbsp;        return _unwrappedPropertyHandler.processUnwrapped(p, ctxt, bean, tokens);</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Handling for cases where we have property/-ies with
+<b class="fc">&nbsp;    /*</b>
+<b class="nc">&nbsp;    /**********************************************************</b>
+<b class="nc">&nbsp;    /* Handling for cases where we have property/-ies with</b>
 &nbsp;    /* external type id
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
 &nbsp;    protected Object deserializeWithExternalTypeId(JsonParser p, DeserializationContext ctxt)
-&nbsp;        throws IOException
+<b class="fc">&nbsp;        throws IOException</b>
 &nbsp;    {
 <b class="fc">&nbsp;        if (_propertyBasedCreator != null) {</b>
 <b class="fc">&nbsp;            return deserializeUsingPropertyBasedWithExternalTypeId(p, ctxt);</b>
 &nbsp;        }
-<b class="fc">&nbsp;        if (_delegateDeserializer != null) {</b>
-&nbsp;            /* 24-Nov-2015, tatu: Use of delegating creator needs to have precedence, and basically
-&nbsp;             *   external type id handling just has to be ignored, as they would relate to target
-&nbsp;             *   type and not delegate type. Whether this works as expected is another story, but
-&nbsp;             *   there&#39;s no other way to really mix these conflicting features.
+&nbsp;        if (_delegateDeserializer != null) {
+<b class="nc">&nbsp;            /* 24-Nov-2015, tatu: Use of delegating creator needs to have precedence, and basically</b>
+<b class="nc">&nbsp;             *   external type id handling just has to be ignored, as they would relate to target</b>
+<b class="nc">&nbsp;             *   type and not delegate type. Whether this works as expected is another story, but</b>
+<b class="nc">&nbsp;             *   there&#39;s no other way to really mix these conflicting features.</b>
 &nbsp;             */
-<b class="fc">&nbsp;            return _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="fc">&nbsp;                    _delegateDeserializer.deserialize(p, ctxt));</b>
-&nbsp;        }
-&nbsp;
-<b class="fc">&nbsp;        return deserializeWithExternalTypeId(p, ctxt, _valueInstantiator.createUsingDefault(ctxt));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    protected Object deserializeWithExternalTypeId(JsonParser p, DeserializationContext ctxt,
+<b class="nc">&nbsp;            return _valueInstantiator.createUsingDelegate(ctxt,</b>
+<b class="nc">&nbsp;                    _delegateDeserializer.deserialize(p, ctxt));</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;        return deserializeWithExternalTypeId(p, ctxt, _valueInstantiator.createUsingDefault(ctxt));</b>
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    protected Object deserializeWithExternalTypeId(JsonParser p, DeserializationContext ctxt,</b>
 &nbsp;            Object bean)
 &nbsp;        throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        final Class&lt;?&gt; activeView = _needViewProcesing ? ctxt.getActiveView() : null;</b>
-<b class="fc">&nbsp;        final ExternalTypeHandler ext = _externalTypeIdHandler.start();</b>
+&nbsp;        final Class&lt;?&gt; activeView = _needViewProcesing ? ctxt.getActiveView() : null;
+&nbsp;        final ExternalTypeHandler ext = _externalTypeIdHandler.start();
 &nbsp;
-<b class="fc">&nbsp;        for (JsonToken t = p.getCurrentToken(); t == JsonToken.FIELD_NAME; t = p.nextToken()) {</b>
-<b class="fc">&nbsp;            String propName = p.getCurrentName();</b>
-<b class="fc">&nbsp;            t = p.nextToken();</b>
-<b class="fc">&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);</b>
-<b class="fc">&nbsp;            if (prop != null) { // normal case</b>
-&nbsp;                // [JACKSON-831]: may have property AND be used as external type id:
-<b class="fc">&nbsp;                if (t.isScalarValue()) {</b>
-<b class="fc">&nbsp;                    ext.handleTypePropertyValue(p, ctxt, propName, bean);</b>
+<b class="nc">&nbsp;        for (JsonToken t = p.getCurrentToken(); t == JsonToken.FIELD_NAME; t = p.nextToken()) {</b>
+<b class="nc">&nbsp;            String propName = p.getCurrentName();</b>
+<b class="nc">&nbsp;            t = p.nextToken();</b>
+<b class="nc">&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);</b>
+<b class="nc">&nbsp;            if (prop != null) { // normal case</b>
+<b class="nc">&nbsp;                // [JACKSON-831]: may have property AND be used as external type id:</b>
+&nbsp;                if (t.isScalarValue()) {
+&nbsp;                    ext.handleTypePropertyValue(p, ctxt, propName, bean);
 &nbsp;                }
-<b class="fc">&nbsp;                if (activeView != null &amp;&amp; !prop.visibleInView(activeView)) {</b>
-<b class="nc">&nbsp;                    p.skipChildren();</b>
-<b class="nc">&nbsp;                    continue;</b>
+&nbsp;                if (activeView != null &amp;&amp; !prop.visibleInView(activeView)) {
+&nbsp;                    p.skipChildren();
+&nbsp;                    continue;
 &nbsp;                }
 &nbsp;                try {
-<b class="fc">&nbsp;                    prop.deserializeAndSet(p, ctxt, bean);</b>
-<b class="nc">&nbsp;                } catch (Exception e) {</b>
-<b class="nc">&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);</b>
-<b class="fc">&nbsp;                }</b>
-<b class="nc">&nbsp;                continue;</b>
-&nbsp;            }
+&nbsp;                    prop.deserializeAndSet(p, ctxt, bean);
+&nbsp;                } catch (Exception e) {
+&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);
+&nbsp;                }
+<b class="fc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;            }</b>
 &nbsp;            // ignorable things should be ignored
 <b class="fc">&nbsp;            if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
-<b class="nc">&nbsp;                handleIgnoredProperty(p, ctxt, bean, propName);</b>
-<b class="nc">&nbsp;                continue;</b>
+&nbsp;                handleIgnoredProperty(p, ctxt, bean, propName);
+&nbsp;                continue;
 &nbsp;            }
 &nbsp;            // but others are likely to be part of external type id thingy...
-<b class="fc">&nbsp;            if (ext.handlePropertyValue(p, ctxt, propName, bean)) {</b>
+&nbsp;            if (ext.handlePropertyValue(p, ctxt, propName, bean)) {
 <b class="fc">&nbsp;                continue;</b>
-&nbsp;            }
+<b class="fc">&nbsp;            }</b>
 &nbsp;            // if not, the usual fallback handling:
-<b class="nc">&nbsp;            if (_anySetter != null) {</b>
-&nbsp;                try {
-<b class="nc">&nbsp;                    _anySetter.deserializeAndSet(p, ctxt, bean, propName);</b>
-<b class="nc">&nbsp;                } catch (Exception e) {</b>
-<b class="nc">&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);</b>
-<b class="nc">&nbsp;                }</b>
-<b class="nc">&nbsp;                continue;</b>
-&nbsp;            }
-&nbsp;            // Unknown: let&#39;s call handler method
-<b class="nc">&nbsp;            handleUnknownProperty(p, ctxt, bean, propName);</b>
-&nbsp;        }
-&nbsp;        // and when we get this far, let&#39;s try finalizing the deal:
-<b class="fc">&nbsp;        return ext.complete(p, ctxt, bean);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
-&nbsp;    protected Object deserializeUsingPropertyBasedWithExternalTypeId(JsonParser p, DeserializationContext ctxt)
-&nbsp;        throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        final ExternalTypeHandler ext = _externalTypeIdHandler.start();</b>
-<b class="fc">&nbsp;        final PropertyBasedCreator creator = _propertyBasedCreator;</b>
-<b class="fc">&nbsp;        PropertyValueBuffer buffer = creator.startBuilding(p, ctxt, _objectIdReader);</b>
-&nbsp;
-<b class="fc">&nbsp;        TokenBuffer tokens = new TokenBuffer(p, ctxt);</b>
-<b class="fc">&nbsp;        tokens.writeStartObject();</b>
-&nbsp;
-<b class="fc">&nbsp;        JsonToken t = p.getCurrentToken();</b>
-<b class="fc">&nbsp;        for (; t == JsonToken.FIELD_NAME; t = p.nextToken()) {</b>
-<b class="fc">&nbsp;            String propName = p.getCurrentName();</b>
-<b class="fc">&nbsp;            p.nextToken(); // to point to value</b>
-&nbsp;            // creator property?
-<b class="fc">&nbsp;            SettableBeanProperty creatorProp = creator.findCreatorProperty(propName);</b>
-<b class="fc">&nbsp;            if (creatorProp != null) {</b>
-&nbsp;                // first: let&#39;s check to see if this might be part of value with external type id:
-&nbsp;                // 11-Sep-2015, tatu: Important; do NOT pass buffer as last arg, but null,
-&nbsp;                //   since it is not the bean
-<b class="fc">&nbsp;                if (ext.handlePropertyValue(p, ctxt, propName, null)) {</b>
-&nbsp;                    ;
-&nbsp;                } else {
-&nbsp;                    // Last creator property to set?
-<b class="fc">&nbsp;                    if (buffer.assignParameter(creatorProp, _deserializeWithErrorWrapping(p, ctxt, creatorProp))) {</b>
-<b class="fc">&nbsp;                        t = p.nextToken(); // to move to following FIELD_NAME/END_OBJECT</b>
-&nbsp;                        Object bean;
-&nbsp;                        try {
-<b class="fc">&nbsp;                            bean = creator.build(ctxt, buffer);</b>
-<b class="nc">&nbsp;                        } catch (Exception e) {</b>
-<b class="nc">&nbsp;                            wrapAndThrow(e, _beanType.getRawClass(), propName, ctxt);</b>
-<b class="nc">&nbsp;                            continue; // never gets here</b>
-<b class="fc">&nbsp;                        }</b>
-&nbsp;                        // if so, need to copy all remaining tokens into buffer
-<b class="fc">&nbsp;                        while (t == JsonToken.FIELD_NAME) {</b>
-<b class="fc">&nbsp;                            p.nextToken(); // to skip name</b>
-<b class="fc">&nbsp;                            tokens.copyCurrentStructure(p);</b>
-<b class="fc">&nbsp;                            t = p.nextToken();</b>
-&nbsp;                        }
-<b class="fc">&nbsp;                        if (bean.getClass() != _beanType.getRawClass()) {</b>
-&nbsp;                            // !!! 08-Jul-2011, tatu: Could theoretically support; but for now
-&nbsp;                            //   it&#39;s too complicated, so bail out
-<b class="nc">&nbsp;                            ctxt.reportMappingException(&quot;Can not create polymorphic instances with external type ids&quot;);</b>
-<b class="nc">&nbsp;                            return null;</b>
-&nbsp;                        }
-<b class="fc">&nbsp;                        return ext.complete(p, ctxt, bean);</b>
-&nbsp;                    }
+&nbsp;            if (_anySetter != null) {
+<b class="fc">&nbsp;                try {</b>
+&nbsp;                    _anySetter.deserializeAndSet(p, ctxt, bean, propName);
+&nbsp;                } catch (Exception e) {
+&nbsp;                    wrapAndThrow(e, bean, propName, ctxt);
 &nbsp;                }
 &nbsp;                continue;
 &nbsp;            }
+<b class="fc">&nbsp;            // Unknown: let&#39;s call handler method</b>
+<b class="fc">&nbsp;            handleUnknownProperty(p, ctxt, bean, propName);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        // and when we get this far, let&#39;s try finalizing the deal:</b>
+<b class="fc">&nbsp;        return ext.complete(p, ctxt, bean);</b>
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    @SuppressWarnings(&quot;resource&quot;)</b>
+&nbsp;    protected Object deserializeUsingPropertyBasedWithExternalTypeId(JsonParser p, DeserializationContext ctxt)
+<b class="fc">&nbsp;        throws IOException</b>
+<b class="fc">&nbsp;    {</b>
+&nbsp;        final ExternalTypeHandler ext = _externalTypeIdHandler.start();
+<b class="fc">&nbsp;        final PropertyBasedCreator creator = _propertyBasedCreator;</b>
+<b class="nc">&nbsp;        PropertyValueBuffer buffer = creator.startBuilding(p, ctxt, _objectIdReader);</b>
+<b class="nc">&nbsp;</b>
+&nbsp;        TokenBuffer tokens = new TokenBuffer(p, ctxt);
+&nbsp;        tokens.writeStartObject();
+<b class="fc">&nbsp;</b>
+<b class="nc">&nbsp;        JsonToken t = p.getCurrentToken();</b>
+<b class="nc">&nbsp;        for (; t == JsonToken.FIELD_NAME; t = p.nextToken()) {</b>
+<b class="fc">&nbsp;            String propName = p.getCurrentName();</b>
+<b class="nc">&nbsp;            p.nextToken(); // to point to value</b>
+&nbsp;            // creator property?
+&nbsp;            SettableBeanProperty creatorProp = creator.findCreatorProperty(propName);
+<b class="fc">&nbsp;            if (creatorProp != null) {</b>
+<b class="nc">&nbsp;                // first: let&#39;s check to see if this might be part of value with external type id:</b>
+<b class="nc">&nbsp;                // 11-Sep-2015, tatu: Important; do NOT pass buffer as last arg, but null,</b>
+&nbsp;                //   since it is not the bean
+&nbsp;                if (ext.handlePropertyValue(p, ctxt, propName, null)) {
+<b class="fc">&nbsp;                    ;</b>
+<b class="fc">&nbsp;                } else {</b>
+&nbsp;                    // Last creator property to set?
+&nbsp;                    if (buffer.assignParameter(creatorProp, _deserializeWithErrorWrapping(p, ctxt, creatorProp))) {
+<b class="nc">&nbsp;                        t = p.nextToken(); // to move to following FIELD_NAME/END_OBJECT</b>
+&nbsp;                        Object bean;
+<b class="nc">&nbsp;                        try {</b>
+<b class="nc">&nbsp;                            bean = creator.build(ctxt, buffer);</b>
+<b class="nc">&nbsp;                        } catch (Exception e) {</b>
+<b class="nc">&nbsp;                            wrapAndThrow(e, _beanType.getRawClass(), propName, ctxt);</b>
+<b class="nc">&nbsp;                            continue; // never gets here</b>
+&nbsp;                        }
+&nbsp;                        // if so, need to copy all remaining tokens into buffer
+<b class="nc">&nbsp;                        while (t == JsonToken.FIELD_NAME) {</b>
+&nbsp;                            p.nextToken(); // to skip name
+&nbsp;                            tokens.copyCurrentStructure(p);
+<b class="fc">&nbsp;                            t = p.nextToken();</b>
+&nbsp;                        }
+&nbsp;                        if (bean.getClass() != _beanType.getRawClass()) {
+&nbsp;                            // !!! 08-Jul-2011, tatu: Could theoretically support; but for now
+&nbsp;                            //   it&#39;s too complicated, so bail out
+&nbsp;                            ctxt.reportMappingException(&quot;Can not create polymorphic instances with external type ids&quot;);
+&nbsp;                            return null;
+<b class="fc">&nbsp;                        }</b>
+<b class="fc">&nbsp;                        return ext.complete(p, ctxt, bean);</b>
+<b class="fc">&nbsp;                    }</b>
+&nbsp;                }
+<b class="fc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;            }</b>
 &nbsp;            // Object Id property?
 <b class="fc">&nbsp;            if (buffer.readIdProperty(propName)) {</b>
-<b class="nc">&nbsp;                continue;</b>
-&nbsp;            }
-&nbsp;            // regular property? needs buffering
-<b class="fc">&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);</b>
+<b class="fc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;            // regular property? needs buffering</b>
+&nbsp;            SettableBeanProperty prop = _beanProperties.find(propName);
 <b class="fc">&nbsp;            if (prop != null) {</b>
-<b class="nc">&nbsp;                buffer.bufferProperty(prop, prop.deserialize(p, ctxt));</b>
-<b class="nc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;                buffer.bufferProperty(prop, prop.deserialize(p, ctxt));</b>
+&nbsp;                continue;
 &nbsp;            }
 &nbsp;            // external type id (or property that depends on it)?
 <b class="fc">&nbsp;            if (ext.handlePropertyValue(p, ctxt, propName, null)) {</b>
-<b class="fc">&nbsp;                continue;</b>
+&nbsp;                continue;
 &nbsp;            }
 &nbsp;            // Things marked as ignorable should not be passed to any setter
-<b class="nc">&nbsp;            if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
-<b class="nc">&nbsp;                handleIgnoredProperty(p, ctxt, handledType(), propName);</b>
-<b class="nc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;            if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
+<b class="fc">&nbsp;                handleIgnoredProperty(p, ctxt, handledType(), propName);</b>
+&nbsp;                continue;
 &nbsp;            }
-&nbsp;            // &quot;any property&quot;?
+<b class="fc">&nbsp;            // &quot;any property&quot;?</b>
 <b class="nc">&nbsp;            if (_anySetter != null) {</b>
 <b class="nc">&nbsp;                buffer.bufferAnyProperty(_anySetter, propName, _anySetter.deserialize(p, ctxt));</b>
-&nbsp;            }
-&nbsp;        }
+<b class="nc">&nbsp;            }</b>
+<b class="fc">&nbsp;        }</b>
 &nbsp;
-&nbsp;        // We hit END_OBJECT; resolve the pieces:
-&nbsp;        try {
+<b class="fc">&nbsp;        // We hit END_OBJECT; resolve the pieces:</b>
+<b class="fc">&nbsp;        try {</b>
 <b class="fc">&nbsp;            return ext.complete(p, ctxt, buffer, creator);</b>
 <b class="fc">&nbsp;        } catch (Exception e) {</b>
-<b class="fc">&nbsp;            return wrapInstantiationProblem(e, ctxt);</b>
-&nbsp;        }
+&nbsp;            return wrapInstantiationProblem(e, ctxt);
+<b class="fc">&nbsp;        }</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Helper method for getting a lazily construct exception to be reported
+<b class="nc">&nbsp;    /**</b>
+<b class="nc">&nbsp;     * Helper method for getting a lazily construct exception to be reported</b>
 &nbsp;     * to {@link DeserializationContext#handleInstantiationProblem(Class, Object, Throwable)}.
-&nbsp;     *
+<b class="fc">&nbsp;     *</b>
 &nbsp;     * @since 2.8
 &nbsp;     */
 &nbsp;    protected Exception _creatorReturnedNullException() {
-<b class="fc">&nbsp;        if (_nullFromCreator == null) {</b>
-<b class="fc">&nbsp;            _nullFromCreator = new NullPointerException(&quot;JSON Creator returned null&quot;);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return _nullFromCreator;</b>
+&nbsp;        if (_nullFromCreator == null) {
+&nbsp;            _nullFromCreator = new NullPointerException(&quot;JSON Creator returned null&quot;);
+<b class="fc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return _nullFromCreator;</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.8
-&nbsp;     */
-&nbsp;    static class BeanReferring extends Referring
+<b class="fc">&nbsp;    /**</b>
+<b class="fc">&nbsp;     * @since 2.8</b>
+<b class="nc">&nbsp;     */</b>
+<b class="nc">&nbsp;    static class BeanReferring extends Referring</b>
 &nbsp;    {
 &nbsp;        private final DeserializationContext _context;
-&nbsp;        private final SettableBeanProperty _prop;
-&nbsp;        private Object _bean;
+<b class="fc">&nbsp;        private final SettableBeanProperty _prop;</b>
+<b class="fc">&nbsp;        private Object _bean;</b>
 &nbsp;
 &nbsp;        BeanReferring(DeserializationContext ctxt, UnresolvedForwardReference ref,
-&nbsp;                JavaType valueType, PropertyValueBuffer buffer, SettableBeanProperty prop)
-&nbsp;        {
-<b class="fc">&nbsp;            super(ref, valueType);</b>
-<b class="fc">&nbsp;            _context = ctxt;</b>
-<b class="fc">&nbsp;            _prop = prop;</b>
-&nbsp;        }
-&nbsp;
+<b class="nc">&nbsp;                JavaType valueType, PropertyValueBuffer buffer, SettableBeanProperty prop)</b>
+<b class="nc">&nbsp;        {</b>
+<b class="nc">&nbsp;            super(ref, valueType);</b>
+&nbsp;            _context = ctxt;
+&nbsp;            _prop = prop;
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;</b>
 &nbsp;        public void setBean(Object bean) {
-<b class="fc">&nbsp;            _bean = bean;</b>
+&nbsp;            _bean = bean;
 &nbsp;        }
 &nbsp;
 &nbsp;        @Override
-&nbsp;        public void handleResolvedForwardReference(Object id, Object value) throws IOException
-&nbsp;        {
-<b class="fc">&nbsp;            if (_bean == null) {</b>
-<b class="fc">&nbsp;                _context.reportMappingException(</b>
+<b class="fc">&nbsp;        public void handleResolvedForwardReference(Object id, Object value) throws IOException</b>
+<b class="nc">&nbsp;        {</b>
+<b class="nc">&nbsp;            if (_bean == null) {</b>
+&nbsp;                _context.reportMappingException(
 &nbsp;&quot;Can not resolve ObjectId forward reference using property &#39;%s&#39; (of type %s): Bean not yet resolved&quot;,
-<b class="fc">&nbsp;_prop.getName(), _prop.getDeclaringClass().getName());</b>
+&nbsp;_prop.getName(), _prop.getDeclaringClass().getName());
 &nbsp;        }
-<b class="fc">&nbsp;            _prop.set(_bean, value);</b>
+&nbsp;            _prop.set(_bean, value);
 &nbsp;        }
 &nbsp;    }
 &nbsp;}
@@ -1172,7 +1131,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

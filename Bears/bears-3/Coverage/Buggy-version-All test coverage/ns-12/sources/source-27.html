@@ -60,10 +60,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    68.6%
+    67.8%
   </span>
   <span class="absValue">
-    (83/121)
+    (82/121)
   </span>
 </td>
 </tr>
@@ -409,7 +409,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;        boolean wrap = (provider == null) || provider.isEnabled(SerializationFeature.WRAP_EXCEPTIONS);</b>
 <b class="fc">&nbsp;        if (t instanceof IOException) {</b>
 <b class="fc">&nbsp;            if (!wrap || !(t instanceof JsonMappingException)) {</b>
-<b class="fc">&nbsp;                throw (IOException) t;</b>
+<b class="nc">&nbsp;                throw (IOException) t;</b>
 &nbsp;            }
 <b class="nc">&nbsp;        } else if (!wrap) { // [JACKSON-407] -- allow disabling wrapping for unchecked exceptions</b>
 <b class="nc">&nbsp;            if (t instanceof RuntimeException) {</b>
@@ -635,7 +635,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

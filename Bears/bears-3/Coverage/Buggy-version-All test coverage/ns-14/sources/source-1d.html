@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > Named</title>
+  <title>Coverage Report > Annotations</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.util</a>
 </div>
 
-<h1>Coverage Summary for Class: Named (com.fasterxml.jackson.databind.util)</h1>
+<h1>Coverage Summary for Class: Annotations (com.fasterxml.jackson.databind.util)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">Named</td>
+  <td class="name">Annotations</td>
 </tr>
 
 </table>
@@ -41,11 +41,27 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.util;
 &nbsp;
+&nbsp;import java.lang.annotation.Annotation;
+&nbsp;
 &nbsp;/**
-&nbsp; * Simple tag interface mostly to allow sorting by name.
+&nbsp; * Interface that defines interface for accessing contents of a
+&nbsp; * collection of annotations. This is needed when introspecting
+&nbsp; * annotation-based features from different kinds of things, not
+&nbsp; * just objects that Java Reflection interface exposes.
+&nbsp; *&lt;p&gt;
+&nbsp; * Standard mutable implementation is {@link com.fasterxml.jackson.databind.introspect.AnnotationMap}
 &nbsp; */
-&nbsp;public interface Named {
-&nbsp;    public String getName();
+&nbsp;public interface Annotations
+&nbsp;{
+&nbsp;    /**
+&nbsp;     * Main access method used to find value for given annotation.
+&nbsp;     */
+&nbsp;    public &lt;A extends Annotation&gt; A get(Class&lt;A&gt; cls);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Returns number of annotation entries in this collection.
+&nbsp;     */
+&nbsp;    public int size();
 &nbsp;}
 </code>
 </pre>
@@ -70,7 +86,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:51</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > BeanDescription</title>
+  <title>Coverage Report > AtomicReferenceDeserializer</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -19,10 +19,10 @@
 <div class="breadCrumbs">
 Current scope:     <a href="../../index.html">all classes</a>
     <span class="separator">|</span>
-    <a href="../index.html">com.fasterxml.jackson.databind</a>
+    <a href="../index.html">com.fasterxml.jackson.databind.deser.std</a>
 </div>
 
-<h1>Coverage Summary for Class: BeanDescription (com.fasterxml.jackson.databind)</h1>
+<h1>Coverage Summary for Class: AtomicReferenceDeserializer (com.fasterxml.jackson.databind.deser.std)</h1>
 
 <table class="coverageStats">
 <tr>
@@ -41,7 +41,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 </th>
 </tr>
 <tr>
-  <td class="name">BeanDescription</td>
+  <td class="name">AtomicReferenceDeserializer</td>
 <td class="coverageStat">
   <span class="percent">
     0%
@@ -63,7 +63,7 @@ Current scope:     <a href="../../index.html">all classes</a>
     0%
   </span>
   <span class="absValue">
-    (0/6)
+    (0/7)
   </span>
 </td>
 </tr>
@@ -75,34 +75,17 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 
 <pre>
-<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind;
+<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.deser.std;
 &nbsp;
-&nbsp;import java.lang.reflect.Constructor;
-&nbsp;import java.lang.reflect.Method;
-&nbsp;import java.util.*;
+&nbsp;import java.util.concurrent.atomic.AtomicReference;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.annotation.JsonFormat;
-&nbsp;import com.fasterxml.jackson.annotation.JsonInclude;
-&nbsp;import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-&nbsp;import com.fasterxml.jackson.databind.introspect.*;
-&nbsp;import com.fasterxml.jackson.databind.type.TypeBindings;
-&nbsp;import com.fasterxml.jackson.databind.util.Annotations;
-&nbsp;import com.fasterxml.jackson.databind.util.Converter;
+&nbsp;import com.fasterxml.jackson.databind.*;
+&nbsp;import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 &nbsp;
-&nbsp;/**
-&nbsp; * Basic container for information gathered by {@link ClassIntrospector} to
-&nbsp; * help in constructing serializers and deserializers.
-&nbsp; * Note that the main implementation type is
-&nbsp; * {@link com.fasterxml.jackson.databind.introspect.BasicBeanDescription},
-&nbsp; * meaning that it is safe to upcast to this type.
-&nbsp; */
-&nbsp;public abstract class BeanDescription
+&nbsp;public class AtomicReferenceDeserializer
+&nbsp;    extends ReferenceTypeDeserializer&lt;AtomicReference&lt;Object&gt;&gt;
 &nbsp;{
-&nbsp;    /**
-&nbsp;     * Bean type information, including raw class and possible
-&nbsp;     * * generics information
-&nbsp;     */
-&nbsp;    protected final JavaType _type;
+&nbsp;    private static final long serialVersionUID = 1L;
 &nbsp;
 &nbsp;    /*
 &nbsp;    /**********************************************************
@@ -110,252 +93,63 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
-<b class="nc">&nbsp;    protected BeanDescription(JavaType type) {</b>
-<b class="nc">&nbsp;        _type = type;</b>
+&nbsp;    @Deprecated // since 2.8
+&nbsp;    public AtomicReferenceDeserializer(JavaType fullType) {
+<b class="nc">&nbsp;        this(fullType, null, null);</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    public AtomicReferenceDeserializer(JavaType fullType,
+&nbsp;            TypeDeserializer typeDeser, JsonDeserializer&lt;?&gt; deser)
+&nbsp;    {
+<b class="nc">&nbsp;        super(fullType, typeDeser, deser);</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Abstract method implementations
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public AtomicReferenceDeserializer withResolved(TypeDeserializer typeDeser, JsonDeserializer&lt;?&gt; valueDeser) {
+<b class="nc">&nbsp;        return new AtomicReferenceDeserializer(_fullType, typeDeser, valueDeser);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public AtomicReference&lt;Object&gt; getNullValue(DeserializationContext ctxt) {
+<b class="nc">&nbsp;        return new AtomicReference&lt;Object&gt;();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public AtomicReference&lt;Object&gt; referenceValue(Object contents) {
+<b class="nc">&nbsp;        return new AtomicReference&lt;Object&gt;(contents);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Simple accesors
-&nbsp;    /**********************************************************
-&nbsp;     */
+&nbsp;    @Override
+&nbsp;    public Object deserializeWithType(JsonParser p, DeserializationContext ctxt,
+&nbsp;            TypeDeserializer typeDeser) throws IOException
+&nbsp;    {
+&nbsp;        final JsonToken t = p.getCurrentToken();
+&nbsp;        if (t == JsonToken.VALUE_NULL) { // can this actually happen?
+&nbsp;            return getNullValue(ctxt);
+&nbsp;        }
+&nbsp;        // 22-Oct-2015, tatu: This handling is probably not needed (or is wrong), but
+&nbsp;        //   could be result of older (pre-2.7) Jackson trying to serialize natural types.
+&nbsp;        //  Because of this, let&#39;s allow for now, unless proven problematic
+&nbsp;        if ((t != null) &amp;&amp; t.isScalarValue()) {
+&nbsp;            return deserialize(p, ctxt);
+&nbsp;        }
+&nbsp;        // 19-Apr-2016, tatu: Alas, due to there not really being anything for AtomicReference
+&nbsp;        //   itself, need to just ignore `typeDeser`, use TypeDeserializer we do have for contents
+&nbsp;        //   and it might just work.
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Method for accessing declared type of bean being introspected,
-&nbsp;     * including full generic type information (from declaration)
-&nbsp;     */
-<b class="nc">&nbsp;    public JavaType getType() { return _type; }</b>
-&nbsp;
-<b class="nc">&nbsp;    public Class&lt;?&gt; getBeanClass() { return _type.getRawClass(); }</b>
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.9
-&nbsp;     */
-&nbsp;    public boolean isNonStaticInnerClass() {
-<b class="nc">&nbsp;        return getClassInfo().isNonStaticInnerClass();</b>
+&nbsp;        if (_valueTypeDeserializer == null) {
+&nbsp;            return deserialize(p, ctxt);
+&nbsp;        }
+&nbsp;        return new AtomicReference&lt;Object&gt;(_valueTypeDeserializer.deserializeTypedFromAny(p, ctxt));
 &nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for accessing low-level information about Class this
-&nbsp;     * item describes.
-&nbsp;     */
-&nbsp;    public abstract AnnotatedClass getClassInfo();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Accessor for getting information about Object Id expected to
-&nbsp;     * be used for this POJO type, if any.
-&nbsp;     */
-&nbsp;    public abstract ObjectIdInfo getObjectIdInfo();
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * Method for checking whether class being described has any
-&nbsp;     * annotations recognized by registered annotation introspector.
-&nbsp;     */
-&nbsp;    public abstract boolean hasKnownClassAnnotations();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Accessor for type bindings that may be needed to fully resolve
-&nbsp;     * types of member object, such as return and argument types of
-&nbsp;     * methods and constructors, and types of fields.
-&nbsp;     *
-&nbsp;     * @deprecated Since 2.7, should not need to access bindings directly
-&nbsp;     */
-&nbsp;    @Deprecated
-&nbsp;    public abstract TypeBindings bindingsForBeanType();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for resolving given JDK type, using this bean as the
-&nbsp;     * generic type resolution context.
-&nbsp;     *
-&nbsp;     * @deprecated Since 2.8, should simply call &lt;code&gt;getType&lt;/code&gt; of
-&nbsp;     *    property accessor directly.
-&nbsp;     */
-&nbsp;    @Deprecated
-&nbsp;    public abstract JavaType resolveType(java.lang.reflect.Type jdkType);
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for accessing collection of annotations the bean
-&nbsp;     * class has.
-&nbsp;     */
-&nbsp;    public abstract Annotations getClassAnnotations();
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Basic API for finding properties
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @return Ordered Map with logical property name as key, and
-&nbsp;     *    matching getter method as value.
-&nbsp;     */
-&nbsp;    public abstract List&lt;BeanPropertyDefinition&gt; findProperties();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for locating all back-reference properties (setters, fields) bean has
-&nbsp;     */
-&nbsp;    public abstract Map&lt;String,AnnotatedMember&gt; findBackReferenceProperties();
-&nbsp;
-&nbsp;    public abstract Set&lt;String&gt; getIgnoredPropertyNames();
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Basic API for finding creator members
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    public abstract List&lt;AnnotatedConstructor&gt; getConstructors();
-&nbsp;
-&nbsp;    public abstract List&lt;AnnotatedMethod&gt; getFactoryMethods();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method that will locate the no-arg constructor for this class,
-&nbsp;     * if it has one, and that constructor has not been marked as
-&nbsp;     * ignorable.
-&nbsp;     */
-&nbsp;    public abstract AnnotatedConstructor findDefaultConstructor();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method that can be called to locate a single-arg constructor that
-&nbsp;     * takes specified exact type (will not accept supertype constructors)
-&nbsp;     *
-&nbsp;     * @param argTypes Type(s) of the argument that we are looking for
-&nbsp;     */
-&nbsp;    public abstract Constructor&lt;?&gt; findSingleArgConstructor(Class&lt;?&gt;... argTypes);
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method that can be called to find if introspected class declares
-&nbsp;     * a static &quot;valueOf&quot; factory method that returns an instance of
-&nbsp;     * introspected type, given one of acceptable types.
-&nbsp;     *
-&nbsp;     * @param expArgTypes Types that the matching single argument factory
-&nbsp;     *   method can take: will also accept super types of these types
-&nbsp;     *   (ie. arg just has to be assignable from expArgType)
-&nbsp;     */
-&nbsp;    public abstract Method findFactoryMethod(Class&lt;?&gt;... expArgTypes);
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Basic API for finding property accessors
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;    
-&nbsp;    public abstract AnnotatedMember findAnyGetter();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method used to locate the method of introspected class that
-&nbsp;     * implements {@link com.fasterxml.jackson.annotation.JsonAnySetter}. If no such method exists
-&nbsp;     * null is returned. If more than one are found, an exception
-&nbsp;     * is thrown.
-&nbsp;     * Additional checks are also made to see that method signature
-&nbsp;     * is acceptable: needs to take 2 arguments, first one String or
-&nbsp;     * Object; second any can be any type.
-&nbsp;     */
-&nbsp;    public abstract AnnotatedMethod findAnySetter();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method used to locate the field of the class that implements
-&nbsp;     * {@link com.fasterxml.jackson.annotation.JsonAnySetter} If no such method
-&nbsp;     * exists null is returned. If more than one are found, an exception is thrown.
-&nbsp;     * 
-&nbsp;     * @since 2.8
-&nbsp;     */
-&nbsp;    public abstract AnnotatedMember findAnySetterField();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for locating the getter method that is annotated with
-&nbsp;     * {@link com.fasterxml.jackson.annotation.JsonValue} annotation,
-&nbsp;     * if any. If multiple ones are found,
-&nbsp;     * an error is reported by throwing {@link IllegalArgumentException}
-&nbsp;     */
-&nbsp;    public abstract AnnotatedMethod findJsonValueMethod();
-&nbsp;
-&nbsp;    public abstract AnnotatedMethod findMethod(String name, Class&lt;?&gt;[] paramTypes);
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Basic API, class configuration
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for finding annotation-indicated inclusion definition (if any);
-&nbsp;     * possibly overriding given default value.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * NOTE: does NOT use global inclusion default settings as the base, unless
-&nbsp;     * passed as `defValue`.
-&nbsp;     *
-&nbsp;     * @since 2.7
-&nbsp;     */
-&nbsp;    public abstract JsonInclude.Value findPropertyInclusion(JsonInclude.Value defValue);
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for checking what is the expected format for POJO, as
-&nbsp;     * defined by defaults and possible annotations.
-&nbsp;     * Note that this may be further refined by per-property annotations.
-&nbsp;     * 
-&nbsp;     * @since 2.1
-&nbsp;     */
-&nbsp;    public abstract JsonFormat.Value findExpectedFormat(JsonFormat.Value defValue);
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for finding {@link Converter} used for serializing instances
-&nbsp;     * of this class.
-&nbsp;     * 
-&nbsp;     * @since 2.2
-&nbsp;     */
-&nbsp;    public abstract Converter&lt;Object,Object&gt; findSerializationConverter();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for finding {@link Converter} used for serializing instances
-&nbsp;     * of this class.
-&nbsp;     * 
-&nbsp;     * @since 2.2
-&nbsp;     */
-&nbsp;    public abstract Converter&lt;Object,Object&gt; findDeserializationConverter();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Accessor for possible description for the bean type, used for constructing
-&nbsp;     * documentation.
-&nbsp;     *
-&nbsp;     * @since 2.7
-&nbsp;     */
-<b class="nc">&nbsp;    public String findClassDescription() { return null; }</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Basic API, other
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    public abstract Map&lt;Object, AnnotatedMember&gt; findInjectables();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for checking if the POJO type has annotations to
-&nbsp;     * indicate that a builder is to be used for instantiating
-&nbsp;     * instances and handling data binding, instead of standard
-&nbsp;     * bean deserializer.
-&nbsp;     */
-&nbsp;    public abstract Class&lt;?&gt; findPOJOBuilder();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for finding configuration for POJO Builder class.
-&nbsp;     */
-&nbsp;    public abstract JsonPOJOBuilder.Value findPOJOBuilderConfig();
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method called to create a &quot;default instance&quot; of the bean, currently
-&nbsp;     * only needed for obtaining default field values which may be used for
-&nbsp;     * suppressing serialization of fields that have &quot;not changed&quot;.
-&nbsp;     * 
-&nbsp;     * @param fixAccess If true, method is allowed to fix access to the
-&nbsp;     *   default constructor (to be able to call non-public constructor);
-&nbsp;     *   if false, has to use constructor as is.
-&nbsp;     *
-&nbsp;     * @return Instance of class represented by this descriptor, if
-&nbsp;     *   suitable default constructor was found; null otherwise.
-&nbsp;     */
-&nbsp;    public abstract Object instantiateBean(boolean fixAccess);
+&nbsp;    */
 &nbsp;}
 </code>
 </pre>
@@ -380,7 +174,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 22:05</div>
+    <div style="float:right;">generated on 2024-04-09 23:30</div>
 </div>
 </body>
 </html>

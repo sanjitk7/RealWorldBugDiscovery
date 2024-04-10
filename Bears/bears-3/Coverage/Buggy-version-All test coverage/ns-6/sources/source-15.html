@@ -761,7 +761,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;                if (ctxt.isEnabled(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)) {</b>
 <b class="fc">&nbsp;                    return p.getDecimalValue();</b>
 &nbsp;                }
-<b class="fc">&nbsp;                return p.getNumberValue();</b>
+<b class="fc">&nbsp;                return Double.valueOf(p.getDoubleValue());</b>
 &nbsp;
 &nbsp;            case JsonTokenId.ID_STRING:
 &nbsp;                /* Textual values are more difficult... not parsing itself, but figuring
@@ -973,7 +973,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:51</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

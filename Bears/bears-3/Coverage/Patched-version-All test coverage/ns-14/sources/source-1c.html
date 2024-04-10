@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > Annotations</title>
+  <title>Coverage Report > ViewMatcher</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,16 +22,97 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.util</a>
 </div>
 
-<h1>Coverage Summary for Class: Annotations (com.fasterxml.jackson.databind.util)</h1>
+<h1>Coverage Summary for Class: ViewMatcher (com.fasterxml.jackson.databind.util)</h1>
 
 <table class="coverageStats">
+
 <tr>
   <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
 </tr>
 <tr>
-  <td class="name">Annotations</td>
+  <td class="name">ViewMatcher</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.9%
+  </span>
+  <span class="absValue">
+    (8/9)
+  </span>
+</td>
 </tr>
-
+  <tr>
+    <td class="name">ViewMatcher$Multi</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/6)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ViewMatcher$Single</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (8/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    94.1%
+  </span>
+  <span class="absValue">
+    (16/17)
+  </span>
+</td>
+</tr>
 </table>
 
 <br/>
@@ -41,27 +122,71 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.util;
 &nbsp;
-&nbsp;import java.lang.annotation.Annotation;
-&nbsp;
 &nbsp;/**
-&nbsp; * Interface that defines interface for accessing contents of a
-&nbsp; * collection of annotations. This is needed when introspecting
-&nbsp; * annotation-based features from different kinds of things, not
-&nbsp; * just objects that Java Reflection interface exposes.
-&nbsp; *&lt;p&gt;
-&nbsp; * Standard mutable implementation is {@link com.fasterxml.jackson.databind.introspect.AnnotationMap}
+&nbsp; * Helper class used for checking whether a property is visible
+&nbsp; * in the active view
 &nbsp; */
-&nbsp;public interface Annotations
+<b class="fc">&nbsp;public class ViewMatcher implements java.io.Serializable</b>
 &nbsp;{
-&nbsp;    /**
-&nbsp;     * Main access method used to find value for given annotation.
-&nbsp;     */
-&nbsp;    public &lt;A extends Annotation&gt; A get(Class&lt;A&gt; cls);
+&nbsp;    private static final long serialVersionUID = 1L;
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Returns number of annotation entries in this collection.
+<b class="fc">&nbsp;    protected final static ViewMatcher EMPTY = new ViewMatcher();</b>
+&nbsp;    
+<b class="fc">&nbsp;    public boolean isVisibleForView(Class&lt;?&gt; activeView) { return false; }</b>
+&nbsp;
+&nbsp;    public static ViewMatcher construct(Class&lt;?&gt;[] views)
+&nbsp;    {
+<b class="fc">&nbsp;        if (views == null) {</b>
+<b class="nc">&nbsp;            return EMPTY;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        switch (views.length) {</b>
+&nbsp;        case 0:
+<b class="fc">&nbsp;            return EMPTY;</b>
+&nbsp;        case 1:
+<b class="fc">&nbsp;            return new Single(views[0]);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return new Multi(views);</b>
+&nbsp;    } 
+&nbsp;    
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Concrete sub-classes
+&nbsp;    /**********************************************************
 &nbsp;     */
-&nbsp;    public int size();
+&nbsp;
+&nbsp;    private final static class Single extends ViewMatcher
+&nbsp;    {
+&nbsp;        private static final long serialVersionUID = 1L;
+&nbsp;
+&nbsp;        private final Class&lt;?&gt; _view;
+<b class="fc">&nbsp;        public Single(Class&lt;?&gt; v) { _view = v; }</b>
+&nbsp;        @Override
+&nbsp;        public boolean isVisibleForView(Class&lt;?&gt; activeView) {
+<b class="fc">&nbsp;            return (activeView == _view) || _view.isAssignableFrom(activeView);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private final static class Multi extends ViewMatcher
+&nbsp;        implements java.io.Serializable
+&nbsp;    {
+&nbsp;        private static final long serialVersionUID = 1L;
+&nbsp;
+&nbsp;        private final Class&lt;?&gt;[] _views;
+&nbsp;
+<b class="fc">&nbsp;        public Multi(Class&lt;?&gt;[] v) { _views = v; }</b>
+&nbsp;
+&nbsp;        @Override
+&nbsp;        public boolean isVisibleForView(Class&lt;?&gt; activeView)
+&nbsp;        {
+<b class="fc">&nbsp;            for (int i = 0, len = _views.length; i &lt; len; ++i) {</b>
+<b class="fc">&nbsp;                Class&lt;?&gt; view = _views[i];</b>
+<b class="fc">&nbsp;                if ((activeView == view) || view.isAssignableFrom(activeView)) {</b>
+<b class="fc">&nbsp;                    return true;</b>
+&nbsp;                }
+&nbsp;            }
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
 &nbsp;}
 </code>
 </pre>
@@ -86,7 +211,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

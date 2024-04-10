@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > JsonFormatVisitable</title>
+  <title>Coverage Report > JsonFormatVisitorWithSerializerProvider</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.jsonFormatVisitors</a>
 </div>
 
-<h1>Coverage Summary for Class: JsonFormatVisitable (com.fasterxml.jackson.databind.jsonFormatVisitors)</h1>
+<h1>Coverage Summary for Class: JsonFormatVisitorWithSerializerProvider (com.fasterxml.jackson.databind.jsonFormatVisitors)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">JsonFormatVisitable</td>
+  <td class="name">JsonFormatVisitorWithSerializerProvider</td>
 </tr>
 
 </table>
@@ -39,24 +39,19 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 
 <pre>
-<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.jsonFormatVisitors;
+<code class="sourceCode" id="sourceCode">&nbsp;/**
+&nbsp; * 
+&nbsp; */
+&nbsp;package com.fasterxml.jackson.databind.jsonFormatVisitors;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.databind.JavaType;
-&nbsp;import com.fasterxml.jackson.databind.JsonMappingException;
+&nbsp;import com.fasterxml.jackson.databind.SerializerProvider;
 &nbsp;
 &nbsp;/**
-&nbsp; * Interface {@link com.fasterxml.jackson.databind.JsonSerializer} implements
-&nbsp; * to allow for visiting type hierarchy.
+&nbsp; * @author jphelan
 &nbsp; */
-&nbsp;public interface JsonFormatVisitable
-&nbsp;{
-&nbsp;    /**
-&nbsp;     * Get the representation of the schema to which this serializer will conform.
-&nbsp;     * 
-&nbsp;     * @param typeHint Type of element (entity like property) being visited
-&nbsp;     */
-&nbsp;    public void acceptJsonFormatVisitor(JsonFormatVisitorWrapper visitor, JavaType typeHint)
-&nbsp;        throws JsonMappingException;
+&nbsp;public interface JsonFormatVisitorWithSerializerProvider {
+&nbsp;    public SerializerProvider getProvider();
+&nbsp;    public abstract void setProvider(SerializerProvider provider);
 &nbsp;}
 </code>
 </pre>
@@ -81,7 +76,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

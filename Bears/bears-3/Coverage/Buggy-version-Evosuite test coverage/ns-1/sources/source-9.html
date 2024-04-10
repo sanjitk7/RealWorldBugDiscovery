@@ -63,7 +63,7 @@ Current scope:     <a href="../../index.html">all classes</a>
     0%
   </span>
   <span class="absValue">
-    (0/39)
+    (0/46)
   </span>
 </td>
 </tr>
@@ -121,7 +121,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;        super(delegate);</b>
 <b class="nc">&nbsp;        _delegate = delegate;</b>
 <b class="nc">&nbsp;        _creator = ctor;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Constructor used with JDK Serialization; needed to handle transient
@@ -136,20 +136,20 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;        if (_creator == null) {</b>
 <b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Missing constructor (broken JDK (de)serialization?)&quot;);</b>
 &nbsp;        }
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    protected InnerClassProperty(InnerClassProperty src, JsonDeserializer&lt;?&gt; deser)
 &nbsp;    {
 <b class="nc">&nbsp;        super(src, deser);</b>
 <b class="nc">&nbsp;        _delegate = src._delegate.withValueDeserializer(deser);</b>
 <b class="nc">&nbsp;        _creator = src._creator;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    protected InnerClassProperty(InnerClassProperty src, PropertyName newName) {
 <b class="nc">&nbsp;        super(src, newName);</b>
 <b class="nc">&nbsp;        _delegate = src._delegate.withName(newName);</b>
 <b class="nc">&nbsp;        _creator = src._creator;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    @Override
 &nbsp;    public InnerClassProperty withName(PropertyName newName) {
@@ -164,7 +164,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    public void fixAccess(DeserializationConfig config) {
 <b class="nc">&nbsp;        _delegate.fixAccess(config);</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    // // // BeanProperty impl
 &nbsp;    
@@ -201,7 +201,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;            _valueDeserializer.deserialize(jp, ctxt, value);</b>
 &nbsp;        }
 <b class="nc">&nbsp;        set(bean, value);</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    @Override
 &nbsp;    public Object deserializeSetAndReturn(JsonParser jp,
@@ -214,7 +214,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    public final void set(Object instance, Object value) throws IOException {
 <b class="nc">&nbsp;        _delegate.set(instance, value);</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    @Override
 &nbsp;    public Object setAndReturn(Object instance, Object value) throws IOException {
@@ -263,7 +263,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 18:41</div>
+    <div style="float:right;">generated on 2024-04-09 22:10</div>
 </div>
 </body>
 </html>

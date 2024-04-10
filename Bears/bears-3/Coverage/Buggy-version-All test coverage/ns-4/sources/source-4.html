@@ -1292,21 +1292,20 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    protected Object deserializeFromObjectUsingNonDefault(JsonParser p,
 &nbsp;            DeserializationContext ctxt) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        final JsonDeserializer&lt;Object&gt; delegateDeser = _delegateDeserializer();</b>
-<b class="fc">&nbsp;        if (delegateDeser != null) {</b>
+<b class="fc">&nbsp;        if (_delegateDeserializer != null) {</b>
 <b class="fc">&nbsp;            return _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="fc">&nbsp;                    delegateDeser.deserialize(p, ctxt));</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (_propertyBasedCreator != null) {</b>
+<b class="fc">&nbsp;                    _delegateDeserializer.deserialize(p, ctxt));</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (_propertyBasedCreator != null) {
 <b class="fc">&nbsp;            return _deserializeUsingPropertyBased(p, ctxt);</b>
-&nbsp;        }
+<b class="fc">&nbsp;        }</b>
 &nbsp;        // should only occur for abstract types...
-<b class="fc">&nbsp;        if (_beanType.isAbstract()) {</b>
-<b class="nc">&nbsp;            return ctxt.handleMissingInstantiator(handledType(), p,</b>
-&nbsp;                    &quot;abstract type (need to add/enable type information?)&quot;);
+&nbsp;        if (_beanType.isAbstract()) {
+<b class="fc">&nbsp;            return ctxt.handleMissingInstantiator(handledType(), p,</b>
+<b class="nc">&nbsp;                    &quot;abstract type (need to add/enable type information?)&quot;);</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return ctxt.handleMissingInstantiator(_beanType.getRawClass(), p,</b>
-&nbsp;                &quot;no suitable constructor found, can not deserialize from Object value (missing default constructor or creator, or perhaps need to add/enable type information?)&quot;);
+&nbsp;        return ctxt.handleMissingInstantiator(_beanType.getRawClass(), p,
+<b class="fc">&nbsp;                &quot;no suitable constructor found, can not deserialize from Object value (missing default constructor or creator, or perhaps need to add/enable type information?)&quot;);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    protected abstract Object _deserializeUsingPropertyBased(final JsonParser p,
@@ -1314,208 +1313,202 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        throws IOException, JsonProcessingException;
 &nbsp;
 &nbsp;    @SuppressWarnings(&quot;incomplete-switch&quot;)
-&nbsp;    public Object deserializeFromNumber(JsonParser p, DeserializationContext ctxt)
-&nbsp;        throws IOException
+&nbsp;    public Object deserializeFromNumber(JsonParser p, DeserializationContext ctxt) throws IOException
 &nbsp;    {
 &nbsp;        // First things first: id Object Id is used, most likely that&#39;s it
-<b class="fc">&nbsp;        if (_objectIdReader != null) {</b>
-<b class="fc">&nbsp;            return deserializeFromObjectId(p, ctxt);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        final JsonDeserializer&lt;Object&gt; delegateDeser = _delegateDeserializer();</b>
-<b class="fc">&nbsp;        switch (p.getNumberType()) {</b>
-&nbsp;        case INT:
-<b class="fc">&nbsp;            if (delegateDeser != null) {</b>
-<b class="fc">&nbsp;                if (!_valueInstantiator.canCreateFromInt()) {</b>
+&nbsp;        if (_objectIdReader != null) {
+&nbsp;            return deserializeFromObjectId(p, ctxt);
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;</b>
+&nbsp;        switch (p.getNumberType()) {
+<b class="fc">&nbsp;        case INT:</b>
+<b class="fc">&nbsp;            if (_delegateDeserializer != null) {</b>
+&nbsp;                if (!_valueInstantiator.canCreateFromInt()) {
 <b class="fc">&nbsp;                    Object bean = _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="fc">&nbsp;                            delegateDeser.deserialize(p, ctxt));</b>
+<b class="fc">&nbsp;                            _delegateDeserializer.deserialize(p, ctxt));</b>
 <b class="fc">&nbsp;                    if (_injectables != null) {</b>
-<b class="nc">&nbsp;                        injectValues(ctxt, bean);</b>
-&nbsp;                    }
-<b class="fc">&nbsp;                    return bean;</b>
-&nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;            return _valueInstantiator.createFromInt(ctxt, p.getIntValue());</b>
-&nbsp;        case LONG:
-<b class="fc">&nbsp;            if (delegateDeser != null) {</b>
-<b class="nc">&nbsp;                if (!_valueInstantiator.canCreateFromInt()) {</b>
-<b class="nc">&nbsp;                    Object bean = _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="nc">&nbsp;                            delegateDeser.deserialize(p, ctxt));</b>
-<b class="nc">&nbsp;                    if (_injectables != null) {</b>
-<b class="nc">&nbsp;                        injectValues(ctxt, bean);</b>
-&nbsp;                    }
+<b class="fc">&nbsp;                        injectValues(ctxt, bean);</b>
+<b class="fc">&nbsp;                    }</b>
 <b class="nc">&nbsp;                    return bean;</b>
 &nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;            return _valueInstantiator.createFromLong(ctxt, p.getLongValue());</b>
+<b class="fc">&nbsp;            }</b>
+&nbsp;            return _valueInstantiator.createFromInt(ctxt, p.getIntValue());
+&nbsp;        case LONG:
+<b class="fc">&nbsp;            if (_delegateDeserializer != null) {</b>
+&nbsp;                if (!_valueInstantiator.canCreateFromInt()) {
+<b class="fc">&nbsp;                    Object bean = _valueInstantiator.createUsingDelegate(ctxt,</b>
+<b class="nc">&nbsp;                            _delegateDeserializer.deserialize(p, ctxt));</b>
+<b class="nc">&nbsp;                    if (_injectables != null) {</b>
+<b class="nc">&nbsp;                        injectValues(ctxt, bean);</b>
+<b class="nc">&nbsp;                    }</b>
+<b class="nc">&nbsp;                    return bean;</b>
+&nbsp;                }
+<b class="nc">&nbsp;            }</b>
+&nbsp;            return _valueInstantiator.createFromLong(ctxt, p.getLongValue());
 &nbsp;        }
-&nbsp;        // actually, could also be BigInteger, so:
-<b class="nc">&nbsp;        if (delegateDeser != null) {</b>
-<b class="nc">&nbsp;            Object bean = _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="nc">&nbsp;                    delegateDeser.deserialize(p, ctxt));</b>
+<b class="fc">&nbsp;        // actually, could also be BigInteger, so:</b>
+&nbsp;        if (_delegateDeserializer != null) {
+&nbsp;            Object bean = _valueInstantiator.createUsingDelegate(ctxt,
+<b class="nc">&nbsp;                    _delegateDeserializer.deserialize(p, ctxt));</b>
 <b class="nc">&nbsp;            if (_injectables != null) {</b>
 <b class="nc">&nbsp;                injectValues(ctxt, bean);</b>
-&nbsp;            }
+<b class="nc">&nbsp;            }</b>
 <b class="nc">&nbsp;            return bean;</b>
 &nbsp;        }
 <b class="nc">&nbsp;        return ctxt.handleMissingInstantiator(handledType(), p,</b>
 &nbsp;                &quot;no suitable creator method found to deserialize from Number value (%s)&quot;,
 <b class="nc">&nbsp;                p.getNumberValue());</b>
 &nbsp;    }
-&nbsp;
+<b class="nc">&nbsp;</b>
 &nbsp;    public Object deserializeFromString(JsonParser p, DeserializationContext ctxt) throws IOException
 &nbsp;    {
 &nbsp;        // First things first: id Object Id is used, most likely that&#39;s it
-<b class="fc">&nbsp;        if (_objectIdReader != null) {</b>
-<b class="fc">&nbsp;            return deserializeFromObjectId(p, ctxt);</b>
-&nbsp;        }
+&nbsp;        if (_objectIdReader != null) {
+&nbsp;            return deserializeFromObjectId(p, ctxt);
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        </b>
 &nbsp;        /* Bit complicated if we have delegating creator; may need to use it,
 &nbsp;         * or might not...
 &nbsp;         */
-<b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; delegateDeser = _delegateDeserializer();</b>
-<b class="fc">&nbsp;        if (delegateDeser != null) {</b>
+&nbsp;        if (_delegateDeserializer != null) {
 <b class="fc">&nbsp;            if (!_valueInstantiator.canCreateFromString()) {</b>
-<b class="fc">&nbsp;                Object bean = _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="fc">&nbsp;                        delegateDeser.deserialize(p, ctxt));</b>
+<b class="fc">&nbsp;                Object bean = _valueInstantiator.createUsingDelegate(ctxt, _delegateDeserializer.deserialize(p, ctxt));</b>
 <b class="fc">&nbsp;                if (_injectables != null) {</b>
-<b class="nc">&nbsp;                    injectValues(ctxt, bean);</b>
-&nbsp;                }
+<b class="fc">&nbsp;                    injectValues(ctxt, bean);</b>
+<b class="fc">&nbsp;                }</b>
 <b class="fc">&nbsp;                return bean;</b>
-&nbsp;            }
+<b class="nc">&nbsp;            }</b>
 &nbsp;        }
 <b class="fc">&nbsp;        return _valueInstantiator.createFromString(ctxt, p.getText());</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method called to deserialize POJO value from a JSON floating-point
 &nbsp;     * number.
 &nbsp;     */
 &nbsp;    public Object deserializeFromDouble(JsonParser p, DeserializationContext ctxt) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        NumberType t = p.getNumberType();</b>
+&nbsp;        NumberType t = p.getNumberType();
 &nbsp;        // no separate methods for taking float...
-<b class="fc">&nbsp;        if ((t == NumberType.DOUBLE) || (t == NumberType.FLOAT)) {</b>
-<b class="fc">&nbsp;            JsonDeserializer&lt;Object&gt; delegateDeser = _delegateDeserializer();</b>
-<b class="fc">&nbsp;            if (delegateDeser != null) {</b>
-<b class="fc">&nbsp;                if (!_valueInstantiator.canCreateFromDouble()) {</b>
-<b class="fc">&nbsp;                    Object bean = _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="fc">&nbsp;                            delegateDeser.deserialize(p, ctxt));</b>
+&nbsp;        if ((t == NumberType.DOUBLE) || (t == NumberType.FLOAT)) {
+<b class="fc">&nbsp;            if (_delegateDeserializer != null) {</b>
+&nbsp;                if (!_valueInstantiator.canCreateFromDouble()) {
+<b class="fc">&nbsp;                    Object bean = _valueInstantiator.createUsingDelegate(ctxt, _delegateDeserializer.deserialize(p, ctxt));</b>
 <b class="fc">&nbsp;                    if (_injectables != null) {</b>
-<b class="nc">&nbsp;                        injectValues(ctxt, bean);</b>
-&nbsp;                    }
+<b class="fc">&nbsp;                        injectValues(ctxt, bean);</b>
+<b class="fc">&nbsp;                    }</b>
 <b class="fc">&nbsp;                    return bean;</b>
-&nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;            return _valueInstantiator.createFromDouble(ctxt, p.getDoubleValue());</b>
+<b class="fc">&nbsp;                }</b>
+<b class="fc">&nbsp;            }</b>
+<b class="nc">&nbsp;            return _valueInstantiator.createFromDouble(ctxt, p.getDoubleValue());</b>
 &nbsp;        }
-&nbsp;        // actually, could also be BigDecimal, so:
-<b class="nc">&nbsp;        JsonDeserializer&lt;Object&gt; delegateDeser = _delegateDeserializer();</b>
-<b class="nc">&nbsp;        if (delegateDeser != null) {</b>
-<b class="nc">&nbsp;            return _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="nc">&nbsp;                    delegateDeser.deserialize(p, ctxt));</b>
-&nbsp;        }
-<b class="nc">&nbsp;        return ctxt.handleMissingInstantiator(handledType(), p,</b>
+<b class="fc">&nbsp;        // actually, could also be BigDecimal, so:</b>
+&nbsp;        if (_delegateDeserializer != null) {
+&nbsp;            return _valueInstantiator.createUsingDelegate(ctxt, _delegateDeserializer.deserialize(p, ctxt));
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return ctxt.handleMissingInstantiator(handledType(), p,
 &nbsp;                &quot;no suitable creator method found to deserialize from Number value (%s)&quot;,
 <b class="nc">&nbsp;                p.getNumberValue());</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method called to deserialize POJO value from a JSON boolean value (true, false)
-&nbsp;     */
+<b class="nc">&nbsp;     */</b>
 &nbsp;    public Object deserializeFromBoolean(JsonParser p, DeserializationContext ctxt) throws IOException
+<b class="nc">&nbsp;    {</b>
+&nbsp;        if (_delegateDeserializer != null) {
+&nbsp;            if (!_valueInstantiator.canCreateFromBoolean()) {
+&nbsp;                Object bean = _valueInstantiator.createUsingDelegate(ctxt, _delegateDeserializer.deserialize(p, ctxt));
+&nbsp;                if (_injectables != null) {
+&nbsp;                    injectValues(ctxt, bean);
+&nbsp;                }
+&nbsp;                return bean;
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        boolean value = (p.getCurrentToken() == JsonToken.VALUE_TRUE);</b>
+<b class="fc">&nbsp;        return _valueInstantiator.createFromBoolean(ctxt, value);</b>
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="nc">&nbsp;    public Object deserializeFromArray(JsonParser p, DeserializationContext ctxt) throws IOException</b>
 &nbsp;    {
-<b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; delegateDeser = _delegateDeserializer();</b>
-<b class="fc">&nbsp;        if (delegateDeser != null) {</b>
-<b class="fc">&nbsp;            if (!_valueInstantiator.canCreateFromBoolean()) {</b>
-<b class="fc">&nbsp;                Object bean = _valueInstantiator.createUsingDelegate(ctxt,</b>
-<b class="fc">&nbsp;                        delegateDeser.deserialize(p, ctxt));</b>
+<b class="fc">&nbsp;        if (_arrayDelegateDeserializer != null) {</b>
+&nbsp;            try {
+&nbsp;                Object bean = _valueInstantiator.createUsingArrayDelegate(ctxt, _arrayDelegateDeserializer.deserialize(p, ctxt));
+<b class="fc">&nbsp;                if (_injectables != null) {</b>
+<b class="fc">&nbsp;                    injectValues(ctxt, bean);</b>
+&nbsp;                }
+&nbsp;                return bean;
+&nbsp;            } catch (Exception e) {
+&nbsp;                return wrapInstantiationProblem(e, ctxt);
+&nbsp;            }
+<b class="fc">&nbsp;        }</b>
+&nbsp;        // fallback to non-array delegate
+<b class="fc">&nbsp;        if (_delegateDeserializer != null) {</b>
+<b class="fc">&nbsp;            try {</b>
+<b class="fc">&nbsp;                Object bean = _valueInstantiator.createUsingArrayDelegate(ctxt, _delegateDeserializer.deserialize(p, ctxt));</b>
 <b class="fc">&nbsp;                if (_injectables != null) {</b>
 <b class="nc">&nbsp;                    injectValues(ctxt, bean);</b>
 &nbsp;                }
 <b class="fc">&nbsp;                return bean;</b>
-&nbsp;            }
-&nbsp;        }
-<b class="fc">&nbsp;        boolean value = (p.getCurrentToken() == JsonToken.VALUE_TRUE);</b>
-<b class="fc">&nbsp;        return _valueInstantiator.createFromBoolean(ctxt, value);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    public Object deserializeFromArray(JsonParser p, DeserializationContext ctxt) throws IOException
-&nbsp;    {
-&nbsp;        // note: can not call `_delegateDeserializer()` since order reversed here:
-<b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; delegateDeser = _arrayDelegateDeserializer;</b>
-&nbsp;        // fallback to non-array delegate
-<b class="fc">&nbsp;        if ((delegateDeser != null) || ((delegateDeser = _delegateDeserializer) != null)) {</b>
-<b class="fc">&nbsp;            Object bean = _valueInstantiator.createUsingArrayDelegate(ctxt,</b>
-<b class="fc">&nbsp;                    delegateDeser.deserialize(p, ctxt));</b>
-<b class="fc">&nbsp;            if (_injectables != null) {</b>
-<b class="nc">&nbsp;                injectValues(ctxt, bean);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            return bean;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (ctxt.isEnabled(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS)) {</b>
+&nbsp;            } catch (Exception e) {
+<b class="fc">&nbsp;                wrapInstantiationProblem(e, ctxt);</b>
+<b class="fc">&nbsp;                return null;</b>
+<b class="fc">&nbsp;            }</b>
+<b class="nc">&nbsp;        }</b>
+&nbsp;        if (ctxt.isEnabled(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS)) {
 <b class="fc">&nbsp;            JsonToken t = p.nextToken();</b>
 <b class="fc">&nbsp;            if (t == JsonToken.END_ARRAY &amp;&amp; ctxt.isEnabled(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)) {</b>
 <b class="nc">&nbsp;                return null;</b>
 &nbsp;            }
 <b class="fc">&nbsp;            final Object value = deserialize(p, ctxt);</b>
-<b class="fc">&nbsp;            if (p.nextToken() != JsonToken.END_ARRAY) {</b>
-<b class="nc">&nbsp;                handleMissingEndArrayForSingle(p, ctxt);</b>
-&nbsp;            }
+&nbsp;            if (p.nextToken() != JsonToken.END_ARRAY) {
+<b class="fc">&nbsp;                handleMissingEndArrayForSingle(p, ctxt);</b>
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            return value;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (ctxt.isEnabled(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)) {</b>
-<b class="fc">&nbsp;            JsonToken t = p.nextToken();</b>
-<b class="fc">&nbsp;            if (t == JsonToken.END_ARRAY) {</b>
-<b class="fc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            return ctxt.handleUnexpectedToken(handledType(),</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (ctxt.isEnabled(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)) {
+<b class="nc">&nbsp;            JsonToken t = p.nextToken();</b>
+&nbsp;            if (t == JsonToken.END_ARRAY) {
+&nbsp;                return null;
+<b class="fc">&nbsp;            }</b>
+&nbsp;            return ctxt.handleUnexpectedToken(handledType(),
 &nbsp;                    JsonToken.START_ARRAY, p, null);
 &nbsp;        }
-<b class="fc">&nbsp;        return ctxt.handleUnexpectedToken(handledType(), p);</b>
+&nbsp;        return ctxt.handleUnexpectedToken(handledType(), p);
 &nbsp;    }
 &nbsp;
 &nbsp;    public Object deserializeFromEmbedded(JsonParser p, DeserializationContext ctxt)
-&nbsp;        throws IOException
-&nbsp;    {
+<b class="nc">&nbsp;        throws IOException</b>
+<b class="nc">&nbsp;    {</b>
 &nbsp;        // First things first: id Object Id is used, most likely that&#39;s it; specifically,
 &nbsp;        // true for UUIDs when written as binary (with Smile, other binary formats)
-<b class="nc">&nbsp;        if (_objectIdReader != null) {</b>
-<b class="nc">&nbsp;            return deserializeFromObjectId(p, ctxt);</b>
-&nbsp;        }
+&nbsp;        if (_objectIdReader != null) {
+&nbsp;            return deserializeFromObjectId(p, ctxt);
+<b class="nc">&nbsp;        }</b>
 &nbsp;
 &nbsp;        // TODO: maybe add support for ValueInstantiator, embedded?
 &nbsp;        
-<b class="nc">&nbsp;        return p.getEmbeddedObject();</b>
+&nbsp;        return p.getEmbeddedObject();
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.9
-&nbsp;     */
-&nbsp;    private final JsonDeserializer&lt;Object&gt; _delegateDeserializer() {
-<b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; deser = _delegateDeserializer;</b>
-<b class="fc">&nbsp;        if (deser == null) {</b>
-<b class="fc">&nbsp;            deser = _arrayDelegateDeserializer;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return deser;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /*
+<b class="fc">&nbsp;    /*</b>
+<b class="fc">&nbsp;    /**********************************************************</b>
+<b class="fc">&nbsp;    /* Overridable helper methods</b>
 &nbsp;    /**********************************************************
-&nbsp;    /* Overridable helper methods
-&nbsp;    /**********************************************************
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;
 &nbsp;    protected void injectValues(DeserializationContext ctxt, Object bean)
 &nbsp;        throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        for (ValueInjector injector : _injectables) {</b>
-<b class="fc">&nbsp;            injector.inject(ctxt, bean);</b>
+&nbsp;        for (ValueInjector injector : _injectables) {
+&nbsp;            injector.inject(ctxt, bean);
 &nbsp;        }
 &nbsp;    }
 &nbsp;    
 &nbsp;    /**
 &nbsp;     * Method called to handle set of one or more unknown properties,
-&nbsp;     * stored in their entirety in given {@link TokenBuffer}
-&nbsp;     * (as field entries, name and value).
+<b class="fc">&nbsp;     * stored in their entirety in given {@link TokenBuffer}</b>
+<b class="fc">&nbsp;     * (as field entries, name and value).</b>
 &nbsp;     */
 &nbsp;    @SuppressWarnings(&quot;resource&quot;)
 &nbsp;    protected Object handleUnknownProperties(DeserializationContext ctxt,
@@ -1523,84 +1516,84 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        throws IOException
 &nbsp;    {
 &nbsp;        // First: add closing END_OBJECT as marker
-<b class="fc">&nbsp;        unknownTokens.writeEndObject();</b>
+&nbsp;        unknownTokens.writeEndObject();
 &nbsp;
 &nbsp;        // note: buffer does NOT have starting START_OBJECT
-<b class="fc">&nbsp;        JsonParser bufferParser = unknownTokens.asParser();</b>
-<b class="fc">&nbsp;        while (bufferParser.nextToken() != JsonToken.END_OBJECT) {</b>
-<b class="fc">&nbsp;            String propName = bufferParser.getCurrentName();</b>
+&nbsp;        JsonParser bufferParser = unknownTokens.asParser();
+&nbsp;        while (bufferParser.nextToken() != JsonToken.END_OBJECT) {
+&nbsp;            String propName = bufferParser.getCurrentName();
 &nbsp;            // Unknown: let&#39;s call handler method
 <b class="fc">&nbsp;            bufferParser.nextToken();</b>
-<b class="fc">&nbsp;            handleUnknownProperty(bufferParser, ctxt, bean, propName);</b>
-<b class="fc">&nbsp;        }</b>
+&nbsp;            handleUnknownProperty(bufferParser, ctxt, bean, propName);
+&nbsp;        }
 <b class="fc">&nbsp;        return bean;</b>
-&nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
-&nbsp;     * Helper method called for an unknown property, when using &quot;vanilla&quot;
-&nbsp;     * processing.
-&nbsp;     */
-&nbsp;    protected void handleUnknownVanilla(JsonParser p, DeserializationContext ctxt,
+<b class="fc">&nbsp;     * Helper method called for an unknown property, when using &quot;vanilla&quot;</b>
+<b class="fc">&nbsp;     * processing.</b>
+<b class="fc">&nbsp;     */</b>
+<b class="fc">&nbsp;    protected void handleUnknownVanilla(JsonParser p, DeserializationContext ctxt,</b>
 &nbsp;            Object bean, String propName)
 &nbsp;        throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
-<b class="fc">&nbsp;            handleIgnoredProperty(p, ctxt, bean, propName);</b>
-<b class="fc">&nbsp;        } else if (_anySetter != null) {</b>
+&nbsp;        if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {
+&nbsp;            handleIgnoredProperty(p, ctxt, bean, propName);
+&nbsp;        } else if (_anySetter != null) {
 &nbsp;            try {
 &nbsp;               // should we consider return type of any setter?
-<b class="fc">&nbsp;                _anySetter.deserializeAndSet(p, ctxt, bean, propName);</b>
-<b class="fc">&nbsp;            } catch (Exception e) {</b>
+&nbsp;                _anySetter.deserializeAndSet(p, ctxt, bean, propName);
+&nbsp;            } catch (Exception e) {
 <b class="fc">&nbsp;                wrapAndThrow(e, bean, propName, ctxt);</b>
 <b class="fc">&nbsp;            }</b>
-&nbsp;        } else {
+<b class="fc">&nbsp;        } else {</b>
 &nbsp;            // Unknown: let&#39;s call handler method
-<b class="fc">&nbsp;            handleUnknownProperty(p, ctxt, bean, propName);         </b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
+&nbsp;            handleUnknownProperty(p, ctxt, bean, propName);         
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method called when a JSON property is encountered that has not matching
 &nbsp;     * setter, any-setter or field, and thus can not be assigned.
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;    @Override
 &nbsp;    protected void handleUnknownProperty(JsonParser p, DeserializationContext ctxt,
 &nbsp;            Object beanOrClass, String propName)
 &nbsp;        throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        if (_ignoreAllUnknown) {</b>
-<b class="fc">&nbsp;            p.skipChildren();</b>
+&nbsp;        if (_ignoreAllUnknown) {
+&nbsp;            p.skipChildren();
 &nbsp;            return;
 &nbsp;        }
-<b class="fc">&nbsp;        if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {</b>
-<b class="nc">&nbsp;            handleIgnoredProperty(p, ctxt, beanOrClass, propName);</b>
+&nbsp;        if (_ignorableProps != null &amp;&amp; _ignorableProps.contains(propName)) {
+&nbsp;            handleIgnoredProperty(p, ctxt, beanOrClass, propName);
 &nbsp;        }
-&nbsp;        // Otherwise use default handling (call handler(s); if not
-&nbsp;        // handled, throw exception or skip depending on settings)
-<b class="fc">&nbsp;        super.handleUnknownProperty(p, ctxt, beanOrClass, propName);</b>
+<b class="fc">&nbsp;        // Otherwise use default handling (call handler(s); if not</b>
+<b class="fc">&nbsp;        // handled, throw exception or skip depending on settings)</b>
+&nbsp;        super.handleUnknownProperty(p, ctxt, beanOrClass, propName);
 &nbsp;    }
-&nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;</b>
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method called when an explicitly ignored property (one specified with a
 &nbsp;     * name to match, either by property annotation or class annotation) is encountered.
 &nbsp;     * 
-&nbsp;     * @since 2.3
+<b class="fc">&nbsp;     * @since 2.3</b>
 &nbsp;     */
 &nbsp;    protected void handleIgnoredProperty(JsonParser p, DeserializationContext ctxt,
 &nbsp;            Object beanOrClass, String propName)
 &nbsp;        throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        if (ctxt.isEnabled(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)) {</b>
-<b class="fc">&nbsp;            throw IgnoredPropertyException.from(p, beanOrClass, propName, getKnownPropertyNames());</b>
+&nbsp;        if (ctxt.isEnabled(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)) {
+&nbsp;            throw IgnoredPropertyException.from(p, beanOrClass, propName, getKnownPropertyNames());
 &nbsp;        }
-<b class="fc">&nbsp;        p.skipChildren();</b>
+&nbsp;        p.skipChildren();
 &nbsp;    }
 &nbsp;    
 &nbsp;    /**
-&nbsp;     * Method called in cases where we may have polymorphic deserialization
-&nbsp;     * case: that is, type of Creator-constructed bean is not the type
+<b class="fc">&nbsp;     * Method called in cases where we may have polymorphic deserialization</b>
+<b class="fc">&nbsp;     * case: that is, type of Creator-constructed bean is not the type</b>
 &nbsp;     * of deserializer itself. It should be a sub-class or implementation
-&nbsp;     * class; either way, we may have more specific deserializer to use
+<b class="fc">&nbsp;     * class; either way, we may have more specific deserializer to use</b>
 &nbsp;     * for handling it.
 &nbsp;     *
 &nbsp;     * @param p (optional) If not null, parser that has more properties to handle
@@ -1613,75 +1606,75 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        throws IOException
 &nbsp;    {  
 &nbsp;        // First things first: maybe there is a more specific deserializer available?
-<b class="fc">&nbsp;        JsonDeserializer&lt;Object&gt; subDeser = _findSubclassDeserializer(ctxt, bean, unknownTokens);</b>
-<b class="fc">&nbsp;        if (subDeser != null) {</b>
-<b class="fc">&nbsp;            if (unknownTokens != null) {</b>
+&nbsp;        JsonDeserializer&lt;Object&gt; subDeser = _findSubclassDeserializer(ctxt, bean, unknownTokens);
+&nbsp;        if (subDeser != null) {
+&nbsp;            if (unknownTokens != null) {
 &nbsp;                // need to add END_OBJECT marker first
-<b class="fc">&nbsp;                unknownTokens.writeEndObject();</b>
-<b class="fc">&nbsp;                JsonParser p2 = unknownTokens.asParser();</b>
-<b class="fc">&nbsp;                p2.nextToken(); // to get to first data field</b>
+&nbsp;                unknownTokens.writeEndObject();
+&nbsp;                JsonParser p2 = unknownTokens.asParser();
+&nbsp;                p2.nextToken(); // to get to first data field
 <b class="fc">&nbsp;                bean = subDeser.deserialize(p2, ctxt, bean);</b>
-&nbsp;            }
-&nbsp;            // Original parser may also have some leftovers
-<b class="fc">&nbsp;            if (p != null) {</b>
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;            // Original parser may also have some leftovers</b>
+&nbsp;            if (p != null) {
 <b class="fc">&nbsp;                bean = subDeser.deserialize(p, ctxt, bean);</b>
-&nbsp;            }
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            return bean;</b>
-&nbsp;        }
+<b class="fc">&nbsp;        }</b>
 &nbsp;        // nope; need to use this deserializer. Unknowns we&#39;ve seen so far?
-<b class="nc">&nbsp;        if (unknownTokens != null) {</b>
-<b class="nc">&nbsp;            bean = handleUnknownProperties(ctxt, bean, unknownTokens);</b>
-&nbsp;        }
+&nbsp;        if (unknownTokens != null) {
+<b class="fc">&nbsp;            bean = handleUnknownProperties(ctxt, bean, unknownTokens);</b>
+<b class="fc">&nbsp;        }</b>
 &nbsp;        // and/or things left to process via main parser?
-<b class="nc">&nbsp;        if (p != null) {</b>
-<b class="nc">&nbsp;            bean = deserialize(p, ctxt, bean);</b>
+<b class="fc">&nbsp;        if (p != null) {</b>
+&nbsp;            bean = deserialize(p, ctxt, bean);
 &nbsp;        }
 <b class="nc">&nbsp;        return bean;</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    /**
-&nbsp;     * Helper method called to (try to) locate deserializer for given sub-type of
-&nbsp;     * type that this deserializer handles.
+<b class="nc">&nbsp;     * Helper method called to (try to) locate deserializer for given sub-type of</b>
+<b class="nc">&nbsp;     * type that this deserializer handles.</b>
 &nbsp;     */
-&nbsp;    protected JsonDeserializer&lt;Object&gt; _findSubclassDeserializer(DeserializationContext ctxt,
+<b class="nc">&nbsp;    protected JsonDeserializer&lt;Object&gt; _findSubclassDeserializer(DeserializationContext ctxt,</b>
 &nbsp;            Object bean, TokenBuffer unknownTokens)
 &nbsp;        throws IOException
 &nbsp;    {  
 &nbsp;        JsonDeserializer&lt;Object&gt; subDeser;
 &nbsp;
 &nbsp;        // First: maybe we have already created sub-type deserializer?
-<b class="fc">&nbsp;        synchronized (this) {</b>
-<b class="fc">&nbsp;            subDeser = (_subDeserializers == null) ? null : _subDeserializers.get(new ClassKey(bean.getClass()));</b>
-<b class="fc">&nbsp;        }</b>
-<b class="fc">&nbsp;        if (subDeser != null) {</b>
-<b class="nc">&nbsp;            return subDeser;</b>
+&nbsp;        synchronized (this) {
+&nbsp;            subDeser = (_subDeserializers == null) ? null : _subDeserializers.get(new ClassKey(bean.getClass()));
+&nbsp;        }
+&nbsp;        if (subDeser != null) {
+&nbsp;            return subDeser;
 &nbsp;        }
 &nbsp;        // If not, maybe we can locate one. First, need provider
 <b class="fc">&nbsp;        JavaType type = ctxt.constructType(bean.getClass());</b>
-&nbsp;        /* 30-Jan-2012, tatu: Ideally we would be passing referring
-&nbsp;         *   property; which in theory we could keep track of via
-&nbsp;         *   ResolvableDeserializer (if we absolutely must...).
-&nbsp;         *   But for now, let&#39;s not bother.
+<b class="fc">&nbsp;        /* 30-Jan-2012, tatu: Ideally we would be passing referring</b>
+<b class="fc">&nbsp;         *   property; which in theory we could keep track of via</b>
+<b class="fc">&nbsp;         *   ResolvableDeserializer (if we absolutely must...).</b>
+<b class="nc">&nbsp;         *   But for now, let&#39;s not bother.</b>
 &nbsp;         */
 &nbsp;//        subDeser = ctxt.findValueDeserializer(type, _property);
 <b class="fc">&nbsp;        subDeser = ctxt.findRootValueDeserializer(type);</b>
 &nbsp;        // Also, need to cache it
-<b class="fc">&nbsp;        if (subDeser != null) {</b>
-<b class="fc">&nbsp;            synchronized (this) {</b>
-<b class="fc">&nbsp;                if (_subDeserializers == null) {</b>
-<b class="fc">&nbsp;                    _subDeserializers = new HashMap&lt;ClassKey,JsonDeserializer&lt;Object&gt;&gt;();;</b>
+&nbsp;        if (subDeser != null) {
+&nbsp;            synchronized (this) {
+&nbsp;                if (_subDeserializers == null) {
+&nbsp;                    _subDeserializers = new HashMap&lt;ClassKey,JsonDeserializer&lt;Object&gt;&gt;();;
 &nbsp;                }
 <b class="fc">&nbsp;                _subDeserializers.put(new ClassKey(bean.getClass()), subDeser);</b>
-<b class="fc">&nbsp;            }            </b>
-&nbsp;        }
+&nbsp;            }            
+<b class="fc">&nbsp;        }</b>
 <b class="fc">&nbsp;        return subDeser;</b>
-&nbsp;    }
-&nbsp;    
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;    </b>
 &nbsp;    /*
+<b class="fc">&nbsp;    /**********************************************************</b>
+<b class="fc">&nbsp;    /* Helper methods for error reporting</b>
 &nbsp;    /**********************************************************
-&nbsp;    /* Helper methods for error reporting
-&nbsp;    /**********************************************************
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method that will modify caught exception (passed in as argument)
@@ -1699,65 +1692,65 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        throws IOException
 &nbsp;    {
 &nbsp;        // [JACKSON-55] Need to add reference information
-<b class="fc">&nbsp;        throw JsonMappingException.wrapWithPath(throwOrReturnThrowable(t, ctxt), bean, fieldName);</b>
+&nbsp;        throw JsonMappingException.wrapWithPath(throwOrReturnThrowable(t, ctxt), bean, fieldName);
 &nbsp;    }
 &nbsp;
 &nbsp;    @Deprecated // since 2.4, not used by core Jackson; only relevant for arrays/Collections
 &nbsp;    public void wrapAndThrow(Throwable t, Object bean, int index, DeserializationContext ctxt) throws IOException {
 &nbsp;        // [JACKSON-55] Need to add reference information
-<b class="nc">&nbsp;        throw JsonMappingException.wrapWithPath(throwOrReturnThrowable(t, ctxt), bean, index);</b>
-&nbsp;    }
+&nbsp;        throw JsonMappingException.wrapWithPath(throwOrReturnThrowable(t, ctxt), bean, index);
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    private Throwable throwOrReturnThrowable(Throwable t, DeserializationContext ctxt) 
 &nbsp;        throws IOException
 &nbsp;    {
 &nbsp;        /* 05-Mar-2009, tatu: But one nasty edge is when we get
-&nbsp;         *   StackOverflow: usually due to infinite loop. But that
+<b class="nc">&nbsp;         *   StackOverflow: usually due to infinite loop. But that</b>
 &nbsp;         *   often gets hidden within an InvocationTargetException...
 &nbsp;         */
-<b class="fc">&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {</b>
-<b class="nc">&nbsp;            t = t.getCause();</b>
+&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {
+&nbsp;            t = t.getCause();
 &nbsp;        }
 &nbsp;        // Errors to be passed as is
-<b class="fc">&nbsp;        if (t instanceof Error) {</b>
-<b class="nc">&nbsp;            throw (Error) t;</b>
+&nbsp;        if (t instanceof Error) {
+&nbsp;            throw (Error) t;
 &nbsp;        }
 <b class="fc">&nbsp;        boolean wrap = (ctxt == null) || ctxt.isEnabled(DeserializationFeature.WRAP_EXCEPTIONS);</b>
-&nbsp;        // Ditto for IOExceptions; except we may want to wrap JSON exceptions
-<b class="fc">&nbsp;        if (t instanceof IOException) {</b>
-<b class="fc">&nbsp;            if (!wrap || !(t instanceof JsonProcessingException)) {</b>
-<b class="nc">&nbsp;                throw (IOException) t;</b>
-&nbsp;            }
-<b class="fc">&nbsp;        } else if (!wrap) { // [JACKSON-407] -- allow disabling wrapping for unchecked exceptions</b>
-<b class="nc">&nbsp;            if (t instanceof RuntimeException) {</b>
-<b class="nc">&nbsp;                throw (RuntimeException) t;</b>
-&nbsp;            }
-&nbsp;        }
-<b class="fc">&nbsp;        return t;</b>
+<b class="nc">&nbsp;        // Ditto for IOExceptions; except we may want to wrap JSON exceptions</b>
+&nbsp;        if (t instanceof IOException) {
+&nbsp;            if (!wrap || !(t instanceof JsonProcessingException)) {
+<b class="fc">&nbsp;                throw (IOException) t;</b>
+<b class="nc">&nbsp;            }</b>
+&nbsp;        } else if (!wrap) { // [JACKSON-407] -- allow disabling wrapping for unchecked exceptions
+<b class="fc">&nbsp;            if (t instanceof RuntimeException) {</b>
+&nbsp;                throw (RuntimeException) t;
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return t;</b>
 &nbsp;    }
-&nbsp;
-&nbsp;    protected Object wrapInstantiationProblem(Throwable t, DeserializationContext ctxt)
-&nbsp;        throws IOException
+<b class="fc">&nbsp;</b>
+<b class="nc">&nbsp;    protected Object wrapInstantiationProblem(Throwable t, DeserializationContext ctxt)</b>
+<b class="nc">&nbsp;        throws IOException</b>
 &nbsp;    {
-<b class="fc">&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {</b>
-<b class="nc">&nbsp;            t = t.getCause();</b>
+&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {
+<b class="fc">&nbsp;            t = t.getCause();</b>
 &nbsp;        }
 &nbsp;        // Errors and &quot;plain&quot; IOExceptions to be passed as is
-<b class="fc">&nbsp;        if (t instanceof Error) {</b>
-<b class="nc">&nbsp;            throw (Error) t;</b>
+&nbsp;        if (t instanceof Error) {
+&nbsp;            throw (Error) t;
 &nbsp;        }
 <b class="fc">&nbsp;        boolean wrap = (ctxt == null) || ctxt.isEnabled(DeserializationFeature.WRAP_EXCEPTIONS);</b>
-<b class="fc">&nbsp;        if (t instanceof IOException) {</b>
+<b class="nc">&nbsp;        if (t instanceof IOException) {</b>
 &nbsp;            // Since we have no more information to add, let&#39;s not actually wrap..
-<b class="fc">&nbsp;            throw (IOException) t;</b>
+&nbsp;            throw (IOException) t;
 <b class="fc">&nbsp;        } else if (!wrap) { // [JACKSON-407] -- allow disabling wrapping for unchecked exceptions</b>
 <b class="nc">&nbsp;            if (t instanceof RuntimeException) {</b>
-<b class="nc">&nbsp;                throw (RuntimeException) t;</b>
-&nbsp;            }
-&nbsp;        }
-<b class="fc">&nbsp;        return ctxt.handleInstantiationProblem(_beanType.getRawClass(), null, t);</b>
-&nbsp;    }
-&nbsp;}
+&nbsp;                throw (RuntimeException) t;
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return ctxt.handleInstantiationProblem(_beanType.getRawClass(), null, t);
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;}</b>
 </code>
 </pre>
 </div>
@@ -1781,7 +1774,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

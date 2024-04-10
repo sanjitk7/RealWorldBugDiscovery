@@ -197,11 +197,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     *   instead.
 &nbsp;     */
 &nbsp;    @Deprecated
-&nbsp;    public Collection&lt;NamedType&gt; collectAndResolveSubtypes(AnnotatedMember property,
-&nbsp;            MapperConfig&lt;?&gt; config, AnnotationIntrospector ai, JavaType baseType) {
-<b class="nc">&nbsp;        return collectAndResolveSubtypesByClass(config, property, baseType);</b>
-&nbsp;    }
-&nbsp;
+&nbsp;    public abstract Collection&lt;NamedType&gt; collectAndResolveSubtypes(AnnotatedMember property,
+&nbsp;            MapperConfig&lt;?&gt; config, AnnotationIntrospector ai, JavaType baseType);
+<b class="nc">&nbsp;    </b>
 &nbsp;    /**
 &nbsp;     * @deprecated Since 2.6 Use either
 &nbsp;     *   {@link #collectAndResolveSubtypesByClass(MapperConfig, AnnotatedClass)}
@@ -209,10 +207,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     *   instead.
 &nbsp;     */
 &nbsp;    @Deprecated
-&nbsp;    public Collection&lt;NamedType&gt; collectAndResolveSubtypes(AnnotatedClass baseType,
-&nbsp;            MapperConfig&lt;?&gt; config, AnnotationIntrospector ai) {
-<b class="nc">&nbsp;        return collectAndResolveSubtypesByClass(config, baseType);</b>
-&nbsp;    }
+&nbsp;    public abstract Collection&lt;NamedType&gt; collectAndResolveSubtypes(AnnotatedClass baseType,
+&nbsp;            MapperConfig&lt;?&gt; config, AnnotationIntrospector ai);
 &nbsp;}
 </code>
 </pre>
@@ -237,7 +233,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

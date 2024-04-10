@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.core.Version;
 
 /**
  * Configuration object that is accessed by databinding functionality
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
  */
 public abstract class ConfigOverride
 {
+    public static Version VERSION;
     /**
      * Definitions of format overrides, if any.
      */

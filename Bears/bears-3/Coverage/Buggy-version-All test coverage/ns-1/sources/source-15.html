@@ -49,10 +49,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    74.2%
+    73.8%
   </span>
   <span class="absValue">
-    (422/569)
+    (420/569)
   </span>
 </td>
 </tr>
@@ -91,6 +91,25 @@ Current scope:     <a href="../../index.html">all classes</a>
   </span>
   <span class="absValue">
     (1/1)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ObjectMapper$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
   </span>
 </td>
   </tr>
@@ -136,18 +155,18 @@ Current scope:     <a href="../../index.html">all classes</a>
   <td class="name"><strong>Total</strong></td>
 <td class="coverageStat">
   <span class="percent">
-    66.5%
+    66.3%
   </span>
   <span class="absValue">
-    (163/245)
+    (163/246)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    73.3%
+    72.9%
   </span>
   <span class="absValue">
-    (464/633)
+    (462/634)
   </span>
 </td>
 </tr>
@@ -401,7 +420,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;                // fall through
 &nbsp;            case OBJECT_AND_NON_CONCRETE:
 &nbsp;                // 19-Apr-2016, tatu: ReferenceType like Optional also requires similar handling:
-<b class="fc">&nbsp;                while (t.isReferenceType()) {</b>
+<b class="pc">&nbsp;                while (t.isReferenceType()) {</b>
 <b class="nc">&nbsp;                    t = t.getReferencedType();</b>
 &nbsp;                }
 <b class="fc">&nbsp;                return t.isJavaLangObject()</b>
@@ -1190,7 +1209,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * new instance of context object.
 &nbsp;    */
 &nbsp;    public DeserializationContext getDeserializationContext() {
-<b class="nc">&nbsp;        return _deserializationContext;</b>
+<b class="fc">&nbsp;        return _deserializationContext;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /*
@@ -2202,10 +2221,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.5
 &nbsp;     */
 &nbsp;    public ObjectMapper disable(JsonGenerator.Feature... features) {
-<b class="fc">&nbsp;        for (JsonGenerator.Feature f : features) {</b>
-<b class="fc">&nbsp;            _jsonFactory.disable(f);</b>
+<b class="nc">&nbsp;        for (JsonGenerator.Feature f : features) {</b>
+<b class="nc">&nbsp;            _jsonFactory.disable(f);</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return this;</b>
+<b class="nc">&nbsp;        return this;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /*
@@ -4101,7 +4120,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:51</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

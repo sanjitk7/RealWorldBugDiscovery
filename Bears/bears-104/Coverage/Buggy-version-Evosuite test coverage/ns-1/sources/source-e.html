@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > JsonSerializable</title>
+  <title>Coverage Report > AppelloProtocol</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -19,10 +19,10 @@
 <div class="breadCrumbs">
 Current scope:     <a href="../../index.html">all classes</a>
     <span class="separator">|</span>
-    <a href="../index.html">com.fasterxml.jackson.databind</a>
+    <a href="../index.html">org.traccar.protocol</a>
 </div>
 
-<h1>Coverage Summary for Class: JsonSerializable (com.fasterxml.jackson.databind)</h1>
+<h1>Coverage Summary for Class: AppelloProtocol (org.traccar.protocol)</h1>
 
 <table class="coverageStats">
 
@@ -37,8 +37,8 @@ Current scope:     <a href="../../index.html">all classes</a>
   Line, %
 </th>
 </tr>
-  <tr>
-    <td class="name">JsonSerializable$Base</td>
+<tr>
+  <td class="name">AppelloProtocol</td>
 <td class="coverageStat">
   <span class="percent">
     0%
@@ -52,7 +52,26 @@ Current scope:     <a href="../../index.html">all classes</a>
     0%
   </span>
   <span class="absValue">
+    (0/4)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">AppelloProtocol$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
     (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/5)
   </span>
 </td>
   </tr>
@@ -63,7 +82,7 @@ Current scope:     <a href="../../index.html">all classes</a>
     0%
   </span>
   <span class="absValue">
-    (0/2)
+    (0/4)
   </span>
 </td>
 <td class="coverageStat">
@@ -71,7 +90,7 @@ Current scope:     <a href="../../index.html">all classes</a>
     0%
   </span>
   <span class="absValue">
-    (0/2)
+    (0/9)
   </span>
 </td>
 </tr>
@@ -82,71 +101,52 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 
 <pre>
-<code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind;
-&nbsp;
-&nbsp;import java.io.IOException;
-&nbsp;
-&nbsp;import com.fasterxml.jackson.core.*;
-&nbsp;import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
-&nbsp;
-&nbsp;/**
-&nbsp; * Interface that can be implemented by objects that know how to
-&nbsp; * serialize themselves to JSON, using {@link JsonGenerator}
-&nbsp; * (and {@link SerializerProvider} if necessary).
-&nbsp; *&lt;p&gt;
-&nbsp; * Note that implementing this interface binds implementing object
-&nbsp; * closely to Jackson API, and that it is often not necessary to do
-&nbsp; * so -- if class is a bean, it can be serialized without
-&nbsp; * implementing this interface.
-&nbsp; *&lt;p&gt;
-&nbsp; * Note that while it is possible to just directly implement {@link JsonSerializable},
-&nbsp; * actual implementations are strongly recommended to instead extend
-&nbsp; * {@link JsonSerializable.Base}.
+<code class="sourceCode" id="sourceCode">&nbsp;/*
+&nbsp; * Copyright 2016 Anton Tananaev (anton@traccar.org)
+&nbsp; *
+&nbsp; * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+&nbsp; * you may not use this file except in compliance with the License.
+&nbsp; * You may obtain a copy of the License at
+&nbsp; *
+&nbsp; *     http://www.apache.org/licenses/LICENSE-2.0
+&nbsp; *
+&nbsp; * Unless required by applicable law or agreed to in writing, software
+&nbsp; * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+&nbsp; * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+&nbsp; * See the License for the specific language governing permissions and
+&nbsp; * limitations under the License.
 &nbsp; */
-&nbsp;public interface JsonSerializable
-&nbsp;{
-&nbsp;    /**
-&nbsp;     * Serialization method called when no additional type information is
-&nbsp;     * to be included in serialization.
-&nbsp;     */
-&nbsp;    public void serialize(JsonGenerator gen, SerializerProvider serializers) throws IOException;
+&nbsp;package org.traccar.protocol;
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Serialization method called when additional type information is
-&nbsp;     * expected to be included in serialization, for deserialization to use.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Usually implementation consists of a call to one of methods
-&nbsp;     * in {@link TypeSerializer} (such as {@link TypeSerializer#writeTypePrefixForObject(Object, JsonGenerator)})
-&nbsp;     * followed by serialization of contents,
-&nbsp;     * followed by another call to {@link TypeSerializer}
-&nbsp;     * (such as {@link TypeSerializer#writeTypeSuffixForObject(Object, JsonGenerator)}).
-&nbsp;     * Exact methods to call in {@link TypeSerializer} depend on shape of JSON Object used
-&nbsp;     * (Array, Object or scalar like String/Number/Boolean).
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note that some types (most notably, &quot;natural&quot; types: String, Integer,
-&nbsp;     * Double and Boolean) never include type information.
-&nbsp;     */
-&nbsp;    public void serializeWithType(JsonGenerator gen, SerializerProvider serializers,
-&nbsp;            TypeSerializer typeSer) throws IOException;
+&nbsp;import org.jboss.netty.bootstrap.ServerBootstrap;
+&nbsp;import org.jboss.netty.channel.ChannelPipeline;
+&nbsp;import org.jboss.netty.handler.codec.frame.LineBasedFrameDecoder;
+&nbsp;import org.jboss.netty.handler.codec.string.StringDecoder;
+&nbsp;import org.jboss.netty.handler.codec.string.StringEncoder;
+&nbsp;import org.traccar.BaseProtocol;
+&nbsp;import org.traccar.TrackerServer;
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Base class with minimal implementation, as well as couple of extension methods
-&nbsp;     * that core Jackson databinding makes use of.
-&nbsp;     * Use of this base class is strongly recommended over directly implementing
-&nbsp;     * {@link JsonSerializable}.
-&nbsp;     *
-&nbsp;     * @since 2.6
-&nbsp;     */
-<b class="nc">&nbsp;    public abstract static class Base implements JsonSerializable</b>
-&nbsp;    {
-&nbsp;        /**
-&nbsp;         * Method that may be called on instance to determine if it is considered
-&nbsp;         * &quot;empty&quot; for purposes of serialization filtering or not.
-&nbsp;         */
-&nbsp;        public boolean isEmpty(SerializerProvider serializers) {
-<b class="nc">&nbsp;            return false;</b>
-&nbsp;        }
-&nbsp;    }
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public class AppelloProtocol extends BaseProtocol {
+&nbsp;
+&nbsp;    public AppelloProtocol() {
+<b class="nc">&nbsp;        super(&quot;appello&quot;);</b>
+<b class="nc">&nbsp;    }</b>
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void initTrackerServers(List&lt;TrackerServer&gt; serverList) {
+<b class="nc">&nbsp;        serverList.add(new TrackerServer(new ServerBootstrap(), getName()) {</b>
+&nbsp;            @Override
+&nbsp;            protected void addSpecificHandlers(ChannelPipeline pipeline) {
+<b class="nc">&nbsp;                pipeline.addLast(&quot;frameDecoder&quot;, new LineBasedFrameDecoder(1024));</b>
+<b class="nc">&nbsp;                pipeline.addLast(&quot;stringDecoder&quot;, new StringDecoder());</b>
+<b class="nc">&nbsp;                pipeline.addLast(&quot;stringEncoder&quot;, new StringEncoder());</b>
+<b class="nc">&nbsp;                pipeline.addLast(&quot;objectDecoder&quot;, new AppelloProtocolDecoder(AppelloProtocol.this));</b>
+&nbsp;            }
+&nbsp;        });
+<b class="nc">&nbsp;    }</b>
+&nbsp;
 &nbsp;}
 </code>
 </pre>
@@ -171,7 +171,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 20:29</div>
+    <div style="float:right;">generated on 2024-04-09 23:51</div>
 </div>
 </body>
 </html>

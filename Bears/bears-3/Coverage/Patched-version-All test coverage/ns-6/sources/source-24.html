@@ -60,10 +60,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    63.8%
+    75.9%
   </span>
   <span class="absValue">
-    (37/58)
+    (44/58)
   </span>
 </td>
 </tr>
@@ -183,15 +183,15 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;            // Maybe it&#39;s &quot;message&quot;?
 <b class="fc">&nbsp;            if (PROP_NAME_MESSAGE.equals(propName)) {</b>
-<b class="nc">&nbsp;                if (hasStringCreator) {</b>
-<b class="nc">&nbsp;                    throwable = _valueInstantiator.createFromString(ctxt, p.getText());</b>
+<b class="fc">&nbsp;                if (hasStringCreator) {</b>
+<b class="fc">&nbsp;                    throwable = _valueInstantiator.createFromString(ctxt, p.getText());</b>
 &nbsp;                    // any pending values?
-<b class="nc">&nbsp;                    if (pending != null) {</b>
-<b class="nc">&nbsp;                        for (int i = 0, len = pendingIx; i &lt; len; i += 2) {</b>
-<b class="nc">&nbsp;                            prop = (SettableBeanProperty)pending[i];</b>
-<b class="nc">&nbsp;                            prop.set(throwable, pending[i+1]);</b>
+<b class="fc">&nbsp;                    if (pending != null) {</b>
+<b class="fc">&nbsp;                        for (int i = 0, len = pendingIx; i &lt; len; i += 2) {</b>
+<b class="fc">&nbsp;                            prop = (SettableBeanProperty)pending[i];</b>
+<b class="fc">&nbsp;                            prop.set(throwable, pending[i+1]);</b>
 &nbsp;                        }
-<b class="nc">&nbsp;                        pending = null;</b>
+<b class="fc">&nbsp;                        pending = null;</b>
 &nbsp;                    }
 &nbsp;                    continue;
 &nbsp;                }
@@ -255,7 +255,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

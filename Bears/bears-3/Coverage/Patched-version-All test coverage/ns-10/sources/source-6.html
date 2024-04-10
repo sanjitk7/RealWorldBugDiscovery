@@ -25,12 +25,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 <h1>Coverage Summary for Class: BeanSerializerFactory (com.fasterxml.jackson.databind.ser)</h1>
 
 <table class="coverageStats">
+
 <tr>
   <th class="name">Class</th>
-<th class="coverageStat 
-">
-  Class, %
-</th>
 <th class="coverageStat 
 ">
   Method, %
@@ -42,14 +39,6 @@ Current scope:     <a href="../../index.html">all classes</a>
 </tr>
 <tr>
   <td class="name">BeanSerializerFactory</td>
-<td class="coverageStat">
-  <span class="percent">
-    100%
-  </span>
-  <span class="absValue">
-    (1/1)
-  </span>
-</td>
 <td class="coverageStat">
   <span class="percent">
     100%
@@ -67,7 +56,44 @@ Current scope:     <a href="../../index.html">all classes</a>
   </span>
 </td>
 </tr>
-
+  <tr>
+    <td class="name">BeanSerializerFactory$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    95.8%
+  </span>
+  <span class="absValue">
+    (23/24)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95.4%
+  </span>
+  <span class="absValue">
+    (267/280)
+  </span>
+</td>
+</tr>
 </table>
 
 <br/>
@@ -409,7 +435,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;        if (b == null) {</b>
 <b class="fc">&nbsp;            typeSer = createTypeSerializer(config, baseType);</b>
 &nbsp;        } else {
-<b class="fc">&nbsp;            Collection&lt;NamedType&gt; subtypes = config.getSubtypeResolver().collectAndResolveSubtypesByClass(</b>
+<b class="pc">&nbsp;            Collection&lt;NamedType&gt; subtypes = config.getSubtypeResolver().collectAndResolveSubtypesByClass(</b>
 &nbsp;                    config, accessor, baseType);
 <b class="fc">&nbsp;            typeSer = b.buildTypeSerializer(config, baseType, subtypes);</b>
 &nbsp;        }
@@ -917,7 +943,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

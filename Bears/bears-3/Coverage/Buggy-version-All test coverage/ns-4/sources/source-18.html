@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > ContextualDeserializer</title>
+  <title>Coverage Report > ResolvableDeserializer</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.deser</a>
 </div>
 
-<h1>Coverage Summary for Class: ContextualDeserializer (com.fasterxml.jackson.databind.deser)</h1>
+<h1>Coverage Summary for Class: ResolvableDeserializer (com.fasterxml.jackson.databind.deser)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">ContextualDeserializer</td>
+  <td class="name">ResolvableDeserializer</td>
 </tr>
 
 </table>
@@ -41,45 +41,47 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.deser;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.databind.*;
+&nbsp;import com.fasterxml.jackson.databind.DeserializationContext;
+&nbsp;import com.fasterxml.jackson.databind.JsonMappingException;
 &nbsp;
 &nbsp;/**
-&nbsp; * Add-on interface that {@link JsonDeserializer}s can implement to get a callback
-&nbsp; * that can be used to create contextual (context-dependent) instances of
-&nbsp; * deserializer to use for  handling properties of supported type.
-&nbsp; * This can be useful
-&nbsp; * for deserializers that can be configured by annotations, or should otherwise
-&nbsp; * have differing behavior depending on what kind of property is being deserialized.
+&nbsp; * Interface used to indicate deserializers that want to do post-processing
+&nbsp; * after construction but before being returned to caller (and possibly cached)
+&nbsp; * and used.
+&nbsp; * This is typically used to resolve references
+&nbsp; * to other contained types; for example, bean deserializers use this callback
+&nbsp; * to locate deserializers for contained field types.
+&nbsp; * Main reason for using a callback (instead of trying to resolve dependencies
+&nbsp; * immediately) is to make it possible to cleanly handle self-references;
+&nbsp; * otherwise it would be easy to get into infinite recursion.
+&nbsp; *&lt;p&gt;
+&nbsp; * Note that {@link #resolve} method does NOT allow returning anything 
+&nbsp; * (specifically, a new deserializer instance): reason for this is that
+&nbsp; * allowing this would not work with proper handling of cyclic dependencies,
+&nbsp; * which are resolved by two-phase processing, where initially constructed
+&nbsp; * deserializer is added as known deserializer, and only after this
+&nbsp; * resolution is done. Resolution is the part that results in lookups for
+&nbsp; * dependant deserializers, which may include handling references to
+&nbsp; * deserializer itself.
 &nbsp; *&lt;p&gt;
 &nbsp; * Note that in cases where deserializer needs both contextualization and
-&nbsp; * resolution -- that is, implements both this interface and {@link ResolvableDeserializer}
-&nbsp; * -- resolution via {@link ResolvableDeserializer} occurs first, and contextual
-&nbsp; * resolution (via this interface) later on.
+&nbsp; * resolution -- that is, implements both this interface and {@link ContextualDeserializer}
+&nbsp; * -- resolution via this interface occurs first, and contextual
+&nbsp; * resolution (using {@link ContextualDeserializer}) later on.
 &nbsp; */
-&nbsp;public interface ContextualDeserializer
+&nbsp;public interface ResolvableDeserializer
 &nbsp;{
 &nbsp;    /**
-&nbsp;     * Method called to see if a different (or differently configured) deserializer
-&nbsp;     * is needed to deserialize values of specified property.
-&nbsp;     * Note that instance that this method is called on is typically shared one and
-&nbsp;     * as a result method should &lt;b&gt;NOT&lt;/b&gt; modify this instance but rather construct
-&nbsp;     * and return a new instance. This instance should only be returned as-is, in case
-&nbsp;     * it is already suitable for use.
-&nbsp;     * 
-&nbsp;     * @param ctxt Deserialization context to access configuration, additional 
-&nbsp;     *    deserializers that may be needed by this deserializer
-&nbsp;     * @param property Method, field or constructor parameter that represents the property
-&nbsp;     *   (and is used to assign deserialized value).
-&nbsp;     *   Should be available; but there may be cases where caller can not provide it and
-&nbsp;     *   null is passed instead (in which case impls usually pass &#39;this&#39; deserializer as is)
-&nbsp;     * 
-&nbsp;     * @return Deserializer to use for deserializing values of specified property;
-&nbsp;     *   may be this instance or a new instance.
-&nbsp;     * 
-&nbsp;     * @throws JsonMappingException
+&nbsp;     * Method called after deserializer instance has been constructed
+&nbsp;     * (and registered as necessary by provider objects),
+&nbsp;     * but before it has returned it to the caller.
+&nbsp;     * Called object can then resolve its dependencies to other types,
+&nbsp;     * including self-references (direct or indirect).
+&nbsp;     *
+&nbsp;     * @param ctxt Context to use for accessing configuration, resolving
+&nbsp;     *    secondary deserializers
 &nbsp;     */
-&nbsp;    public JsonDeserializer&lt;?&gt; createContextual(DeserializationContext ctxt,
-&nbsp;            BeanProperty property)
+&nbsp;    public abstract void resolve(DeserializationContext ctxt)
 &nbsp;        throws JsonMappingException;
 &nbsp;}
 </code>
@@ -105,7 +107,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

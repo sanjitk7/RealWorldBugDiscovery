@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > JacksonStdImpl</title>
+  <title>Coverage Report > JsonValueInstantiator</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.annotation</a>
 </div>
 
-<h1>Coverage Summary for Class: JacksonStdImpl (com.fasterxml.jackson.databind.annotation)</h1>
+<h1>Coverage Summary for Class: JsonValueInstantiator (com.fasterxml.jackson.databind.annotation)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">JacksonStdImpl</td>
+  <td class="name">JsonValueInstantiator</td>
 </tr>
 
 </table>
@@ -46,21 +46,21 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;import java.lang.annotation.RetentionPolicy;
 &nbsp;import java.lang.annotation.Target;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.annotation.JacksonAnnotation;
+&nbsp;import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 &nbsp;
 &nbsp;/**
-&nbsp; * Marker interface used to indicate implementation classes
-&nbsp; * (serializers, deserializers etc) that are standard ones Jackson
-&nbsp; * uses; not custom ones that application has added. It can be
-&nbsp; * added in cases where certain optimizations can be made if
-&nbsp; * default instances are uses; for example when handling conversions
-&nbsp; * of &quot;natural&quot; JSON types like Strings, booleans and numbers.
+&nbsp; * Annotation that can be used to indicate a {@link ValueInstantiator} to use
+&nbsp; * for creating instances of specified type.
 &nbsp; */
-&nbsp;@Target({ElementType.TYPE})
+&nbsp;@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 &nbsp;@Retention(RetentionPolicy.RUNTIME)
-&nbsp;@JacksonAnnotation
-&nbsp;public @interface JacksonStdImpl {
-&nbsp;
+&nbsp;@com.fasterxml.jackson.annotation.JacksonAnnotation
+&nbsp;public @interface JsonValueInstantiator
+&nbsp;{
+&nbsp;    /**
+&nbsp;     * @return  {@link ValueInstantiator} to use for annotated type
+&nbsp;     */
+&nbsp;    public Class&lt;? extends ValueInstantiator&gt; value();
 &nbsp;}
 </code>
 </pre>
@@ -85,7 +85,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

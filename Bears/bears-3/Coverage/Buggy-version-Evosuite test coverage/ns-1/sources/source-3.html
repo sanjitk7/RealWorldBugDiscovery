@@ -44,26 +44,26 @@ Current scope:     <a href="../../index.html">all classes</a>
   <td class="name">BeanPropertyMap</td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    100%
   </span>
   <span class="absValue">
-    (0/1)
+    (1/1)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    100%
   </span>
   <span class="absValue">
-    (0/27)
+    (27/27)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    0%
+    67.3%
   </span>
   <span class="absValue">
-    (0/221)
+    (152/226)
   </span>
 </td>
 </tr>
@@ -133,24 +133,24 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    private SettableBeanProperty[] _propsInOrder;
 &nbsp;
 &nbsp;    public BeanPropertyMap(boolean caseInsensitive, Collection&lt;SettableBeanProperty&gt; props)
-<b class="nc">&nbsp;    {</b>
-<b class="nc">&nbsp;        _caseInsensitive = caseInsensitive;</b>
-<b class="nc">&nbsp;        _propsInOrder = props.toArray(new SettableBeanProperty[props.size()]);</b>
-<b class="nc">&nbsp;        init(props);</b>
-&nbsp;    }
+<b class="fc">&nbsp;    {</b>
+<b class="fc">&nbsp;        _caseInsensitive = caseInsensitive;</b>
+<b class="fc">&nbsp;        _propsInOrder = props.toArray(new SettableBeanProperty[props.size()]);</b>
+<b class="fc">&nbsp;        init(props);</b>
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.8
 &nbsp;     */
 &nbsp;    protected BeanPropertyMap(BeanPropertyMap base, boolean caseInsensitive)
-<b class="nc">&nbsp;    {</b>
-<b class="nc">&nbsp;        _caseInsensitive = caseInsensitive;</b>
+<b class="fc">&nbsp;    {</b>
+<b class="fc">&nbsp;        _caseInsensitive = caseInsensitive;</b>
 &nbsp;
 &nbsp;        // 16-May-2016, tatu: Alas, not enough to just change flag, need to re-init
 &nbsp;        //    as well.
-<b class="nc">&nbsp;        _propsInOrder = Arrays.copyOf(base._propsInOrder, base._propsInOrder.length);</b>
-<b class="nc">&nbsp;        init(Arrays.asList(_propsInOrder));</b>
-&nbsp;    }
+<b class="fc">&nbsp;        _propsInOrder = Arrays.copyOf(base._propsInOrder, base._propsInOrder.length);</b>
+<b class="fc">&nbsp;        init(Arrays.asList(_propsInOrder));</b>
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Mutant factory method that constructs a new instance if desired case-insensitivity
@@ -160,65 +160,65 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.8
 &nbsp;     */
 &nbsp;    public BeanPropertyMap withCaseInsensitivity(boolean state) {
-<b class="nc">&nbsp;        if (_caseInsensitive == state) {</b>
-<b class="nc">&nbsp;            return this;</b>
+<b class="fc">&nbsp;        if (_caseInsensitive == state) {</b>
+<b class="fc">&nbsp;            return this;</b>
 &nbsp;        }
-<b class="nc">&nbsp;        return new BeanPropertyMap(this, state);</b>
+<b class="fc">&nbsp;        return new BeanPropertyMap(this, state);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    protected void init(Collection&lt;SettableBeanProperty&gt; props)
 &nbsp;    {
-<b class="nc">&nbsp;        _size = props.size();</b>
+<b class="fc">&nbsp;        _size = props.size();</b>
 &nbsp;        
 &nbsp;        // First: calculate size of primary hash area
-<b class="nc">&nbsp;        final int hashSize = findSize(_size);</b>
-<b class="nc">&nbsp;        _hashMask = hashSize-1;</b>
+<b class="fc">&nbsp;        final int hashSize = findSize(_size);</b>
+<b class="fc">&nbsp;        _hashMask = hashSize-1;</b>
 &nbsp;
 &nbsp;        // and allocate enough to contain primary/secondary, expand for spillovers as need be
-<b class="nc">&nbsp;        int alloc = (hashSize + (hashSize&gt;&gt;1)) * 2;</b>
-<b class="nc">&nbsp;        Object[] hashed = new Object[alloc];</b>
-<b class="nc">&nbsp;        int spillCount = 0;</b>
+<b class="fc">&nbsp;        int alloc = (hashSize + (hashSize&gt;&gt;1)) * 2;</b>
+<b class="fc">&nbsp;        Object[] hashed = new Object[alloc];</b>
+<b class="fc">&nbsp;        int spillCount = 0;</b>
 &nbsp;
-<b class="nc">&nbsp;        for (SettableBeanProperty prop : props) {</b>
+<b class="fc">&nbsp;        for (SettableBeanProperty prop : props) {</b>
 &nbsp;            // Due to removal, renaming, theoretically possible we&#39;ll have &quot;holes&quot; so:
-<b class="nc">&nbsp;            if (prop == null) {</b>
-<b class="nc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;            if (prop == null) {</b>
+<b class="fc">&nbsp;                continue;</b>
 &nbsp;            }
 &nbsp;            
-<b class="nc">&nbsp;            String key = getPropertyName(prop);</b>
-<b class="nc">&nbsp;            int slot = _hashCode(key);</b>
-<b class="nc">&nbsp;            int ix = (slot&lt;&lt;1);</b>
+<b class="fc">&nbsp;            String key = getPropertyName(prop);</b>
+<b class="fc">&nbsp;            int slot = _hashCode(key);</b>
+<b class="fc">&nbsp;            int ix = (slot&lt;&lt;1);</b>
 &nbsp;
 &nbsp;            // primary slot not free?
-<b class="nc">&nbsp;            if (hashed[ix] != null) {</b>
+<b class="fc">&nbsp;            if (hashed[ix] != null) {</b>
 &nbsp;                // secondary?
-<b class="nc">&nbsp;                ix = (hashSize + (slot &gt;&gt; 1)) &lt;&lt; 1;</b>
-<b class="nc">&nbsp;                if (hashed[ix] != null) {</b>
+<b class="fc">&nbsp;                ix = (hashSize + (slot &gt;&gt; 1)) &lt;&lt; 1;</b>
+<b class="fc">&nbsp;                if (hashed[ix] != null) {</b>
 &nbsp;                    // ok, spill over.
-<b class="nc">&nbsp;                    ix = ((hashSize + (hashSize &gt;&gt; 1) ) &lt;&lt; 1) + spillCount;</b>
-<b class="nc">&nbsp;                    spillCount += 2;</b>
-<b class="nc">&nbsp;                    if (ix &gt;= hashed.length) {</b>
-<b class="nc">&nbsp;                        hashed = Arrays.copyOf(hashed, hashed.length + 4);</b>
+<b class="fc">&nbsp;                    ix = ((hashSize + (hashSize &gt;&gt; 1) ) &lt;&lt; 1) + spillCount;</b>
+<b class="fc">&nbsp;                    spillCount += 2;</b>
+<b class="fc">&nbsp;                    if (ix &gt;= hashed.length) {</b>
+<b class="fc">&nbsp;                        hashed = Arrays.copyOf(hashed, hashed.length + 4);</b>
 &nbsp;                    }
 &nbsp;                }
 &nbsp;            }
 &nbsp;//System.err.println(&quot; add &#39;&quot;+key+&quot; at #&quot;+(ix&gt;&gt;1)+&quot;/&quot;+size+&quot; (hashed at &quot;+slot+&quot;)&quot;);             
-<b class="nc">&nbsp;            hashed[ix] = key;</b>
-<b class="nc">&nbsp;            hashed[ix+1] = prop;</b>
-<b class="nc">&nbsp;        }</b>
+<b class="fc">&nbsp;            hashed[ix] = key;</b>
+<b class="fc">&nbsp;            hashed[ix+1] = prop;</b>
+<b class="fc">&nbsp;        }</b>
 &nbsp;/*
 &nbsp;for (int i = 0; i &lt; hashed.length; i += 2) {
 &nbsp;System.err.printf(&quot;#%02d: %s\n&quot;, i&gt;&gt;1, (hashed[i] == null) ? &quot;-&quot; : hashed[i]);
 &nbsp;}
 &nbsp;*/
-<b class="nc">&nbsp;        _hashArea = hashed;</b>
-<b class="nc">&nbsp;        _spillCount = spillCount;</b>
-&nbsp;    }
+<b class="fc">&nbsp;        _hashArea = hashed;</b>
+<b class="fc">&nbsp;        _spillCount = spillCount;</b>
+<b class="fc">&nbsp;    }</b>
 &nbsp;    
 &nbsp;    private final static int findSize(int size)
 &nbsp;    {
-<b class="nc">&nbsp;        if (size &lt;= 5) {</b>
-<b class="nc">&nbsp;            return 8;</b>
+<b class="fc">&nbsp;        if (size &lt;= 5) {</b>
+<b class="fc">&nbsp;            return 8;</b>
 &nbsp;        }
 <b class="nc">&nbsp;        if (size &lt;= 12) {</b>
 <b class="nc">&nbsp;            return 16;</b>
@@ -235,7 +235,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.6
 &nbsp;     */
 &nbsp;    public static BeanPropertyMap construct(Collection&lt;SettableBeanProperty&gt; props, boolean caseInsensitive) {
-<b class="nc">&nbsp;        return new BeanPropertyMap(caseInsensitive, props);</b>
+<b class="fc">&nbsp;        return new BeanPropertyMap(caseInsensitive, props);</b>
 &nbsp;    }
 &nbsp;    
 &nbsp;    /**
@@ -248,7 +248,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public BeanPropertyMap withProperty(SettableBeanProperty newProp)
 &nbsp;    {
 &nbsp;        // First: may be able to just replace?
-<b class="nc">&nbsp;        String key = getPropertyName(newProp);</b>
+<b class="fc">&nbsp;        String key = getPropertyName(newProp);</b>
 &nbsp;
 <b class="nc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
 <b class="nc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
@@ -301,14 +301,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public BeanPropertyMap assignIndexes()
 &nbsp;    {
 &nbsp;        // order is arbitrary, but stable:
-<b class="nc">&nbsp;        int index = 0;</b>
-<b class="nc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
-<b class="nc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
-<b class="nc">&nbsp;            if (prop != null) {</b>
-<b class="nc">&nbsp;                prop.assignIndex(index++);</b>
+<b class="fc">&nbsp;        int index = 0;</b>
+<b class="fc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
+<b class="fc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
+<b class="fc">&nbsp;            if (prop != null) {</b>
+<b class="fc">&nbsp;                prop.assignIndex(index++);</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        return this;</b>
+<b class="fc">&nbsp;        return this;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -317,25 +317,25 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public BeanPropertyMap renameAll(NameTransformer transformer)
 &nbsp;    {
-<b class="nc">&nbsp;        if (transformer == null || (transformer == NameTransformer.NOP)) {</b>
-<b class="nc">&nbsp;            return this;</b>
+<b class="fc">&nbsp;        if (transformer == null || (transformer == NameTransformer.NOP)) {</b>
+<b class="fc">&nbsp;            return this;</b>
 &nbsp;        }
 &nbsp;        // Try to retain insertion ordering as well
-<b class="nc">&nbsp;        final int len = _propsInOrder.length;</b>
-<b class="nc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; newProps = new ArrayList&lt;SettableBeanProperty&gt;(len);</b>
+<b class="fc">&nbsp;        final int len = _propsInOrder.length;</b>
+<b class="fc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; newProps = new ArrayList&lt;SettableBeanProperty&gt;(len);</b>
 &nbsp;
-<b class="nc">&nbsp;        for (int i = 0; i &lt; len; ++i) {</b>
-<b class="nc">&nbsp;            SettableBeanProperty prop = _propsInOrder[i];</b>
+<b class="fc">&nbsp;        for (int i = 0; i &lt; len; ++i) {</b>
+<b class="fc">&nbsp;            SettableBeanProperty prop = _propsInOrder[i];</b>
 &nbsp;            
 &nbsp;            // What to do with holes? For now, retain
-<b class="nc">&nbsp;            if (prop == null) {</b>
-<b class="nc">&nbsp;                newProps.add(prop);</b>
-<b class="nc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;            if (prop == null) {</b>
+<b class="fc">&nbsp;                newProps.add(prop);</b>
+<b class="fc">&nbsp;                continue;</b>
 &nbsp;            }
 <b class="nc">&nbsp;            newProps.add(_rename(prop, transformer));</b>
 &nbsp;        }
 &nbsp;        // should we try to re-index? Ordering probably changed but caller probably doesn&#39;t want changes...
-<b class="nc">&nbsp;        return new BeanPropertyMap(_caseInsensitive, newProps);</b>
+<b class="fc">&nbsp;        return new BeanPropertyMap(_caseInsensitive, newProps);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -347,13 +347,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public BeanPropertyMap withoutProperties(Collection&lt;String&gt; toExclude)
 &nbsp;    {
-<b class="nc">&nbsp;        if (toExclude.isEmpty()) {</b>
-<b class="nc">&nbsp;            return this;</b>
+<b class="fc">&nbsp;        if (toExclude.isEmpty()) {</b>
+<b class="fc">&nbsp;            return this;</b>
 &nbsp;        }
-<b class="nc">&nbsp;        final int len = _propsInOrder.length;</b>
-<b class="nc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; newProps = new ArrayList&lt;SettableBeanProperty&gt;(len);</b>
+<b class="fc">&nbsp;        final int len = _propsInOrder.length;</b>
+<b class="fc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; newProps = new ArrayList&lt;SettableBeanProperty&gt;(len);</b>
 &nbsp;
-<b class="nc">&nbsp;        for (int i = 0; i &lt; len; ++i) {</b>
+<b class="fc">&nbsp;        for (int i = 0; i &lt; len; ++i) {</b>
 <b class="nc">&nbsp;            SettableBeanProperty prop = _propsInOrder[i];</b>
 &nbsp;            // 01-May-2015, tatu: Not 100% sure if existing `null`s should be retained;
 &nbsp;            //   or, if entries to ignore should be retained as nulls. For now just
@@ -365,7 +365,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            }
 &nbsp;        }
 &nbsp;        // should we try to re-index? Apparently no need
-<b class="nc">&nbsp;        return new BeanPropertyMap(_caseInsensitive, newProps);</b>
+<b class="fc">&nbsp;        return new BeanPropertyMap(_caseInsensitive, newProps);</b>
 &nbsp;    }
 &nbsp;    
 &nbsp;    /**
@@ -375,29 +375,29 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public void replace(SettableBeanProperty newProp)
 &nbsp;    {
-<b class="nc">&nbsp;        String key = getPropertyName(newProp);</b>
-<b class="nc">&nbsp;        int ix = _findIndexInHash(key);</b>
+<b class="fc">&nbsp;        String key = getPropertyName(newProp);</b>
+<b class="fc">&nbsp;        int ix = _findIndexInHash(key);</b>
 &nbsp;        
-<b class="nc">&nbsp;        if (ix &gt;= 0) {</b>
-<b class="nc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[ix];</b>
-<b class="nc">&nbsp;            _hashArea[ix] = newProp;</b>
+<b class="fc">&nbsp;        if (ix &gt;= 0) {</b>
+<b class="fc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[ix];</b>
+<b class="fc">&nbsp;            _hashArea[ix] = newProp;</b>
 &nbsp;            // also, replace in in-order
-<b class="nc">&nbsp;            _propsInOrder[_findFromOrdered(prop)] = newProp;</b>
-&nbsp;            return;
+<b class="fc">&nbsp;            _propsInOrder[_findFromOrdered(prop)] = newProp;</b>
+<b class="fc">&nbsp;            return;</b>
 &nbsp;        }
 &nbsp;        
-<b class="nc">&nbsp;        throw new NoSuchElementException(&quot;No entry &#39;&quot;+key+&quot;&#39; found, can&#39;t replace&quot;);</b>
+<b class="fc">&nbsp;        throw new NoSuchElementException(&quot;No entry &#39;&quot;+key+&quot;&#39; found, can&#39;t replace&quot;);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    private List&lt;SettableBeanProperty&gt; properties() {
-<b class="nc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; p = new ArrayList&lt;SettableBeanProperty&gt;(_size);</b>
-<b class="nc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
-<b class="nc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
-<b class="nc">&nbsp;            if (prop != null) {</b>
-<b class="nc">&nbsp;                p.add(prop);</b>
+<b class="fc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; p = new ArrayList&lt;SettableBeanProperty&gt;(_size);</b>
+<b class="fc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
+<b class="fc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
+<b class="fc">&nbsp;            if (prop != null) {</b>
+<b class="fc">&nbsp;                p.add(prop);</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        return p;</b>
+<b class="fc">&nbsp;        return p;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -405,7 +405,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Override
 &nbsp;    public Iterator&lt;SettableBeanProperty&gt; iterator() {
-<b class="nc">&nbsp;        return properties().iterator();</b>
+<b class="fc">&nbsp;        return properties().iterator();</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -417,13 +417,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.1
 &nbsp;     */
 &nbsp;    public SettableBeanProperty[] getPropertiesInInsertionOrder() {
-<b class="nc">&nbsp;        return _propsInOrder;</b>
+<b class="fc">&nbsp;        return _propsInOrder;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    // Confining this case insensitivity to this function (and the find method) in case we want to
 &nbsp;    // apply a particular locale to the lower case function.  For now, using the default.
 &nbsp;    protected final String getPropertyName(SettableBeanProperty prop) {
-<b class="nc">&nbsp;        return _caseInsensitive ? prop.getName().toLowerCase() : prop.getName();</b>
+<b class="fc">&nbsp;        return _caseInsensitive ? prop.getName().toLowerCase() : prop.getName();</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -433,41 +433,41 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    {
 &nbsp;        // note: will scan the whole area, including primary, secondary and
 &nbsp;        // possible spill-area
-<b class="nc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
-<b class="nc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
-<b class="nc">&nbsp;            if ((prop != null) &amp;&amp; (index == prop.getPropertyIndex())) {</b>
+<b class="fc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
+<b class="fc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
+<b class="fc">&nbsp;            if ((prop != null) &amp;&amp; (index == prop.getPropertyIndex())) {</b>
 <b class="nc">&nbsp;                return prop;</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        return null;</b>
+<b class="fc">&nbsp;        return null;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    public SettableBeanProperty find(String key)
 &nbsp;    {
-<b class="nc">&nbsp;        if (key == null) {</b>
-<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Can not pass null property name&quot;);</b>
+<b class="fc">&nbsp;        if (key == null) {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Can not pass null property name&quot;);</b>
 &nbsp;        }
-<b class="nc">&nbsp;        if (_caseInsensitive) {</b>
-<b class="nc">&nbsp;            key = key.toLowerCase();</b>
+<b class="fc">&nbsp;        if (_caseInsensitive) {</b>
+<b class="fc">&nbsp;            key = key.toLowerCase();</b>
 &nbsp;        }
 &nbsp;            
 &nbsp;        // inlined `_hashCode(key)`
-<b class="nc">&nbsp;        int slot = key.hashCode() &amp; _hashMask;</b>
+<b class="fc">&nbsp;        int slot = key.hashCode() &amp; _hashMask;</b>
 &nbsp;//        int h = key.hashCode();
 &nbsp;//        int slot = (h + (h &gt;&gt; 13)) &amp; _hashMask;
 &nbsp;
-<b class="nc">&nbsp;        int ix = (slot&lt;&lt;1);</b>
-<b class="nc">&nbsp;        Object match = _hashArea[ix];</b>
-<b class="nc">&nbsp;        if ((match == key) || key.equals(match)) {</b>
+<b class="fc">&nbsp;        int ix = (slot&lt;&lt;1);</b>
+<b class="fc">&nbsp;        Object match = _hashArea[ix];</b>
+<b class="fc">&nbsp;        if ((match == key) || key.equals(match)) {</b>
 <b class="nc">&nbsp;            return (SettableBeanProperty) _hashArea[ix+1];</b>
 &nbsp;        }
-<b class="nc">&nbsp;        return _find2(key, slot, match);</b>
+<b class="fc">&nbsp;        return _find2(key, slot, match);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    private final SettableBeanProperty _find2(String key, int slot, Object match)
 &nbsp;    {
-<b class="nc">&nbsp;        if (match == null) {</b>
-<b class="nc">&nbsp;            return null;</b>
+<b class="fc">&nbsp;        if (match == null) {</b>
+<b class="fc">&nbsp;            return null;</b>
 &nbsp;        }
 &nbsp;        // no? secondary?
 <b class="nc">&nbsp;        int hashSize = _hashMask+1;</b>
@@ -494,21 +494,21 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
-<b class="nc">&nbsp;    public int size() { return _size; }</b>
+<b class="fc">&nbsp;    public int size() { return _size; }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Specialized method for removing specified existing entry.
 &nbsp;     * NOTE: entry MUST exist, otherwise an exception is thrown.
 &nbsp;     */
 &nbsp;    public void remove(SettableBeanProperty propToRm) {
-<b class="nc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; props = new ArrayList&lt;SettableBeanProperty&gt;(_size);</b>
-<b class="nc">&nbsp;        String key = getPropertyName(propToRm);</b>
-<b class="nc">&nbsp;        boolean found = false;</b>
+<b class="fc">&nbsp;        ArrayList&lt;SettableBeanProperty&gt; props = new ArrayList&lt;SettableBeanProperty&gt;(_size);</b>
+<b class="fc">&nbsp;        String key = getPropertyName(propToRm);</b>
+<b class="fc">&nbsp;        boolean found = false;</b>
 &nbsp;
-<b class="nc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
-<b class="nc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
-<b class="nc">&nbsp;            if (prop == null) {</b>
-<b class="nc">&nbsp;                continue;</b>
+<b class="fc">&nbsp;        for (int i = 1, end = _hashArea.length; i &lt; end; i += 2) {</b>
+<b class="fc">&nbsp;            SettableBeanProperty prop = (SettableBeanProperty) _hashArea[i];</b>
+<b class="fc">&nbsp;            if (prop == null) {</b>
+<b class="fc">&nbsp;                continue;</b>
 &nbsp;            }
 <b class="nc">&nbsp;            if (!found) {</b>
 <b class="nc">&nbsp;                found = key.equals(prop.getName());</b>
@@ -520,11 +520,11 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            }
 <b class="nc">&nbsp;            props.add(prop);</b>
 &nbsp;        }
-<b class="nc">&nbsp;        if (!found) {</b>
-<b class="nc">&nbsp;            throw new NoSuchElementException(&quot;No entry &#39;&quot;+propToRm.getName()+&quot;&#39; found, can&#39;t remove&quot;);</b>
+<b class="fc">&nbsp;        if (!found) {</b>
+<b class="fc">&nbsp;            throw new NoSuchElementException(&quot;No entry &#39;&quot;+propToRm.getName()+&quot;&#39; found, can&#39;t remove&quot;);</b>
 &nbsp;        }
 <b class="nc">&nbsp;        init(props);</b>
-&nbsp;    }
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Convenience method that tries to find property with given name, and
@@ -538,9 +538,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public boolean findDeserializeAndSet(JsonParser p, DeserializationContext ctxt,
 &nbsp;            Object bean, String key) throws IOException
 &nbsp;    {
-<b class="nc">&nbsp;        final SettableBeanProperty prop = find(key);</b>
-<b class="nc">&nbsp;        if (prop == null) {</b>
-<b class="nc">&nbsp;            return false;</b>
+<b class="fc">&nbsp;        final SettableBeanProperty prop = find(key);</b>
+<b class="fc">&nbsp;        if (prop == null) {</b>
+<b class="fc">&nbsp;            return false;</b>
 &nbsp;        }
 &nbsp;        try {
 <b class="nc">&nbsp;            prop.deserializeAndSet(p, ctxt, bean);</b>
@@ -553,12 +553,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    public String toString()
 &nbsp;    {
-<b class="nc">&nbsp;        StringBuilder sb = new StringBuilder();</b>
-<b class="nc">&nbsp;        sb.append(&quot;Properties=[&quot;);</b>
-<b class="nc">&nbsp;        int count = 0;</b>
+<b class="fc">&nbsp;        StringBuilder sb = new StringBuilder();</b>
+<b class="fc">&nbsp;        sb.append(&quot;Properties=[&quot;);</b>
+<b class="fc">&nbsp;        int count = 0;</b>
 &nbsp;
-<b class="nc">&nbsp;        Iterator&lt;SettableBeanProperty&gt; it = iterator();</b>
-<b class="nc">&nbsp;        while (it.hasNext()) {</b>
+<b class="fc">&nbsp;        Iterator&lt;SettableBeanProperty&gt; it = iterator();</b>
+<b class="fc">&nbsp;        while (it.hasNext()) {</b>
 <b class="nc">&nbsp;            SettableBeanProperty prop = it.next();</b>
 <b class="nc">&nbsp;            if (count++ &gt; 0) {</b>
 <b class="nc">&nbsp;                sb.append(&quot;, &quot;);</b>
@@ -568,8 +568,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;            sb.append(prop.getType());</b>
 <b class="nc">&nbsp;            sb.append(&#39;)&#39;);</b>
 <b class="nc">&nbsp;        }</b>
-<b class="nc">&nbsp;        sb.append(&#39;]&#39;);</b>
-<b class="nc">&nbsp;        return sb.toString();</b>
+<b class="fc">&nbsp;        sb.append(&#39;]&#39;);</b>
+<b class="fc">&nbsp;        return sb.toString();</b>
 &nbsp;    }
 &nbsp;    
 &nbsp;    /*
@@ -580,47 +580,47 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;    protected SettableBeanProperty _rename(SettableBeanProperty prop, NameTransformer xf)
 &nbsp;    {
-<b class="nc">&nbsp;        if (prop == null) {</b>
-<b class="nc">&nbsp;            return prop;</b>
+<b class="fc">&nbsp;        if (prop == null) {</b>
+<b class="fc">&nbsp;            return prop;</b>
 &nbsp;        }
-<b class="nc">&nbsp;        String newName = xf.transform(prop.getName());</b>
-<b class="nc">&nbsp;        prop = prop.withSimpleName(newName);</b>
-<b class="nc">&nbsp;        JsonDeserializer&lt;?&gt; deser = prop.getValueDeserializer();</b>
-<b class="nc">&nbsp;        if (deser != null) {</b>
+<b class="fc">&nbsp;        String newName = xf.transform(prop.getName());</b>
+<b class="fc">&nbsp;        prop = prop.withSimpleName(newName);</b>
+<b class="fc">&nbsp;        JsonDeserializer&lt;?&gt; deser = prop.getValueDeserializer();</b>
+<b class="fc">&nbsp;        if (deser != null) {</b>
 &nbsp;            @SuppressWarnings(&quot;unchecked&quot;)
-<b class="nc">&nbsp;            JsonDeserializer&lt;Object&gt; newDeser = (JsonDeserializer&lt;Object&gt;)</b>
-<b class="nc">&nbsp;                deser.unwrappingDeserializer(xf);</b>
-<b class="nc">&nbsp;            if (newDeser != deser) {</b>
+<b class="fc">&nbsp;            JsonDeserializer&lt;Object&gt; newDeser = (JsonDeserializer&lt;Object&gt;)</b>
+<b class="fc">&nbsp;                deser.unwrappingDeserializer(xf);</b>
+<b class="fc">&nbsp;            if (newDeser != deser) {</b>
 <b class="nc">&nbsp;                prop = prop.withValueDeserializer(newDeser);</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        return prop;</b>
+<b class="fc">&nbsp;        return prop;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    protected void wrapAndThrow(Throwable t, Object bean, String fieldName, DeserializationContext ctxt)
 &nbsp;        throws IOException
 &nbsp;    {
 &nbsp;        // inlined &#39;throwOrReturnThrowable&#39;
-<b class="nc">&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {</b>
-<b class="nc">&nbsp;            t = t.getCause();</b>
+<b class="fc">&nbsp;        while (t instanceof InvocationTargetException &amp;&amp; t.getCause() != null) {</b>
+<b class="fc">&nbsp;            t = t.getCause();</b>
 &nbsp;        }
 &nbsp;        // Errors to be passed as is
-<b class="nc">&nbsp;        if (t instanceof Error) {</b>
-<b class="nc">&nbsp;            throw (Error) t;</b>
+<b class="fc">&nbsp;        if (t instanceof Error) {</b>
+<b class="fc">&nbsp;            throw (Error) t;</b>
 &nbsp;        }
 &nbsp;        // StackOverflowErrors are tricky ones; need to be careful...
-<b class="nc">&nbsp;        boolean wrap = (ctxt == null) || ctxt.isEnabled(DeserializationFeature.WRAP_EXCEPTIONS);</b>
+<b class="fc">&nbsp;        boolean wrap = (ctxt == null) || ctxt.isEnabled(DeserializationFeature.WRAP_EXCEPTIONS);</b>
 &nbsp;        // Ditto for IOExceptions; except we may want to wrap JSON exceptions
-<b class="nc">&nbsp;        if (t instanceof IOException) {</b>
-<b class="nc">&nbsp;            if (!wrap || !(t instanceof JsonProcessingException)) {</b>
-<b class="nc">&nbsp;                throw (IOException) t;</b>
+<b class="fc">&nbsp;        if (t instanceof IOException) {</b>
+<b class="fc">&nbsp;            if (!wrap || !(t instanceof JsonProcessingException)) {</b>
+<b class="fc">&nbsp;                throw (IOException) t;</b>
 &nbsp;            }
-<b class="nc">&nbsp;        } else if (!wrap) { // allow disabling wrapping for unchecked exceptions</b>
-<b class="nc">&nbsp;            if (t instanceof RuntimeException) {</b>
-<b class="nc">&nbsp;                throw (RuntimeException) t;</b>
+<b class="fc">&nbsp;        } else if (!wrap) { // allow disabling wrapping for unchecked exceptions</b>
+<b class="fc">&nbsp;            if (t instanceof RuntimeException) {</b>
+<b class="fc">&nbsp;                throw (RuntimeException) t;</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        throw JsonMappingException.wrapWithPath(t, bean, fieldName);</b>
+<b class="fc">&nbsp;        throw JsonMappingException.wrapWithPath(t, bean, fieldName);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -633,33 +633,33 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    private final int _findIndexInHash(String key)
 &nbsp;    {
-<b class="nc">&nbsp;        final int slot = _hashCode(key);</b>
-<b class="nc">&nbsp;        int ix = (slot&lt;&lt;1);</b>
+<b class="fc">&nbsp;        final int slot = _hashCode(key);</b>
+<b class="fc">&nbsp;        int ix = (slot&lt;&lt;1);</b>
 &nbsp;        
 &nbsp;        // primary match?
-<b class="nc">&nbsp;        if (key.equals(_hashArea[ix])) {</b>
-<b class="nc">&nbsp;            return ix+1;</b>
+<b class="fc">&nbsp;        if (key.equals(_hashArea[ix])) {</b>
+<b class="fc">&nbsp;            return ix+1;</b>
 &nbsp;        }
 &nbsp;        // no? secondary?
-<b class="nc">&nbsp;        int hashSize = _hashMask+1;</b>
-<b class="nc">&nbsp;        ix = hashSize + (slot&gt;&gt;1) &lt;&lt; 1;</b>
-<b class="nc">&nbsp;        if (key.equals(_hashArea[ix])) {</b>
+<b class="fc">&nbsp;        int hashSize = _hashMask+1;</b>
+<b class="fc">&nbsp;        ix = hashSize + (slot&gt;&gt;1) &lt;&lt; 1;</b>
+<b class="fc">&nbsp;        if (key.equals(_hashArea[ix])) {</b>
 <b class="nc">&nbsp;            return ix+1;</b>
 &nbsp;        }
 &nbsp;        // perhaps spill then
-<b class="nc">&nbsp;        int i = (hashSize + (hashSize&gt;&gt;1)) &lt;&lt; 1;</b>
-<b class="nc">&nbsp;        for (int end = i + _spillCount; i &lt; end; i += 2) {</b>
+<b class="fc">&nbsp;        int i = (hashSize + (hashSize&gt;&gt;1)) &lt;&lt; 1;</b>
+<b class="fc">&nbsp;        for (int end = i + _spillCount; i &lt; end; i += 2) {</b>
 <b class="nc">&nbsp;            if (key.equals(_hashArea[i])) {</b>
 <b class="nc">&nbsp;                return i+1;</b>
 &nbsp;            }
 &nbsp;        }
-<b class="nc">&nbsp;        return -1;</b>
+<b class="fc">&nbsp;        return -1;</b>
 &nbsp;    }
 &nbsp;    
 &nbsp;    private final int _findFromOrdered(SettableBeanProperty prop) {
-<b class="nc">&nbsp;        for (int i = 0, end = _propsInOrder.length; i &lt; end; ++i) {</b>
-<b class="nc">&nbsp;            if (_propsInOrder[i] == prop) {</b>
-<b class="nc">&nbsp;                return i;</b>
+<b class="fc">&nbsp;        for (int i = 0, end = _propsInOrder.length; i &lt; end; ++i) {</b>
+<b class="fc">&nbsp;            if (_propsInOrder[i] == prop) {</b>
+<b class="fc">&nbsp;                return i;</b>
 &nbsp;            }
 &nbsp;        }
 <b class="nc">&nbsp;        throw new IllegalStateException(&quot;Illegal state: property &#39;&quot;+prop.getName()+&quot;&#39; missing from _propsInOrder&quot;);</b>
@@ -676,7 +676,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        int h = key.hashCode();
 &nbsp;        return (h + (h &gt;&gt; 13)) &amp; _hashMask;
 &nbsp;        */
-<b class="nc">&nbsp;        return key.hashCode() &amp; _hashMask;</b>
+<b class="fc">&nbsp;        return key.hashCode() &amp; _hashMask;</b>
 &nbsp;    }
 &nbsp;}
 </code>
@@ -702,7 +702,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 18:41</div>
+    <div style="float:right;">generated on 2024-04-09 22:10</div>
 </div>
 </body>
 </html>

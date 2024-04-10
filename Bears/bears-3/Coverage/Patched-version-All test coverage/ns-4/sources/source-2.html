@@ -60,10 +60,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    90.1%
+    89.5%
   </span>
   <span class="absValue">
-    (710/788)
+    (705/788)
   </span>
 </td>
 </tr>
@@ -546,9 +546,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;                }
 <b class="fc">&nbsp;                NameTransformer unwrapper = intr.findUnwrappingNameTransformer(param);</b>
 <b class="fc">&nbsp;                if (unwrapper != null) {</b>
-<b class="fc">&nbsp;                    properties[i] = constructCreatorProperty(ctxt, beanDesc, UNWRAPPED_CREATOR_PARAM_NAME, i, param, null);</b>
-<b class="fc">&nbsp;                    ++explicitNameCount;</b>
-<b class="fc">&nbsp;                    continue;</b>
+<b class="nc">&nbsp;                    properties[i] = constructCreatorProperty(ctxt, beanDesc, UNWRAPPED_CREATOR_PARAM_NAME, i, param, null);</b>
+<b class="nc">&nbsp;                    ++explicitNameCount;</b>
+<b class="nc">&nbsp;                    continue;</b>
 &nbsp;                }
 &nbsp;                // One more thing: implicit names are ok iff ctor has creator annotation
 <b class="fc">&nbsp;                if (isCreator &amp;&amp; (name != null &amp;&amp; !name.isEmpty())) {</b>
@@ -582,8 +582,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;                    // Let&#39;s consider non-static inner class as a special case...
 <b class="fc">&nbsp;                    int ix = nonAnnotatedParam.getIndex();</b>
 <b class="fc">&nbsp;                    if ((ix == 0) &amp;&amp; ClassUtil.isNonStaticInnerClass(ctor.getDeclaringClass())) {</b>
-<b class="fc">&nbsp;                        throw new IllegalArgumentException(&quot;Non-static inner classes like &quot;</b>
-<b class="fc">&nbsp;                                +ctor.getDeclaringClass().getName()+&quot; can not use @JsonCreator for constructors&quot;);</b>
+<b class="nc">&nbsp;                        throw new IllegalArgumentException(&quot;Non-static inner classes like &quot;</b>
+<b class="nc">&nbsp;                                +ctor.getDeclaringClass().getName()+&quot; can not use @JsonCreator for constructors&quot;);</b>
 &nbsp;                    }
 <b class="fc">&nbsp;                    throw new IllegalArgumentException(&quot;Argument #&quot;+ix</b>
 &nbsp;                            +&quot; of constructor &quot;+ctor+&quot; has no property name annotation; must have name when multiple-parameter constructor annotated as Creator&quot;);
@@ -1477,12 +1477,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        // the only non-standard thing is this:
 <b class="fc">&nbsp;        if (deser == null) {</b>
 <b class="fc">&nbsp;            if (type.isEnumType()) {</b>
-<b class="fc">&nbsp;                deser = _createEnumKeyDeserializer(ctxt, type);</b>
-&nbsp;            } else {
-<b class="fc">&nbsp;                deser = StdKeyDeserializers.findStringBasedKeyDeserializer(config, type);</b>
+<b class="fc">&nbsp;                return _createEnumKeyDeserializer(ctxt, type);</b>
 &nbsp;            }
+<b class="fc">&nbsp;            deser = StdKeyDeserializers.findStringBasedKeyDeserializer(config, type);</b>
 &nbsp;        }
-&nbsp;        // and then post-processing
+&nbsp;        
+&nbsp;        // and then new with 2.2: ability to post-process it too (Issue#120)
 <b class="fc">&nbsp;        if (deser != null) {</b>
 <b class="fc">&nbsp;            if (_factoryConfig.hasDeserializerModifiers()) {</b>
 <b class="fc">&nbsp;                for (BeanDeserializerModifier mod : _factoryConfig.deserializerModifiers()) {</b>
@@ -1541,7 +1541,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;                        +enumClass.getName()+&quot;)&quot;);</b>
 &nbsp;            }
 <b class="fc">&nbsp;        }</b>
-&nbsp;        // Also, need to consider @JsonValue, if one found
+&nbsp;        // [JACKSON-749] Also, need to consider @JsonValue, if one found
 <b class="fc">&nbsp;        return StdKeyDeserializers.constructEnumKeyDeserializer(enumRes);</b>
 &nbsp;    }
 &nbsp;
@@ -2052,7 +2052,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

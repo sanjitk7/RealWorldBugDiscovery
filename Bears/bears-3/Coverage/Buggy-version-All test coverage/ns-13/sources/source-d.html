@@ -25,12 +25,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 <h1>Coverage Summary for Class: TypeFactory (com.fasterxml.jackson.databind.type)</h1>
 
 <table class="coverageStats">
+
 <tr>
   <th class="name">Class</th>
-<th class="coverageStat 
-">
-  Class, %
-</th>
 <th class="coverageStat 
 ">
   Method, %
@@ -44,30 +41,49 @@ Current scope:     <a href="../../index.html">all classes</a>
   <td class="name">TypeFactory</td>
 <td class="coverageStat">
   <span class="percent">
-    100%
+    88.2%
   </span>
   <span class="absValue">
-    (1/1)
+    (60/68)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    85.3%
+    88.8%
   </span>
   <span class="absValue">
-    (58/68)
-  </span>
-</td>
-<td class="coverageStat">
-  <span class="percent">
-    88.3%
-  </span>
-  <span class="absValue">
-    (332/376)
+    (334/376)
   </span>
 </td>
 </tr>
-
+  <tr>
+    <td class="name">TypeFactory$$EnhancerByMockitoWithCGLIB$$e109db5c</td>
+  </tr>
+  <tr>
+    <td class="name">TypeFactory$$EnhancerByMockitoWithCGLIB$$e109db5c$$FastClassByMockitoWithCGLIB$$1f6635f8</td>
+  </tr>
+  <tr>
+    <td class="name">TypeFactory$$FastClassByMockitoWithCGLIB$$b76e5d7b</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    88.2%
+  </span>
+  <span class="absValue">
+    (60/68)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    88.8%
+  </span>
+  <span class="absValue">
+    (334/376)
+  </span>
+</td>
+</tr>
 </table>
 
 <br/>
@@ -266,7 +282,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    }
 &nbsp;
 &nbsp;    public TypeFactory withClassLoader(ClassLoader classLoader) {
-<b class="nc">&nbsp;        return new TypeFactory(_typeCache, _parser, _modifiers, classLoader);</b>
+<b class="fc">&nbsp;        return new TypeFactory(_typeCache, _parser, _modifiers, classLoader);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -728,8 +744,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Deprecated
 &nbsp;    public JavaType constructType(Type type, Class&lt;?&gt; contextClass) {
-<b class="fc">&nbsp;        JavaType contextType = (contextClass == null) ? null : constructType(contextClass);</b>
-<b class="fc">&nbsp;        return constructType(type, contextType);</b>
+<b class="fc">&nbsp;        TypeBindings bindings = (contextClass == null)</b>
+<b class="fc">&nbsp;                ? TypeBindings.emptyBindings() : constructType(contextClass).getBindings();</b>
+&nbsp;        return _fromAny(null, type, bindings);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -737,46 +754,27 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Deprecated
 &nbsp;    public JavaType constructType(Type type, JavaType contextType) {
-&nbsp;        TypeBindings bindings;
-<b class="fc">&nbsp;        if (contextType == null) {</b>
-<b class="fc">&nbsp;            bindings = TypeBindings.emptyBindings();</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            bindings = contextType.getBindings();</b>
-&nbsp;            // 16-Nov-2016, tatu: Unfortunately as per [databind#1456] this can&#39;t
-&nbsp;            //   be made to work for some cases used to work (even if accidentally);
-&nbsp;            //   however, we can try a simple heuristic to increase chances of
-&nbsp;            //   compatibility from 2.6 code
-<b class="fc">&nbsp;            if (type.getClass() != Class.class) {</b>
-&nbsp;                // Ok: so, ideally we would test super-interfaces if necessary;
-&nbsp;                // but let&#39;s assume most if not all cases are for classes.
-<b class="fc">&nbsp;                while (bindings.isEmpty()) {</b>
-<b class="fc">&nbsp;                    contextType = contextType.getSuperClass();</b>
-<b class="fc">&nbsp;                    if (contextType == null) {</b>
-<b class="nc">&nbsp;                        break;</b>
-&nbsp;                    }
-<b class="fc">&nbsp;                    bindings = contextType.getBindings();</b>
-&nbsp;                }
-&nbsp;            }
-&nbsp;        }
-<b class="fc">&nbsp;        return _fromAny(null, type, bindings);</b>
-&nbsp;    }
+<b class="fc">&nbsp;        TypeBindings bindings = (contextType == null)</b>
+<b class="fc">&nbsp;                ? TypeBindings.emptyBindings() : contextType.getBindings();</b>
+&nbsp;        return _fromAny(null, type, bindings);
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /*
 &nbsp;    /**********************************************************
 &nbsp;    /* Direct factory methods
-&nbsp;    /**********************************************************
+<b class="fc">&nbsp;    /**********************************************************</b>
 &nbsp;     */
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Method for constructing an {@link ArrayType}.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * NOTE: type modifiers are NOT called on array type itself; but are called
+<b class="fc">&nbsp;    /**</b>
+<b class="fc">&nbsp;     * Method for constructing an {@link ArrayType}.</b>
+<b class="fc">&nbsp;     *&lt;p&gt;</b>
+<b class="nc">&nbsp;     * NOTE: type modifiers are NOT called on array type itself; but are called</b>
 &nbsp;     * for element type (and other contained types)
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;    public ArrayType constructArrayType(Class&lt;?&gt; elementType) {
-<b class="fc">&nbsp;        return ArrayType.construct(_fromAny(null, elementType, null), null);</b>
+&nbsp;        return ArrayType.construct(_fromAny(null, elementType, null), null);
 &nbsp;    }
-&nbsp;    
+<b class="fc">&nbsp;    </b>
 &nbsp;    /**
 &nbsp;     * Method for constructing an {@link ArrayType}.
 &nbsp;     *&lt;p&gt;
@@ -784,7 +782,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * for contained types.
 &nbsp;     */
 &nbsp;    public ArrayType constructArrayType(JavaType elementType) {
-<b class="nc">&nbsp;        return ArrayType.construct(elementType, null);</b>
+&nbsp;        return ArrayType.construct(elementType, null);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -792,52 +790,52 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     *&lt;p&gt;
 &nbsp;     * NOTE: type modifiers are NOT called on Collection type itself; but are called
 &nbsp;     * for contained types.
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;    public CollectionType constructCollectionType(Class&lt;? extends Collection&gt; collectionClass, Class&lt;?&gt; elementClass) {
-<b class="fc">&nbsp;        return constructCollectionType(collectionClass,</b>
-<b class="fc">&nbsp;                _fromClass(null, elementClass, EMPTY_BINDINGS));</b>
+&nbsp;        return constructCollectionType(collectionClass,
+&nbsp;                _fromClass(null, elementClass, EMPTY_BINDINGS));
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method for constructing a {@link CollectionType}.
 &nbsp;     *&lt;p&gt;
 &nbsp;     * NOTE: type modifiers are NOT called on Collection type itself; but are called
-&nbsp;     * for contained types.
+<b class="fc">&nbsp;     * for contained types.</b>
 &nbsp;     */
 &nbsp;    public CollectionType constructCollectionType(Class&lt;? extends Collection&gt; collectionClass, JavaType elementType) {
 &nbsp;        // 19-Oct-2015, tatu: Allow case of no-type-variables, since it seems likely to be
 &nbsp;        //    a valid use case here
-<b class="fc">&nbsp;        return (CollectionType) _fromClass(null, collectionClass,</b>
-<b class="fc">&nbsp;                TypeBindings.create(collectionClass, elementType));</b>
+&nbsp;        return (CollectionType) _fromClass(null, collectionClass,
+&nbsp;                TypeBindings.create(collectionClass, elementType));
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Method for constructing a {@link CollectionLikeType}.
-&nbsp;     *&lt;p&gt;
+<b class="fc">&nbsp;     * Method for constructing a {@link CollectionLikeType}.</b>
+<b class="fc">&nbsp;     *&lt;p&gt;</b>
 &nbsp;     * NOTE: type modifiers are NOT called on constructed type itself; but are called
 &nbsp;     * for contained types.
 &nbsp;     */
 &nbsp;    public CollectionLikeType constructCollectionLikeType(Class&lt;?&gt; collectionClass, Class&lt;?&gt; elementClass) {
-<b class="nc">&nbsp;        return constructCollectionLikeType(collectionClass,</b>
-<b class="nc">&nbsp;                _fromClass(null, elementClass, EMPTY_BINDINGS));</b>
+&nbsp;        return constructCollectionLikeType(collectionClass,
+&nbsp;                _fromClass(null, elementClass, EMPTY_BINDINGS));
 &nbsp;    }
 &nbsp;    
 &nbsp;    /**
 &nbsp;     * Method for constructing a {@link CollectionLikeType}.
 &nbsp;     *&lt;p&gt;
-&nbsp;     * NOTE: type modifiers are NOT called on constructed type itself; but are called
-&nbsp;     * for contained types.
+<b class="fc">&nbsp;     * NOTE: type modifiers are NOT called on constructed type itself; but are called</b>
+<b class="fc">&nbsp;     * for contained types.</b>
 &nbsp;     */
 &nbsp;    public CollectionLikeType constructCollectionLikeType(Class&lt;?&gt; collectionClass, JavaType elementType) {
-<b class="fc">&nbsp;        JavaType type = _fromClass(null, collectionClass,</b>
-<b class="fc">&nbsp;                TypeBindings.createIfNeeded(collectionClass, elementType));</b>
-<b class="fc">&nbsp;        if (type instanceof CollectionLikeType) {</b>
-<b class="nc">&nbsp;            return (CollectionLikeType) type;</b>
+&nbsp;        JavaType type = _fromClass(null, collectionClass,
+&nbsp;                TypeBindings.createIfNeeded(collectionClass, elementType));
+&nbsp;        if (type instanceof CollectionLikeType) {
+&nbsp;            return (CollectionLikeType) type;
 &nbsp;        }
-<b class="fc">&nbsp;        return CollectionLikeType.upgradeFrom(type, elementType);</b>
+&nbsp;        return CollectionLikeType.upgradeFrom(type, elementType);
 &nbsp;    }
-&nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    /**</b>
 &nbsp;     * Method for constructing a {@link MapType} instance
 &nbsp;     *&lt;p&gt;
 &nbsp;     * NOTE: type modifiers are NOT called on constructed type itself; but are called
@@ -845,14 +843,14 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public MapType constructMapType(Class&lt;? extends Map&gt; mapClass, Class&lt;?&gt; keyClass, Class&lt;?&gt; valueClass) {
 &nbsp;        JavaType kt, vt;
-<b class="fc">&nbsp;        if (mapClass == Properties.class) {</b>
-<b class="nc">&nbsp;            kt = vt = CORE_TYPE_STRING;</b>
-&nbsp;        } else {
+&nbsp;        if (mapClass == Properties.class) {
+&nbsp;            kt = vt = CORE_TYPE_STRING;
+<b class="fc">&nbsp;        } else {</b>
 <b class="fc">&nbsp;            kt = _fromClass(null, keyClass, EMPTY_BINDINGS);</b>
 <b class="fc">&nbsp;            vt = _fromClass(null, valueClass, EMPTY_BINDINGS);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return constructMapType(mapClass, kt, vt);</b>
-&nbsp;    }
+<b class="nc">&nbsp;        }</b>
+&nbsp;        return constructMapType(mapClass, kt, vt);
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method for constructing a {@link MapType} instance
@@ -861,26 +859,26 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * for contained types.
 &nbsp;     */
 &nbsp;    public MapType constructMapType(Class&lt;? extends Map&gt; mapClass, JavaType keyType, JavaType valueType) {
-<b class="fc">&nbsp;        return (MapType) _fromClass(null, mapClass,</b>
-<b class="fc">&nbsp;                TypeBindings.create(mapClass, new JavaType[] {</b>
-&nbsp;                        keyType, valueType
-&nbsp;                }));
+&nbsp;        return (MapType) _fromClass(null, mapClass,
+&nbsp;                TypeBindings.create(mapClass, new JavaType[] {
+<b class="fc">&nbsp;                        keyType, valueType</b>
+<b class="nc">&nbsp;                }));</b>
 &nbsp;    }
-&nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method for constructing a {@link MapLikeType} instance
-&nbsp;     *&lt;p&gt;
+<b class="fc">&nbsp;     *&lt;p&gt;</b>
 &nbsp;     * NOTE: type modifiers are NOT called on constructed type itself; but are called
 &nbsp;     * for contained types.
 &nbsp;     */
 &nbsp;    public MapLikeType constructMapLikeType(Class&lt;?&gt; mapClass, Class&lt;?&gt; keyClass, Class&lt;?&gt; valueClass) {
-<b class="nc">&nbsp;        return constructMapLikeType(mapClass,</b>
-<b class="nc">&nbsp;                _fromClass(null, keyClass, EMPTY_BINDINGS),</b>
-<b class="nc">&nbsp;                _fromClass(null, valueClass, EMPTY_BINDINGS));</b>
+&nbsp;        return constructMapLikeType(mapClass,
+&nbsp;                _fromClass(null, keyClass, EMPTY_BINDINGS),
+&nbsp;                _fromClass(null, valueClass, EMPTY_BINDINGS));
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Method for constructing a {@link MapLikeType} instance
+<b class="fc">&nbsp;    /**</b>
+<b class="fc">&nbsp;     * Method for constructing a {@link MapLikeType} instance</b>
 &nbsp;     *&lt;p&gt;
 &nbsp;     * NOTE: type modifiers are NOT called on constructed type itself; but are called
 &nbsp;     * for contained types.
@@ -888,13 +886,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public MapLikeType constructMapLikeType(Class&lt;?&gt; mapClass, JavaType keyType, JavaType valueType) {
 &nbsp;        // 19-Oct-2015, tatu: Allow case of no-type-variables, since it seems likely to be
 &nbsp;        //    a valid use case here
-<b class="fc">&nbsp;        JavaType type = _fromClass(null, mapClass,</b>
-<b class="fc">&nbsp;                TypeBindings.createIfNeeded(mapClass, new JavaType[] { keyType, valueType }));</b>
-<b class="fc">&nbsp;        if (type instanceof MapLikeType) {</b>
-<b class="nc">&nbsp;            return (MapLikeType) type;</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return MapLikeType.upgradeFrom(type, keyType, valueType);</b>
-&nbsp;    }
+&nbsp;        JavaType type = _fromClass(null, mapClass,
+&nbsp;                TypeBindings.createIfNeeded(mapClass, new JavaType[] { keyType, valueType }));
+&nbsp;        if (type instanceof MapLikeType) {
+&nbsp;            return (MapLikeType) type;
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        return MapLikeType.upgradeFrom(type, keyType, valueType);</b>
+<b class="nc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method for constructing a type instance with specified parameterization.
@@ -902,29 +900,29 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * NOTE: was briefly deprecated for 2.6.
 &nbsp;     */
 &nbsp;    public JavaType constructSimpleType(Class&lt;?&gt; rawType, JavaType[] parameterTypes) {
-<b class="nc">&nbsp;        return _fromClass(null, rawType, TypeBindings.create(rawType, parameterTypes));</b>
+&nbsp;        return _fromClass(null, rawType, TypeBindings.create(rawType, parameterTypes));
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Method for constructing a type instance with specified parameterization.
-&nbsp;     *
-&nbsp;     * @since 2.6
-&nbsp;     *
+<b class="fc">&nbsp;     * Method for constructing a type instance with specified parameterization.</b>
+<b class="fc">&nbsp;     *</b>
+<b class="fc">&nbsp;     * @since 2.6</b>
+<b class="nc">&nbsp;     *</b>
 &nbsp;     * @deprecated Since 2.7
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;    @Deprecated
 &nbsp;    public JavaType constructSimpleType(Class&lt;?&gt; rawType, Class&lt;?&gt; parameterTarget,
 &nbsp;            JavaType[] parameterTypes)
 &nbsp;    {
-<b class="nc">&nbsp;        return constructSimpleType(rawType, parameterTypes);</b>
+&nbsp;        return constructSimpleType(rawType, parameterTypes);
 &nbsp;    } 
 &nbsp;
 &nbsp;    /**
-&nbsp;     * @since 2.6
+<b class="nc">&nbsp;     * @since 2.6</b>
 &nbsp;     */
 &nbsp;    public JavaType constructReferenceType(Class&lt;?&gt; rawType, JavaType referredType)
 &nbsp;    {
-<b class="nc">&nbsp;        return ReferenceType.construct(rawType, null, // no bindings</b>
+&nbsp;        return ReferenceType.construct(rawType, null, // no bindings
 &nbsp;                null, null, // or super-class, interfaces?
 &nbsp;                referredType);
 &nbsp;    }
@@ -934,7 +932,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * by application code outside databind package.
 &nbsp;     *&lt;p&gt; 
 &nbsp;     * Unchecked here not only means that no checks are made as to whether given class
-&nbsp;     * might be non-simple type (like {@link CollectionType}) but also that most of supertype
+<b class="nc">&nbsp;     * might be non-simple type (like {@link CollectionType}) but also that most of supertype</b>
 &nbsp;     * information is not gathered. This means that unless called on primitive types or
 &nbsp;     * {@link java.lang.String}, results are probably not what you want to use.
 &nbsp;     *
@@ -942,8 +940,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    @Deprecated // since 2.8
 &nbsp;    public JavaType uncheckedSimpleType(Class&lt;?&gt; cls) {
-&nbsp;        // 18-Oct-2015, tatu: Not sure how much problem missing super-type info is here
-<b class="fc">&nbsp;        return _constructSimple(cls, EMPTY_BINDINGS, null, null);</b>
+<b class="nc">&nbsp;        // 18-Oct-2015, tatu: Not sure how much problem missing super-type info is here</b>
+&nbsp;        return _constructSimple(cls, EMPTY_BINDINGS, null, null);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -961,7 +959,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * constructed for &lt;code&gt;ArrayList&amp;lt;Integer&gt;&lt;/code&gt;, the usual call would be:
 &nbsp;     *&lt;pre&gt;
 &nbsp;     *  TypeFactory.constructParametrizedType(ArrayList.class, List.class, Integer.class);
-&nbsp;     *&lt;/pre&gt;
+<b class="fc">&nbsp;     *&lt;/pre&gt;</b>
 &nbsp;     * since parameterization is applied to {@link java.util.List}.
 &nbsp;     * In most cases distinction does not matter, but there are types where it does;
 &nbsp;     * one such example is parameterization of types that implement {@link java.util.Iterator}.
@@ -974,12 +972,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.5 NOTE: was briefly deprecated for 2.6
 &nbsp;     */
 &nbsp;    public JavaType constructParametricType(Class&lt;?&gt; parametrized, Class&lt;?&gt;... parameterClasses) {
-<b class="fc">&nbsp;        int len = parameterClasses.length;</b>
-<b class="fc">&nbsp;        JavaType[] pt = new JavaType[len];</b>
-<b class="fc">&nbsp;        for (int i = 0; i &lt; len; ++i) {</b>
-<b class="fc">&nbsp;            pt[i] = _fromClass(null, parameterClasses[i], null);</b>
+&nbsp;        int len = parameterClasses.length;
+&nbsp;        JavaType[] pt = new JavaType[len];
+&nbsp;        for (int i = 0; i &lt; len; ++i) {
+&nbsp;            pt[i] = _fromClass(null, parameterClasses[i], null);
 &nbsp;        }
-<b class="fc">&nbsp;        return constructParametricType(parametrized, pt);</b>
+&nbsp;        return constructParametricType(parametrized, pt);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -992,12 +990,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     *  return TypeFactory.constructParametrizedType(ArrayList.class, List.class, inner);
 &nbsp;     *&lt;/pre&gt;
 &nbsp;     *&lt;p&gt;
-&nbsp;     * The reason for first two arguments to be separate is that parameterization may
-&nbsp;     * apply to a super-type. For example, if generic type was instead to be
-&nbsp;     * constructed for &lt;code&gt;ArrayList&amp;lt;Integer&gt;&lt;/code&gt;, the usual call would be:
-&nbsp;     *&lt;pre&gt;
+<b class="fc">&nbsp;     * The reason for first two arguments to be separate is that parameterization may</b>
+<b class="fc">&nbsp;     * apply to a super-type. For example, if generic type was instead to be</b>
+<b class="fc">&nbsp;     * constructed for &lt;code&gt;ArrayList&amp;lt;Integer&gt;&lt;/code&gt;, the usual call would be:</b>
+<b class="fc">&nbsp;     *&lt;pre&gt;</b>
 &nbsp;     *  TypeFactory.constructParametrizedType(ArrayList.class, List.class, Integer.class);
-&nbsp;     *&lt;/pre&gt;
+<b class="fc">&nbsp;     *&lt;/pre&gt;</b>
 &nbsp;     * since parameterization is applied to {@link java.util.List}.
 &nbsp;     * In most cases distinction does not matter, but there are types where it does;
 &nbsp;     * one such example is parameterization of types that implement {@link java.util.Iterator}.
@@ -1011,7 +1009,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public JavaType constructParametricType(Class&lt;?&gt; rawType, JavaType... parameterTypes)
 &nbsp;    {
-<b class="fc">&nbsp;        return _fromClass(null, rawType, TypeBindings.create(rawType, parameterTypes));</b>
+&nbsp;        return _fromClass(null, rawType, TypeBindings.create(rawType, parameterTypes));
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1020,7 +1018,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public JavaType constructParametrizedType(Class&lt;?&gt; parametrized, Class&lt;?&gt; parametersFor,
 &nbsp;            JavaType... parameterTypes)
 &nbsp;    {
-<b class="fc">&nbsp;        return constructParametricType(parametrized, parameterTypes);</b>
+&nbsp;        return constructParametricType(parametrized, parameterTypes);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1038,7 +1036,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    /* parameterization is unknown
 &nbsp;    /**********************************************************
 &nbsp;     */
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Method that can be used to construct &quot;raw&quot; Collection type; meaning that its
 &nbsp;     * parameterization is unknown.
@@ -1047,11 +1045,11 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     *&lt;pre&gt;
 &nbsp;     *  typeFactory.constructCollectionType(collectionClass, typeFactory.unknownType());
 &nbsp;     *&lt;/pre&gt;
-&nbsp;     *&lt;p&gt;
+<b class="fc">&nbsp;     *&lt;p&gt;</b>
 &nbsp;     * This method should only be used if parameterization is completely unavailable.
 &nbsp;     */
 &nbsp;    public CollectionType constructRawCollectionType(Class&lt;? extends Collection&gt; collectionClass) {
-<b class="fc">&nbsp;        return constructCollectionType(collectionClass, unknownType());</b>
+&nbsp;        return constructCollectionType(collectionClass, unknownType());
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1066,10 +1064,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * This method should only be used if parameterization is completely unavailable.
 &nbsp;     */
 &nbsp;    public CollectionLikeType constructRawCollectionLikeType(Class&lt;?&gt; collectionClass) {
-<b class="fc">&nbsp;        return constructCollectionLikeType(collectionClass, unknownType());</b>
+&nbsp;        return constructCollectionLikeType(collectionClass, unknownType());
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that can be used to construct &quot;raw&quot; Map type; meaning that its
 &nbsp;     * parameterization is unknown.
 &nbsp;     * This is similar to using &lt;code&gt;Object.class&lt;/code&gt; parameterization,
@@ -1081,10 +1079,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * This method should only be used if parameterization is completely unavailable.
 &nbsp;     */
 &nbsp;    public MapType constructRawMapType(Class&lt;? extends Map&gt; mapClass) {
-<b class="fc">&nbsp;        return constructMapType(mapClass, unknownType(), unknownType());</b>
+&nbsp;        return constructMapType(mapClass, unknownType(), unknownType());
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that can be used to construct &quot;raw&quot; Map-like type; meaning that its
 &nbsp;     * parameterization is unknown.
 &nbsp;     * This is similar to using &lt;code&gt;Object.class&lt;/code&gt; parameterization,
@@ -1096,10 +1094,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * This method should only be used if parameterization is completely unavailable.
 &nbsp;     */
 &nbsp;    public MapLikeType constructRawMapLikeType(Class&lt;?&gt; mapClass) {
-<b class="fc">&nbsp;        return constructMapLikeType(mapClass, unknownType(), unknownType());</b>
+&nbsp;        return constructMapLikeType(mapClass, unknownType(), unknownType());
 &nbsp;    }
 &nbsp;
-&nbsp;    /*
+<b class="fc">&nbsp;    /*</b>
 &nbsp;    /**********************************************************
 &nbsp;    /* Low-level factory methods
 &nbsp;    /**********************************************************
@@ -1111,76 +1109,76 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        JavaType kt, vt;
 &nbsp;
 &nbsp;        // 28-May-2015, tatu: Properties are special, as per [databind#810]; fake &quot;correct&quot; parameter sig
-<b class="fc">&nbsp;        if (rawClass == Properties.class) {</b>
-<b class="nc">&nbsp;            kt = vt = CORE_TYPE_STRING;</b>
+&nbsp;        if (rawClass == Properties.class) {
+&nbsp;            kt = vt = CORE_TYPE_STRING;
 &nbsp;        } else {
 <b class="fc">&nbsp;            List&lt;JavaType&gt; typeParams = bindings.getTypeParameters();</b>
 &nbsp;            // ok to have no types (&quot;raw&quot;)
-<b class="fc">&nbsp;            switch (typeParams.size()) {</b>
+&nbsp;            switch (typeParams.size()) {
 &nbsp;            case 0: // acceptable?
-<b class="fc">&nbsp;                kt = vt = _unknownType();</b>
-<b class="fc">&nbsp;                break;</b>
+&nbsp;                kt = vt = _unknownType();
+&nbsp;                break;
 &nbsp;            case 2:
-<b class="fc">&nbsp;                kt = typeParams.get(0);</b>
-<b class="fc">&nbsp;                vt = typeParams.get(1);</b>
-<b class="fc">&nbsp;                break;</b>
+&nbsp;                kt = typeParams.get(0);
+&nbsp;                vt = typeParams.get(1);
+&nbsp;                break;
 &nbsp;            default:
-<b class="nc">&nbsp;                throw new IllegalArgumentException(&quot;Strange Map type &quot;+rawClass.getName()+&quot;: can not determine type parameters&quot;);</b>
+&nbsp;                throw new IllegalArgumentException(&quot;Strange Map type &quot;+rawClass.getName()+&quot;: can not determine type parameters&quot;);
 &nbsp;            }
 &nbsp;        }
-<b class="fc">&nbsp;        return MapType.construct(rawClass, bindings, superClass, superInterfaces, kt, vt);</b>
-&nbsp;    }
-&nbsp;
+&nbsp;        return MapType.construct(rawClass, bindings, superClass, superInterfaces, kt, vt);
+<b class="fc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
 &nbsp;    private JavaType _collectionType(Class&lt;?&gt; rawClass, TypeBindings bindings,
-&nbsp;            JavaType superClass, JavaType[] superInterfaces)
+<b class="fc">&nbsp;            JavaType superClass, JavaType[] superInterfaces)</b>
 &nbsp;    {
 <b class="fc">&nbsp;        List&lt;JavaType&gt; typeParams = bindings.getTypeParameters();</b>
 &nbsp;        // ok to have no types (&quot;raw&quot;)
-&nbsp;        JavaType ct;
+<b class="fc">&nbsp;        JavaType ct;</b>
 <b class="fc">&nbsp;        if (typeParams.isEmpty()) {</b>
-<b class="fc">&nbsp;            ct = _unknownType();</b>
+&nbsp;            ct = _unknownType();
 <b class="fc">&nbsp;        } else if (typeParams.size() == 1) {</b>
 <b class="fc">&nbsp;            ct = typeParams.get(0);</b>
-&nbsp;        } else {
-<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Strange Collection type &quot;+rawClass.getName()+&quot;: can not determine type parameters&quot;);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return CollectionType.construct(rawClass, bindings, superClass, superInterfaces, ct);</b>
+<b class="fc">&nbsp;        } else {</b>
+&nbsp;            throw new IllegalArgumentException(&quot;Strange Collection type &quot;+rawClass.getName()+&quot;: can not determine type parameters&quot;);
+<b class="nc">&nbsp;        }</b>
+&nbsp;        return CollectionType.construct(rawClass, bindings, superClass, superInterfaces, ct);
 &nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    private JavaType _referenceType(Class&lt;?&gt; rawClass, TypeBindings bindings,
 &nbsp;            JavaType superClass, JavaType[] superInterfaces)
 &nbsp;    {
-<b class="fc">&nbsp;        List&lt;JavaType&gt; typeParams = bindings.getTypeParameters();</b>
+&nbsp;        List&lt;JavaType&gt; typeParams = bindings.getTypeParameters();
 &nbsp;        // ok to have no types (&quot;raw&quot;)
-&nbsp;        JavaType ct;
-<b class="fc">&nbsp;        if (typeParams.isEmpty()) {</b>
-<b class="fc">&nbsp;            ct = _unknownType();</b>
+<b class="fc">&nbsp;        JavaType ct;</b>
+&nbsp;        if (typeParams.isEmpty()) {
+&nbsp;            ct = _unknownType();
 <b class="fc">&nbsp;        } else if (typeParams.size() == 1) {</b>
 <b class="fc">&nbsp;            ct = typeParams.get(0);</b>
-&nbsp;        } else {
-<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Strange Reference type &quot;+rawClass.getName()+&quot;: can not determine type parameters&quot;);</b>
+<b class="fc">&nbsp;        } else {</b>
+<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;Strange Reference type &quot;+rawClass.getName()+&quot;: can not determine type parameters&quot;);</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return ReferenceType.construct(rawClass, bindings, superClass, superInterfaces, ct);</b>
+<b class="nc">&nbsp;        return ReferenceType.construct(rawClass, bindings, superClass, superInterfaces, ct);</b>
 &nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Factory method to call when no special {@link JavaType} is needed,
 &nbsp;     * no generic parameters are passed. Default implementation may check
 &nbsp;     * pre-constructed values for &quot;well-known&quot; types, but if none found
 &nbsp;     * will simply call {@link #_newSimpleType}
-&nbsp;     *
+<b class="fc">&nbsp;     *</b>
 &nbsp;     * @since 2.7
 &nbsp;     */
-&nbsp;    protected JavaType _constructSimple(Class&lt;?&gt; raw, TypeBindings bindings,
-&nbsp;            JavaType superClass, JavaType[] superInterfaces)
-&nbsp;    {
+<b class="fc">&nbsp;    protected JavaType _constructSimple(Class&lt;?&gt; raw, TypeBindings bindings,</b>
+<b class="fc">&nbsp;            JavaType superClass, JavaType[] superInterfaces)</b>
+<b class="fc">&nbsp;    {</b>
 <b class="fc">&nbsp;        if (bindings.isEmpty()) {</b>
-<b class="fc">&nbsp;            JavaType result = _findWellKnownSimple(raw);</b>
-<b class="fc">&nbsp;            if (result != null) {</b>
-<b class="fc">&nbsp;                return result;</b>
-&nbsp;            }
+&nbsp;            JavaType result = _findWellKnownSimple(raw);
+<b class="nc">&nbsp;            if (result != null) {</b>
+&nbsp;                return result;
+<b class="fc">&nbsp;            }</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return _newSimpleType(raw, bindings, superClass, superInterfaces);</b>
+&nbsp;        return _newSimpleType(raw, bindings, superClass, superInterfaces);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1192,17 +1190,17 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    protected JavaType _newSimpleType(Class&lt;?&gt; raw, TypeBindings bindings,
 &nbsp;            JavaType superClass, JavaType[] superInterfaces)
-&nbsp;    {
+<b class="fc">&nbsp;    {</b>
 <b class="fc">&nbsp;        return new SimpleType(raw, bindings, superClass, superInterfaces);</b>
-&nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
 &nbsp;    protected JavaType _unknownType() {
 &nbsp;        /* 15-Sep-2015, tatu: Prior to 2.7, we constructed new instance for each call.
-&nbsp;         *    This may have been due to potential mutability of the instance; but that
+<b class="fc">&nbsp;         *    This may have been due to potential mutability of the instance; but that</b>
 &nbsp;         *    should not be issue any more, and creation is somewhat wasteful. So let&#39;s
 &nbsp;         *    try reusing singleton/flyweight instance.
 &nbsp;         */
-<b class="fc">&nbsp;        return CORE_TYPE_OBJECT;</b>
+&nbsp;        return CORE_TYPE_OBJECT;
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1211,17 +1209,17 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * pre-constructed and do not need dynamic caching.
 &nbsp;     *
 &nbsp;     * @since 2.7
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;    protected JavaType _findWellKnownSimple(Class&lt;?&gt; clz) {
-<b class="fc">&nbsp;        if (clz.isPrimitive()) {</b>
-<b class="fc">&nbsp;            if (clz == CLS_BOOL) return CORE_TYPE_BOOL;</b>
-<b class="fc">&nbsp;            if (clz == CLS_INT) return CORE_TYPE_INT;</b>
-<b class="fc">&nbsp;            if (clz == CLS_LONG) return CORE_TYPE_LONG;</b>
+&nbsp;        if (clz.isPrimitive()) {
+&nbsp;            if (clz == CLS_BOOL) return CORE_TYPE_BOOL;
+&nbsp;            if (clz == CLS_INT) return CORE_TYPE_INT;
+&nbsp;            if (clz == CLS_LONG) return CORE_TYPE_LONG;
 &nbsp;        } else {
-<b class="fc">&nbsp;            if (clz == CLS_STRING) return CORE_TYPE_STRING;</b>
-<b class="fc">&nbsp;            if (clz == CLS_OBJECT) return CORE_TYPE_OBJECT; // since 2.7</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return null;</b>
+&nbsp;            if (clz == CLS_STRING) return CORE_TYPE_STRING;
+&nbsp;            if (clz == CLS_OBJECT) return CORE_TYPE_OBJECT; // since 2.7
+<b class="fc">&nbsp;        }</b>
+&nbsp;        return null;
 &nbsp;    }
 &nbsp;
 &nbsp;    /*
@@ -1231,107 +1229,107 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Factory method that can be used if type information is passed
-&nbsp;     * as Java typing returned from &lt;code&gt;getGenericXxx&lt;/code&gt; methods
-&nbsp;     * (usually for a return or argument type).
-&nbsp;     */
+<b class="fc">&nbsp;     * Factory method that can be used if type information is passed</b>
+<b class="fc">&nbsp;     * as Java typing returned from &lt;code&gt;getGenericXxx&lt;/code&gt; methods</b>
+<b class="fc">&nbsp;     * (usually for a return or argument type).</b>
+<b class="fc">&nbsp;     */</b>
 &nbsp;    protected JavaType _fromAny(ClassStack context, Type type, TypeBindings bindings)
-&nbsp;    {
-&nbsp;        JavaType resultType;
+<b class="fc">&nbsp;    {</b>
+<b class="fc">&nbsp;        JavaType resultType;</b>
 &nbsp;
-&nbsp;        // simple class?
-<b class="fc">&nbsp;        if (type instanceof Class&lt;?&gt;) {</b>
+<b class="fc">&nbsp;        // simple class?</b>
+&nbsp;        if (type instanceof Class&lt;?&gt;) {
 &nbsp;            // Important: remove possible bindings since this is type-erased thingy
-<b class="fc">&nbsp;            resultType = _fromClass(context, (Class&lt;?&gt;) type, EMPTY_BINDINGS);</b>
+&nbsp;            resultType = _fromClass(context, (Class&lt;?&gt;) type, EMPTY_BINDINGS);
 &nbsp;        }
 &nbsp;        // But if not, need to start resolving.
-<b class="fc">&nbsp;        else if (type instanceof ParameterizedType) {</b>
-<b class="fc">&nbsp;            resultType = _fromParamType(context, (ParameterizedType) type, bindings);</b>
+&nbsp;        else if (type instanceof ParameterizedType) {
+&nbsp;            resultType = _fromParamType(context, (ParameterizedType) type, bindings);
 &nbsp;        }
-<b class="fc">&nbsp;        else if (type instanceof JavaType) { // [databind#116]</b>
+&nbsp;        else if (type instanceof JavaType) { // [databind#116]
 &nbsp;            // no need to modify further if we already had JavaType
-<b class="fc">&nbsp;            return (JavaType) type;</b>
+&nbsp;            return (JavaType) type;
 &nbsp;        }
-<b class="fc">&nbsp;        else if (type instanceof GenericArrayType) {</b>
-<b class="fc">&nbsp;            resultType = _fromArrayType(context, (GenericArrayType) type, bindings);</b>
+&nbsp;        else if (type instanceof GenericArrayType) {
+&nbsp;            resultType = _fromArrayType(context, (GenericArrayType) type, bindings);
 &nbsp;        }
-<b class="fc">&nbsp;        else if (type instanceof TypeVariable&lt;?&gt;) {</b>
-<b class="fc">&nbsp;            resultType = _fromVariable(context, (TypeVariable&lt;?&gt;) type, bindings);</b>
+&nbsp;        else if (type instanceof TypeVariable&lt;?&gt;) {
+&nbsp;            resultType = _fromVariable(context, (TypeVariable&lt;?&gt;) type, bindings);
 &nbsp;        }
 <b class="fc">&nbsp;        else if (type instanceof WildcardType) {</b>
-<b class="fc">&nbsp;            resultType = _fromWildcard(context, (WildcardType) type, bindings);</b>
-&nbsp;        } else {
+&nbsp;            resultType = _fromWildcard(context, (WildcardType) type, bindings);
+<b class="fc">&nbsp;        } else {</b>
 &nbsp;            // sanity check
-<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Unrecognized Type: &quot;+((type == null) ? &quot;[null]&quot; : type.toString()));</b>
-&nbsp;        }
-&nbsp;        /* 21-Feb-2016, nateB/tatu: as per [databind#1129] (applied for 2.7.2),
+&nbsp;            throw new IllegalArgumentException(&quot;Unrecognized Type: &quot;+((type == null) ? &quot;[null]&quot; : type.toString()));
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        /* 21-Feb-2016, nateB/tatu: as per [databind#1129] (applied for 2.7.2),</b>
 &nbsp;         *   we do need to let all kinds of types to be refined, esp. for Scala module.
-&nbsp;         */
-<b class="fc">&nbsp;        if (_modifiers != null) {</b>
+<b class="fc">&nbsp;         */</b>
+&nbsp;        if (_modifiers != null) {
 <b class="fc">&nbsp;            TypeBindings b = resultType.getBindings();</b>
-<b class="fc">&nbsp;            if (b == null) {</b>
-<b class="nc">&nbsp;                b = EMPTY_BINDINGS;</b>
-&nbsp;            }
-<b class="fc">&nbsp;            for (TypeModifier mod : _modifiers) {</b>
+&nbsp;            if (b == null) {
+<b class="fc">&nbsp;                b = EMPTY_BINDINGS;</b>
+<b class="fc">&nbsp;            }</b>
+&nbsp;            for (TypeModifier mod : _modifiers) {
 <b class="fc">&nbsp;                JavaType t = mod.modifyType(resultType, type, b, this);</b>
 <b class="fc">&nbsp;                if (t == null) {</b>
-<b class="nc">&nbsp;                    throw new IllegalStateException(String.format(</b>
-&nbsp;                            &quot;TypeModifier %s (of type %s) return null for type %s&quot;,
-<b class="nc">&nbsp;                            mod, mod.getClass().getName(), resultType));</b>
+&nbsp;                    throw new IllegalStateException(String.format(
+<b class="fc">&nbsp;                            &quot;TypeModifier %s (of type %s) return null for type %s&quot;,</b>
+<b class="fc">&nbsp;                            mod, mod.getClass().getName(), resultType));</b>
 &nbsp;                }
-<b class="fc">&nbsp;                resultType = t;</b>
-&nbsp;            }
+&nbsp;                resultType = t;
+<b class="nc">&nbsp;            }</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return resultType;</b>
+&nbsp;        return resultType;
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * @param bindings Mapping of formal parameter declarations (for generic
-&nbsp;     *   types) into actual types
-&nbsp;     */
+<b class="fc">&nbsp;    /**</b>
+<b class="fc">&nbsp;     * @param bindings Mapping of formal parameter declarations (for generic</b>
+<b class="fc">&nbsp;     *   types) into actual types</b>
+<b class="nc">&nbsp;     */</b>
 &nbsp;    protected JavaType _fromClass(ClassStack context, Class&lt;?&gt; rawType, TypeBindings bindings)
-&nbsp;    {
-&nbsp;        // Very first thing: small set of core types we know well:
+<b class="fc">&nbsp;    {</b>
+<b class="fc">&nbsp;        // Very first thing: small set of core types we know well:</b>
 <b class="fc">&nbsp;        JavaType result = _findWellKnownSimple(rawType);</b>
-<b class="fc">&nbsp;        if (result != null) {</b>
-<b class="fc">&nbsp;            return result;</b>
-&nbsp;        }
+<b class="nc">&nbsp;        if (result != null) {</b>
+&nbsp;            return result;
+<b class="nc">&nbsp;        }</b>
 &nbsp;        // Barring that, we may have recently constructed an instance
-&nbsp;        final Object key;
-<b class="fc">&nbsp;        if ((bindings == null) || bindings.isEmpty()) {</b>
-<b class="fc">&nbsp;            key = rawType;</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            key = bindings.asKey(rawType);</b>
+<b class="fc">&nbsp;        final Object key;</b>
+&nbsp;        if ((bindings == null) || bindings.isEmpty()) {
+&nbsp;            key = rawType;
+<b class="fc">&nbsp;        } else {</b>
+&nbsp;            key = bindings.asKey(rawType);
 &nbsp;        }
-<b class="fc">&nbsp;        result = _typeCache.get(key); // ok, cache object is synced</b>
-<b class="fc">&nbsp;        if (result != null) {</b>
-<b class="fc">&nbsp;            return result;</b>
+&nbsp;        result = _typeCache.get(key); // ok, cache object is synced
+&nbsp;        if (result != null) {
+&nbsp;            return result;
 &nbsp;        }
 &nbsp;
 &nbsp;        // 15-Oct-2015, tatu: recursive reference?
-<b class="fc">&nbsp;        if (context == null) {</b>
+&nbsp;        if (context == null) {
 <b class="fc">&nbsp;            context = new ClassStack(rawType);</b>
-&nbsp;        } else {
+<b class="fc">&nbsp;        } else {</b>
 <b class="fc">&nbsp;            ClassStack prev = context.find(rawType);</b>
-<b class="fc">&nbsp;            if (prev != null) {</b>
+&nbsp;            if (prev != null) {
 &nbsp;                // Self-reference: needs special handling, then...
-<b class="fc">&nbsp;                ResolvedRecursiveType selfRef = new ResolvedRecursiveType(rawType, EMPTY_BINDINGS);</b>
+&nbsp;                ResolvedRecursiveType selfRef = new ResolvedRecursiveType(rawType, EMPTY_BINDINGS);
 <b class="fc">&nbsp;                prev.addSelfReference(selfRef);</b>
 <b class="fc">&nbsp;                return selfRef;</b>
 &nbsp;            }
-&nbsp;            // no, but need to update context to allow for proper cycle resolution
-<b class="fc">&nbsp;            context = context.child(rawType);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        // First: do we have an array type?
-<b class="fc">&nbsp;        if (rawType.isArray()) {</b>
-<b class="fc">&nbsp;            result = ArrayType.construct(_fromAny(context, rawType.getComponentType(), bindings),</b>
+<b class="fc">&nbsp;            // no, but need to update context to allow for proper cycle resolution</b>
+&nbsp;            context = context.child(rawType);
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;        // First: do we have an array type?</b>
+&nbsp;        if (rawType.isArray()) {
+&nbsp;            result = ArrayType.construct(_fromAny(context, rawType.getComponentType(), bindings),
 &nbsp;                    bindings);
-&nbsp;        } else {
-&nbsp;            // If not, need to proceed by first resolving parent type hierarchy
+<b class="fc">&nbsp;        } else {</b>
+<b class="fc">&nbsp;            // If not, need to proceed by first resolving parent type hierarchy</b>
 &nbsp;            
-&nbsp;            JavaType superClass;
-&nbsp;            JavaType[] superInterfaces;
+<b class="fc">&nbsp;            JavaType superClass;</b>
+<b class="fc">&nbsp;            JavaType[] superInterfaces;</b>
 &nbsp;
 <b class="fc">&nbsp;            if (rawType.isInterface()) {</b>
 <b class="fc">&nbsp;                superClass = null;</b>
@@ -1339,110 +1337,110 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            } else {
 &nbsp;                // Note: even Enums can implement interfaces, so can not drop those
 <b class="fc">&nbsp;                superClass = _resolveSuperClass(context, rawType, bindings);</b>
-<b class="fc">&nbsp;                superInterfaces = _resolveSuperInterfaces(context, rawType, bindings);</b>
+&nbsp;                superInterfaces = _resolveSuperInterfaces(context, rawType, bindings);
 &nbsp;            }
 &nbsp;
-&nbsp;            // 19-Oct-2015, tatu: Bit messy, but we need to &#39;fix&#39; java.util.Properties here...
+<b class="fc">&nbsp;            // 19-Oct-2015, tatu: Bit messy, but we need to &#39;fix&#39; java.util.Properties here...</b>
 <b class="fc">&nbsp;            if (rawType == Properties.class) {</b>
-<b class="fc">&nbsp;                result = MapType.construct(rawType, bindings, superClass, superInterfaces,</b>
+&nbsp;                result = MapType.construct(rawType, bindings, superClass, superInterfaces,
 &nbsp;                        CORE_TYPE_STRING, CORE_TYPE_STRING);
 &nbsp;            }
 &nbsp;            // And then check what flavor of type we got. Start by asking resolved
 &nbsp;            // super-type if refinement is all that is needed?
-<b class="fc">&nbsp;            else if (superClass != null) {</b>
-<b class="fc">&nbsp;                result = superClass.refine(rawType, bindings, superClass, superInterfaces);</b>
-&nbsp;            }
-&nbsp;            // if not, perhaps we are now resolving a well-known class or interface?
+&nbsp;            else if (superClass != null) {
+&nbsp;                result = superClass.refine(rawType, bindings, superClass, superInterfaces);
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;            // if not, perhaps we are now resolving a well-known class or interface?</b>
 <b class="fc">&nbsp;            if (result == null) {</b>
-<b class="fc">&nbsp;                result = _fromWellKnownClass(context, rawType, bindings, superClass, superInterfaces); </b>
-<b class="fc">&nbsp;                if (result == null) {</b>
+&nbsp;                result = _fromWellKnownClass(context, rawType, bindings, superClass, superInterfaces); 
+&nbsp;                if (result == null) {
 <b class="fc">&nbsp;                    result = _fromWellKnownInterface(context, rawType, bindings, superClass, superInterfaces);</b>
 <b class="fc">&nbsp;                    if (result == null) {</b>
 &nbsp;                        // but if nothing else, &quot;simple&quot; class for now:
-<b class="fc">&nbsp;                        result = _newSimpleType(rawType, bindings, superClass, superInterfaces);</b>
+&nbsp;                        result = _newSimpleType(rawType, bindings, superClass, superInterfaces);
 &nbsp;                    }
-&nbsp;                }
-&nbsp;            }
+<b class="fc">&nbsp;                }</b>
+<b class="fc">&nbsp;            }</b>
 &nbsp;        }
-<b class="fc">&nbsp;        context.resolveSelfReferences(result);</b>
+&nbsp;        context.resolveSelfReferences(result);
 &nbsp;        // 16-Jul-2016, tatu: [databind#1302] is solved different way, but ideally we shouldn&#39;t
 &nbsp;        //     cache anything with partially resolved `ResolvedRecursiveType`... so maybe improve
 <b class="fc">&nbsp;        if (!result.hasHandlers()) {</b>
 <b class="fc">&nbsp;            _typeCache.putIfAbsent(key, result); // cache object syncs</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return result;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    protected JavaType _resolveSuperClass(ClassStack context, Class&lt;?&gt; rawType, TypeBindings parentBindings)
-&nbsp;    {
+&nbsp;        return result;
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    protected JavaType _resolveSuperClass(ClassStack context, Class&lt;?&gt; rawType, TypeBindings parentBindings)</b>
+<b class="fc">&nbsp;    {</b>
 <b class="fc">&nbsp;        Type parent = ClassUtil.getGenericSuperclass(rawType);</b>
-<b class="fc">&nbsp;        if (parent == null) {</b>
+&nbsp;        if (parent == null) {
 <b class="fc">&nbsp;            return null;</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return _fromAny(context, parent, parentBindings);</b>
+&nbsp;        return _fromAny(context, parent, parentBindings);
 &nbsp;    }
 &nbsp;
-&nbsp;    protected JavaType[] _resolveSuperInterfaces(ClassStack context, Class&lt;?&gt; rawType, TypeBindings parentBindings)
+<b class="fc">&nbsp;    protected JavaType[] _resolveSuperInterfaces(ClassStack context, Class&lt;?&gt; rawType, TypeBindings parentBindings)</b>
 &nbsp;    {
-<b class="fc">&nbsp;        Type[] types = ClassUtil.getGenericInterfaces(rawType);</b>
+&nbsp;        Type[] types = ClassUtil.getGenericInterfaces(rawType);
 <b class="fc">&nbsp;        if (types == null || types.length == 0) {</b>
 <b class="fc">&nbsp;            return NO_TYPES;</b>
 &nbsp;        }
 <b class="fc">&nbsp;        int len = types.length;</b>
-<b class="fc">&nbsp;        JavaType[] resolved = new JavaType[len];</b>
-<b class="fc">&nbsp;        for (int i = 0; i &lt; len; ++i) {</b>
-<b class="fc">&nbsp;            Type type = types[i];</b>
-<b class="fc">&nbsp;            resolved[i] = _fromAny(context, type, parentBindings);</b>
-&nbsp;        }
+&nbsp;        JavaType[] resolved = new JavaType[len];
+&nbsp;        for (int i = 0; i &lt; len; ++i) {
+&nbsp;            Type type = types[i];
+&nbsp;            resolved[i] = _fromAny(context, type, parentBindings);
+<b class="fc">&nbsp;        }</b>
 <b class="fc">&nbsp;        return resolved;</b>
-&nbsp;    }
+<b class="fc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Helper class used to check whether exact class for which type is being constructed
 &nbsp;     * is one of well-known base interfaces or classes that indicates alternate
 &nbsp;     * {@link JavaType} implementation.
 &nbsp;     */
-&nbsp;    protected JavaType _fromWellKnownClass(ClassStack context, Class&lt;?&gt; rawType, TypeBindings bindings,
-&nbsp;            JavaType superClass, JavaType[] superInterfaces)
-&nbsp;    {
-<b class="fc">&nbsp;        if (bindings == null) {</b>
+<b class="fc">&nbsp;    protected JavaType _fromWellKnownClass(ClassStack context, Class&lt;?&gt; rawType, TypeBindings bindings,</b>
+<b class="fc">&nbsp;            JavaType superClass, JavaType[] superInterfaces)</b>
+<b class="fc">&nbsp;    {</b>
+&nbsp;        if (bindings == null) {
 <b class="fc">&nbsp;            bindings = TypeBindings.emptyBindings();</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        // Quite simple when we resolving exact class/interface; start with that
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        </b>
+<b class="fc">&nbsp;        // Quite simple when we resolving exact class/interface; start with that</b>
 <b class="fc">&nbsp;        if (rawType == Map.class) {</b>
-<b class="fc">&nbsp;            return _mapType(rawType, bindings, superClass, superInterfaces);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (rawType == Collection.class) {</b>
-<b class="fc">&nbsp;            return _collectionType(rawType, bindings, superClass, superInterfaces);</b>
+&nbsp;            return _mapType(rawType, bindings, superClass, superInterfaces);
+<b class="fc">&nbsp;        }</b>
+&nbsp;        if (rawType == Collection.class) {
+&nbsp;            return _collectionType(rawType, bindings, superClass, superInterfaces);
 &nbsp;        }
 &nbsp;        // and since 2.6 one referential type
-<b class="fc">&nbsp;        if (rawType == AtomicReference.class) {</b>
-<b class="fc">&nbsp;            return _referenceType(rawType, bindings, superClass, superInterfaces);</b>
+&nbsp;        if (rawType == AtomicReference.class) {
+&nbsp;            return _referenceType(rawType, bindings, superClass, superInterfaces);
 &nbsp;        }
 &nbsp;        // 01-Nov-2015, tatu: As of 2.7, couple of potential `CollectionLikeType`s (like
 &nbsp;        //    `Iterable`, `Iterator`), and `MapLikeType`s (`Map.Entry`) are not automatically
 &nbsp;        //    detected, related to difficulties in propagating type upwards (Iterable, for
-&nbsp;        //    example, is a weak, tag-on type). They may be detectable in future.
+<b class="fc">&nbsp;        //    example, is a weak, tag-on type). They may be detectable in future.</b>
 <b class="fc">&nbsp;        return null;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    protected JavaType _fromWellKnownInterface(ClassStack context, Class&lt;?&gt; rawType, TypeBindings bindings,
-&nbsp;            JavaType superClass, JavaType[] superInterfaces)
-&nbsp;    {
+<b class="fc">&nbsp;            JavaType superClass, JavaType[] superInterfaces)</b>
+<b class="fc">&nbsp;    {</b>
 &nbsp;        // But that&#39;s not all: may be possible current type actually implements an
-&nbsp;        // interface type. So...
+<b class="fc">&nbsp;        // interface type. So...</b>
 <b class="fc">&nbsp;        final int intCount = superInterfaces.length;</b>
 &nbsp;
-<b class="fc">&nbsp;        for (int i = 0; i &lt; intCount; ++i) {</b>
+&nbsp;        for (int i = 0; i &lt; intCount; ++i) {
 <b class="fc">&nbsp;            JavaType result = superInterfaces[i].refine(rawType, bindings, superClass, superInterfaces);</b>
 <b class="fc">&nbsp;            if (result != null) {</b>
-<b class="fc">&nbsp;                return result;</b>
+&nbsp;                return result;
 &nbsp;            }
 &nbsp;        }
-<b class="fc">&nbsp;        return null;</b>
+&nbsp;        return null;
 &nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * This method deals with parameterized types, that is,
 &nbsp;     * first class generic classes.
@@ -1450,25 +1448,25 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    protected JavaType _fromParamType(ClassStack context, ParameterizedType ptype,
 &nbsp;            TypeBindings parentBindings)
 &nbsp;    {
-&nbsp;        // Assumption here is we&#39;ll always get Class, not one of other Types
-<b class="fc">&nbsp;        Class&lt;?&gt; rawType = (Class&lt;?&gt;) ptype.getRawType();</b>
-&nbsp;
-&nbsp;        // 29-Oct-2015, tatu: For performance reasons, let&#39;s streamline handling of
-&nbsp;        //   couple of not-so-useful parametric types
+<b class="fc">&nbsp;        // Assumption here is we&#39;ll always get Class, not one of other Types</b>
+&nbsp;        Class&lt;?&gt; rawType = (Class&lt;?&gt;) ptype.getRawType();
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;        // 29-Oct-2015, tatu: For performance reasons, let&#39;s streamline handling of</b>
+<b class="fc">&nbsp;        //   couple of not-so-useful parametric types</b>
 <b class="fc">&nbsp;        if (rawType == CLS_ENUM) {</b>
-<b class="fc">&nbsp;            return CORE_TYPE_ENUM;</b>
+&nbsp;            return CORE_TYPE_ENUM;
 &nbsp;        }
 <b class="fc">&nbsp;        if (rawType == CLS_COMPARABLE) {</b>
-<b class="fc">&nbsp;            return CORE_TYPE_COMPARABLE;</b>
+&nbsp;            return CORE_TYPE_COMPARABLE;
 &nbsp;        }
-<b class="fc">&nbsp;        if (rawType == CLS_CLASS) {</b>
-<b class="fc">&nbsp;            return CORE_TYPE_CLASS;</b>
+&nbsp;        if (rawType == CLS_CLASS) {
+&nbsp;            return CORE_TYPE_CLASS;
 &nbsp;        }
 &nbsp;
 &nbsp;        // First: what is the actual base type? One odd thing is that &#39;getRawType&#39;
 &nbsp;        // returns Type, not Class&lt;?&gt; as one might expect. But let&#39;s assume it is
 &nbsp;        // always of type Class: if not, need to add more code to resolve it to Class.        
-<b class="fc">&nbsp;        Type[] args = ptype.getActualTypeArguments();</b>
+&nbsp;        Type[] args = ptype.getActualTypeArguments();
 <b class="fc">&nbsp;        int paramCount = (args == null) ? 0 : args.length;</b>
 &nbsp;        JavaType[] pt;
 &nbsp;        TypeBindings newBindings;        
@@ -1478,48 +1476,48 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        } else {
 <b class="fc">&nbsp;            pt = new JavaType[paramCount];</b>
 <b class="fc">&nbsp;            for (int i = 0; i &lt; paramCount; ++i) {</b>
-<b class="fc">&nbsp;                pt[i] = _fromAny(context, args[i], parentBindings);</b>
-&nbsp;            }
+&nbsp;                pt[i] = _fromAny(context, args[i], parentBindings);
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            newBindings = TypeBindings.create(rawType, pt);</b>
 &nbsp;        }
-<b class="fc">&nbsp;        return _fromClass(context, rawType, newBindings);</b>
+&nbsp;        return _fromClass(context, rawType, newBindings);
 &nbsp;    }
 &nbsp;
 &nbsp;    protected JavaType _fromArrayType(ClassStack context, GenericArrayType type, TypeBindings bindings)
-&nbsp;    {
+<b class="fc">&nbsp;    {</b>
 <b class="fc">&nbsp;        JavaType elementType = _fromAny(context, type.getGenericComponentType(), bindings);</b>
-<b class="fc">&nbsp;        return ArrayType.construct(elementType, bindings);</b>
+&nbsp;        return ArrayType.construct(elementType, bindings);
 &nbsp;    }
 &nbsp;
-&nbsp;    protected JavaType _fromVariable(ClassStack context, TypeVariable&lt;?&gt; var, TypeBindings bindings)
-&nbsp;    {
+<b class="fc">&nbsp;    protected JavaType _fromVariable(ClassStack context, TypeVariable&lt;?&gt; var, TypeBindings bindings)</b>
+<b class="fc">&nbsp;    {</b>
 &nbsp;        // ideally should find it via bindings:
 <b class="fc">&nbsp;        final String name = var.getName();</b>
 <b class="fc">&nbsp;        JavaType type = bindings.findBoundType(name);</b>
 <b class="fc">&nbsp;        if (type != null) {</b>
-<b class="fc">&nbsp;            return type;</b>
-&nbsp;        }
+&nbsp;            return type;
+<b class="fc">&nbsp;        }</b>
 &nbsp;        // but if not, use bounds... note that approach here is simplistic; not taking
-&nbsp;        // into account possible multiple bounds, nor consider upper bounds.
-<b class="fc">&nbsp;        if (bindings.hasUnbound(name)) {</b>
-<b class="nc">&nbsp;            return CORE_TYPE_OBJECT;</b>
+<b class="fc">&nbsp;        // into account possible multiple bounds, nor consider upper bounds.</b>
+&nbsp;        if (bindings.hasUnbound(name)) {
+&nbsp;            return CORE_TYPE_OBJECT;
 &nbsp;        }
-<b class="fc">&nbsp;        bindings = bindings.withUnboundVariable(name);</b>
-&nbsp;
+&nbsp;        bindings = bindings.withUnboundVariable(name);
+<b class="fc">&nbsp;</b>
 <b class="fc">&nbsp;        Type[] bounds = var.getBounds();</b>
-<b class="fc">&nbsp;        return _fromAny(context, bounds[0], bindings);</b>
+&nbsp;        return _fromAny(context, bounds[0], bindings);
 &nbsp;    }
 &nbsp;
 &nbsp;    protected JavaType _fromWildcard(ClassStack context, WildcardType type, TypeBindings bindings)
 &nbsp;    {
-&nbsp;        /* Similar to challenges with TypeVariable, we may have multiple upper bounds.
-&nbsp;         * But it is also possible that if upper bound defaults to Object, we might
-&nbsp;         * want to consider lower bounds instead.
-&nbsp;         * For now, we won&#39;t try anything more advanced; above is just for future reference.
+<b class="fc">&nbsp;        /* Similar to challenges with TypeVariable, we may have multiple upper bounds.</b>
+<b class="fc">&nbsp;         * But it is also possible that if upper bound defaults to Object, we might</b>
+<b class="fc">&nbsp;         * want to consider lower bounds instead.</b>
+<b class="fc">&nbsp;         * For now, we won&#39;t try anything more advanced; above is just for future reference.</b>
 &nbsp;         */
-<b class="fc">&nbsp;        return _fromAny(context, type.getUpperBounds()[0], bindings);</b>
+&nbsp;        return _fromAny(context, type.getUpperBounds()[0], bindings);
 &nbsp;    }
-&nbsp;}
+<b class="fc">&nbsp;}</b>
 </code>
 </pre>
 </div>
@@ -1543,7 +1541,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

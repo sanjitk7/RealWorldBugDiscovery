@@ -25,12 +25,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 <h1>Coverage Summary for Class: AnnotatedClass (com.fasterxml.jackson.databind.introspect)</h1>
 
 <table class="coverageStats">
+
 <tr>
   <th class="name">Class</th>
-<th class="coverageStat 
-">
-  Class, %
-</th>
 <th class="coverageStat 
 ">
   Method, %
@@ -44,14 +41,6 @@ Current scope:     <a href="../../index.html">all classes</a>
   <td class="name">AnnotatedClass</td>
 <td class="coverageStat">
   <span class="percent">
-    100%
-  </span>
-  <span class="absValue">
-    (1/1)
-  </span>
-</td>
-<td class="coverageStat">
-  <span class="percent">
     80.3%
   </span>
   <span class="absValue">
@@ -60,14 +49,51 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    85.6%
+    88.1%
   </span>
   <span class="absValue">
-    (344/402)
+    (354/402)
   </span>
 </td>
 </tr>
-
+  <tr>
+    <td class="name">AnnotatedClass$Creators</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/4)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    79.1%
+  </span>
+  <span class="absValue">
+    (53/67)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    87.2%
+  </span>
+  <span class="absValue">
+    (354/406)
+  </span>
+</td>
+</tr>
 </table>
 
 <br/>
@@ -456,10 +482,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;            }</b>
 &nbsp;        }
 <b class="fc">&nbsp;        return anns;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Initialization method that will recursively collect Jackson
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;    /**</b>
+<b class="nc">&nbsp;     * Initialization method that will recursively collect Jackson</b>
 &nbsp;     * annotations for this class and all super classes and
 &nbsp;     * interfaces.
 &nbsp;     */
@@ -994,29 +1020,29 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;            // Limits of the work-around (to avoid hiding real errors):
 &nbsp;            // first, only applicable for member classes and then either:
 &nbsp;
-<b class="nc">&nbsp;            resolvedAnnotations = null;</b>
-<b class="nc">&nbsp;            Class&lt;?&gt; dc = ctor.getDeclaringClass();</b>
+<b class="fc">&nbsp;            resolvedAnnotations = null;</b>
+<b class="fc">&nbsp;            Class&lt;?&gt; dc = ctor.getDeclaringClass();</b>
 &nbsp;            // (a) is enum, which have two extra hidden params (name, index)
-<b class="nc">&nbsp;            if (dc.isEnum() &amp;&amp; (paramCount == paramAnns.length + 2)) {</b>
+<b class="fc">&nbsp;            if (dc.isEnum() &amp;&amp; (paramCount == paramAnns.length + 2)) {</b>
 <b class="nc">&nbsp;                Annotation[][] old = paramAnns;</b>
 <b class="nc">&nbsp;                paramAnns = new Annotation[old.length+2][];</b>
 <b class="nc">&nbsp;                System.arraycopy(old, 0, paramAnns, 2, old.length);</b>
 <b class="nc">&nbsp;                resolvedAnnotations = _collectRelevantAnnotations(paramAnns);</b>
 <b class="nc">&nbsp;            } else if (dc.isMemberClass()) {</b>
 &nbsp;                // (b) non-static inner classes, get implicit &#39;this&#39; for parameter, not  annotation
-<b class="nc">&nbsp;                if (paramCount == (paramAnns.length + 1)) {</b>
+<b class="fc">&nbsp;                if (paramCount == (paramAnns.length + 1)) {</b>
 &nbsp;                    // hack attack: prepend a null entry to make things match
-<b class="nc">&nbsp;                    Annotation[][] old = paramAnns;</b>
-<b class="nc">&nbsp;                    paramAnns = new Annotation[old.length+1][];</b>
-<b class="nc">&nbsp;                    System.arraycopy(old, 0, paramAnns, 1, old.length);</b>
-<b class="nc">&nbsp;                    resolvedAnnotations = _collectRelevantAnnotations(paramAnns);</b>
+<b class="fc">&nbsp;                    Annotation[][] old = paramAnns;</b>
+<b class="fc">&nbsp;                    paramAnns = new Annotation[old.length+1][];</b>
+<b class="fc">&nbsp;                    System.arraycopy(old, 0, paramAnns, 1, old.length);</b>
+<b class="fc">&nbsp;                    resolvedAnnotations = _collectRelevantAnnotations(paramAnns);</b>
 &nbsp;                }
 &nbsp;            }
-<b class="nc">&nbsp;            if (resolvedAnnotations == null) {</b>
+<b class="fc">&nbsp;            if (resolvedAnnotations == null) {</b>
 <b class="nc">&nbsp;                throw new IllegalStateException(&quot;Internal error: constructor for &quot;+ctor.getDeclaringClass().getName()</b>
 &nbsp;                        +&quot; has mismatch: &quot;+paramCount+&quot; parameters; &quot;+paramAnns.length+&quot; sets of annotations&quot;);
 &nbsp;            }
-<b class="nc">&nbsp;        } else {</b>
+<b class="fc">&nbsp;        } else {</b>
 <b class="fc">&nbsp;            resolvedAnnotations = _collectRelevantAnnotations(paramAnns);</b>
 &nbsp;        }
 <b class="fc">&nbsp;        return new AnnotatedConstructor(typeContext, ctor.getConstructor(),</b>
@@ -1319,7 +1345,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

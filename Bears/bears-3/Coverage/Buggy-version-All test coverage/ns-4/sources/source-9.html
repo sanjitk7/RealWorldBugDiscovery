@@ -60,10 +60,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    57.1%
+    52.4%
   </span>
   <span class="absValue">
-    (24/42)
+    (22/42)
   </span>
 </td>
 </tr>
@@ -202,7 +202,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * NOTE: one exception to immutability, due to problems with CreatorProperty instances
 &nbsp;     * being shared between Bean, separate PropertyBasedCreator
 &nbsp;     * 
-&nbsp;     * @since 2.6
+&nbsp;     * @since 2.6.0
 &nbsp;     */
 &nbsp;    public void setFallbackSetter(SettableBeanProperty fallbackSetter) {
 <b class="fc">&nbsp;        _fallbackSetter = fallbackSetter;</b>
@@ -277,8 +277,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;         * Perhaps better to throw an exception, since it&#39;s generally an error.
 &nbsp;         */
 <b class="fc">&nbsp;        if (_fallbackSetter == null) {</b>
-<b class="fc">&nbsp;            throw new IllegalStateException(&quot;No fallback setter/field defined: can not use creator property for &quot;</b>
-<b class="fc">&nbsp;                    +getClass().getName());</b>
+<b class="nc">&nbsp;            throw new IllegalStateException(&quot;No fallback setter/field defined: can not use creator property for &quot;</b>
+<b class="nc">&nbsp;                    +getClass().getName());</b>
 &nbsp;        }
 <b class="fc">&nbsp;        _fallbackSetter.set(instance, value);</b>
 &nbsp;    }
@@ -324,7 +324,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

@@ -179,7 +179,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public PropertyName internSimpleName()
 &nbsp;    {
 <b class="fc">&nbsp;        if (_simpleName.length() == 0) { // empty String is canonical already</b>
-<b class="nc">&nbsp;            return this;</b>
+<b class="fc">&nbsp;            return this;</b>
 &nbsp;        }
 <b class="fc">&nbsp;        String interned = InternCache.instance.intern(_simpleName);</b>
 <b class="fc">&nbsp;        if (interned == _simpleName) { // was already interned</b>
@@ -248,7 +248,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    }
 &nbsp;    
 &nbsp;    public String getNamespace() {
-<b class="nc">&nbsp;        return _namespace;</b>
+<b class="fc">&nbsp;        return _namespace;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    public boolean hasSimpleName() {
@@ -322,8 +322,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    
 &nbsp;    @Override
 &nbsp;    public String toString() {
-<b class="fc">&nbsp;        if (_namespace == null) {</b>
-<b class="fc">&nbsp;            return _simpleName;</b>
+<b class="nc">&nbsp;        if (_namespace == null) {</b>
+<b class="nc">&nbsp;            return _simpleName;</b>
 &nbsp;        }
 <b class="nc">&nbsp;        return &quot;{&quot;+_namespace + &quot;}&quot; + _simpleName;</b>
 &nbsp;    }
@@ -351,7 +351,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

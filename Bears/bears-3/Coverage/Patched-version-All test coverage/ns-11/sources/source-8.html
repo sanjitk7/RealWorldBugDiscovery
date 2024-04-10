@@ -25,12 +25,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 <h1>Coverage Summary for Class: MapEntrySerializer (com.fasterxml.jackson.databind.ser.impl)</h1>
 
 <table class="coverageStats">
+
 <tr>
   <th class="name">Class</th>
-<th class="coverageStat 
-">
-  Class, %
-</th>
 <th class="coverageStat 
 ">
   Method, %
@@ -42,14 +39,6 @@ Current scope:     <a href="../../index.html">all classes</a>
 </tr>
 <tr>
   <td class="name">MapEntrySerializer</td>
-<td class="coverageStat">
-  <span class="percent">
-    100%
-  </span>
-  <span class="absValue">
-    (1/1)
-  </span>
-</td>
 <td class="coverageStat">
   <span class="percent">
     53.3%
@@ -67,7 +56,44 @@ Current scope:     <a href="../../index.html">all classes</a>
   </span>
 </td>
 </tr>
-
+  <tr>
+    <td class="name">MapEntrySerializer$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    50%
+  </span>
+  <span class="absValue">
+    (8/16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    62.3%
+  </span>
+  <span class="absValue">
+    (71/114)
+  </span>
+</td>
+</tr>
 </table>
 
 <br/>
@@ -303,7 +329,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="nc">&nbsp;            provider.findNullKeySerializer(_keyType, _property).serialize(null, jgen, provider);</b>
 &nbsp;        } else {
 &nbsp;            // [JACKSON-314] skip entries with null values?
-<b class="fc">&nbsp;            if (skipNulls &amp;&amp; valueElem == null) return;</b>
+<b class="pc">&nbsp;            if (skipNulls &amp;&amp; valueElem == null) return;</b>
 <b class="fc">&nbsp;            keySerializer.serialize(keyElem, jgen, provider);</b>
 &nbsp;        }
 &nbsp;        // And then value
@@ -424,7 +450,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

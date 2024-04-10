@@ -306,7 +306,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 <b class="fc">&nbsp;        _serializerProvider = base._serializerProvider;</b>
 <b class="fc">&nbsp;        _serializerFactory = base._serializerFactory;</b>
-<b class="fc">&nbsp;        _generatorFactory = f;</b>
+<b class="fc">&nbsp;        _generatorFactory = base._generatorFactory;</b>
 &nbsp;
 <b class="fc">&nbsp;        _generatorSettings = base._generatorSettings;</b>
 <b class="fc">&nbsp;        _prefetch = base._prefetch;</b>
@@ -990,33 +990,22 @@ Current scope:     <a href="../../index.html">all classes</a>
 <b class="fc">&nbsp;        return _config.isEnabled(f);</b>
 &nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.8.5
-&nbsp;     */
-&nbsp;    @Deprecated
 &nbsp;    public boolean isEnabled(JsonParser.Feature f) {
-<b class="nc">&nbsp;        return _generatorFactory.isEnabled(f);</b>
+&nbsp;        return _generatorFactory.isEnabled(f);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * @since 2.8.5
-&nbsp;     */
-&nbsp;    public boolean isEnabled(JsonGenerator.Feature f) {
-<b class="fc">&nbsp;        return _generatorFactory.isEnabled(f);</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * @since 2.2
+<b class="nc">&nbsp;     * @since 2.2</b>
 &nbsp;     */
 &nbsp;    public SerializationConfig getConfig() {
-<b class="fc">&nbsp;        return _config;</b>
+&nbsp;        return _config;
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * @since 2.2
+<b class="fc">&nbsp;     * @since 2.2</b>
 &nbsp;     */
 &nbsp;    public JsonFactory getFactory() {
-<b class="fc">&nbsp;        return _generatorFactory;</b>
+&nbsp;        return _generatorFactory;
 &nbsp;    }
 &nbsp;    
 &nbsp;    public TypeFactory getTypeFactory() {
@@ -1027,70 +1016,70 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * Diagnostics method that can be called to check whether this writer
 &nbsp;     * has pre-fetched serializer to use: pre-fetching improves performance
 &nbsp;     * when writer instances are reused as it avoids a per-call serializer
-&nbsp;     * lookup.
+<b class="fc">&nbsp;     * lookup.</b>
 &nbsp;     * 
 &nbsp;     * @since 2.2
 &nbsp;     */
-&nbsp;    public boolean hasPrefetchedSerializer() {
-<b class="fc">&nbsp;        return _prefetch.hasSerializer();</b>
+<b class="fc">&nbsp;    public boolean hasPrefetchedSerializer() {</b>
+&nbsp;        return _prefetch.hasSerializer();
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.3
 &nbsp;     */
 &nbsp;    public ContextAttributes getAttributes() {
-<b class="fc">&nbsp;        return _config.getAttributes();</b>
+&nbsp;        return _config.getAttributes();
 &nbsp;    }
 &nbsp;    
 &nbsp;    /*
-&nbsp;    /**********************************************************
+<b class="fc">&nbsp;    /**********************************************************</b>
 &nbsp;    /* Serialization methods; ones from ObjectCodec first
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Method that can be used to serialize any Java value as
-&nbsp;     * JSON output, using provided {@link JsonGenerator}.
+<b class="fc">&nbsp;     * JSON output, using provided {@link JsonGenerator}.</b>
 &nbsp;     */
 &nbsp;    public void writeValue(JsonGenerator gen, Object value) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        _configureGenerator(gen);</b>
-<b class="fc">&nbsp;        if (_config.isEnabled(SerializationFeature.CLOSE_CLOSEABLE)</b>
+&nbsp;        _configureGenerator(gen);
+&nbsp;        if (_config.isEnabled(SerializationFeature.CLOSE_CLOSEABLE)
 &nbsp;                &amp;&amp; (value instanceof Closeable)) {
 &nbsp;
-<b class="nc">&nbsp;            Closeable toClose = (Closeable) value;</b>
+&nbsp;            Closeable toClose = (Closeable) value;
 &nbsp;            try {
-<b class="nc">&nbsp;                _prefetch.serialize(gen, value, _serializerProvider());</b>
-<b class="nc">&nbsp;                if (_config.isEnabled(SerializationFeature.FLUSH_AFTER_WRITE_VALUE)) {</b>
-<b class="nc">&nbsp;                    gen.flush();</b>
+&nbsp;                _prefetch.serialize(gen, value, _serializerProvider());
+&nbsp;                if (_config.isEnabled(SerializationFeature.FLUSH_AFTER_WRITE_VALUE)) {
+&nbsp;                    gen.flush();
 &nbsp;                }
-<b class="nc">&nbsp;            } catch (Exception e) {</b>
-<b class="nc">&nbsp;                ClassUtil.closeOnFailAndThrowAsIAE(null, toClose, e);</b>
-&nbsp;                return;
-<b class="nc">&nbsp;            }</b>
-<b class="nc">&nbsp;            toClose.close();</b>
-<b class="nc">&nbsp;        } else {</b>
-<b class="fc">&nbsp;            _prefetch.serialize(gen, value, _serializerProvider());</b>
-<b class="fc">&nbsp;            if (_config.isEnabled(SerializationFeature.FLUSH_AFTER_WRITE_VALUE)) {</b>
-<b class="fc">&nbsp;                gen.flush();</b>
+&nbsp;            } catch (Exception e) {
+<b class="fc">&nbsp;                ClassUtil.closeOnFailAndThrowAsIAE(null, toClose, e);</b>
+<b class="fc">&nbsp;                return;</b>
 &nbsp;            }
+&nbsp;            toClose.close();
+<b class="nc">&nbsp;        } else {</b>
+&nbsp;            _prefetch.serialize(gen, value, _serializerProvider());
+<b class="nc">&nbsp;            if (_config.isEnabled(SerializationFeature.FLUSH_AFTER_WRITE_VALUE)) {</b>
+<b class="nc">&nbsp;                gen.flush();</b>
+<b class="nc">&nbsp;            }</b>
 &nbsp;        }
-&nbsp;    }
-&nbsp;
+<b class="nc">&nbsp;    }</b>
+<b class="nc">&nbsp;</b>
 &nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Serialization methods, others
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
+<b class="nc">&nbsp;    /**********************************************************</b>
+<b class="nc">&nbsp;    /* Serialization methods, others</b>
+<b class="nc">&nbsp;    /**********************************************************</b>
+<b class="fc">&nbsp;     */</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that can be used to serialize any Java value as
 &nbsp;     * JSON output, written to File provided.
 &nbsp;     */
 &nbsp;    public void writeValue(File resultFile, Object value)
 &nbsp;        throws IOException, JsonGenerationException, JsonMappingException
 &nbsp;    {
-<b class="nc">&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(resultFile, JsonEncoding.UTF8), value);</b>
+&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(resultFile, JsonEncoding.UTF8), value);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1101,13 +1090,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * Note: method does not close the underlying stream explicitly
 &nbsp;     * here; however, {@link JsonFactory} this mapper uses may choose
 &nbsp;     * to close the stream depending on its settings (by default,
-&nbsp;     * it will try to close it when {@link JsonGenerator} we construct
+<b class="nc">&nbsp;     * it will try to close it when {@link JsonGenerator} we construct</b>
 &nbsp;     * is closed).
 &nbsp;     */
 &nbsp;    public void writeValue(OutputStream out, Object value)
 &nbsp;        throws IOException, JsonGenerationException, JsonMappingException
 &nbsp;    {
-<b class="fc">&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(out, JsonEncoding.UTF8), value);</b>
+&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(out, JsonEncoding.UTF8), value);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1118,12 +1107,12 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * here; however, {@link JsonFactory} this mapper uses may choose
 &nbsp;     * to close the stream depending on its settings (by default,
 &nbsp;     * it will try to close it when {@link JsonGenerator} we construct
-&nbsp;     * is closed).
+<b class="fc">&nbsp;     * is closed).</b>
 &nbsp;     */
 &nbsp;    public void writeValue(Writer w, Object value)
 &nbsp;        throws IOException, JsonGenerationException, JsonMappingException
 &nbsp;    {
-<b class="fc">&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(w), value);</b>
+&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(w), value);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1132,9 +1121,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public void writeValue(DataOutput out, Object value)
 &nbsp;        throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(out), value);</b>
+&nbsp;        _configAndWriteValue(_generatorFactory.createGenerator(out), value);
 &nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Method that can be used to serialize any Java value as
 &nbsp;     * a String. Functionally equivalent to calling
@@ -1143,57 +1132,57 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     *&lt;p&gt;
 &nbsp;     * Note: prior to version 2.1, throws clause included {@link IOException}; 2.1 removed it.
 &nbsp;     */
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
+<b class="fc">&nbsp;    @SuppressWarnings(&quot;resource&quot;)</b>
 &nbsp;    public String writeValueAsString(Object value)
 &nbsp;        throws JsonProcessingException
 &nbsp;    {        
 &nbsp;        // alas, we have to pull the recycler directly here...
-<b class="fc">&nbsp;        SegmentedStringWriter sw = new SegmentedStringWriter(_generatorFactory._getBufferRecycler());</b>
+&nbsp;        SegmentedStringWriter sw = new SegmentedStringWriter(_generatorFactory._getBufferRecycler());
 &nbsp;        try {
-<b class="fc">&nbsp;            _configAndWriteValue(_generatorFactory.createGenerator(sw), value);</b>
-<b class="fc">&nbsp;        } catch (JsonProcessingException e) { // to support [JACKSON-758]</b>
-<b class="fc">&nbsp;            throw e;</b>
-<b class="nc">&nbsp;        } catch (IOException e) { // shouldn&#39;t really happen, but is declared as possibility so:</b>
-<b class="nc">&nbsp;            throw JsonMappingException.fromUnexpectedIOE(e);</b>
-<b class="fc">&nbsp;        }</b>
-<b class="fc">&nbsp;        return sw.getAndClear();</b>
+&nbsp;            _configAndWriteValue(_generatorFactory.createGenerator(sw), value);
+&nbsp;        } catch (JsonProcessingException e) { // to support [JACKSON-758]
+&nbsp;            throw e;
+&nbsp;        } catch (IOException e) { // shouldn&#39;t really happen, but is declared as possibility so:
+&nbsp;            throw JsonMappingException.fromUnexpectedIOE(e);
+&nbsp;        }
+&nbsp;        return sw.getAndClear();
 &nbsp;    }
 &nbsp;    
-&nbsp;    /**
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * Method that can be used to serialize any Java value as
-&nbsp;     * a byte array. Functionally equivalent to calling
-&nbsp;     * {@link #writeValue(Writer,Object)} with {@link java.io.ByteArrayOutputStream}
-&nbsp;     * and getting bytes, but more efficient.
-&nbsp;     * Encoding used will be UTF-8.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note: prior to version 2.1, throws clause included {@link IOException}; 2.1 removed it.
-&nbsp;     */
+<b class="fc">&nbsp;     * a byte array. Functionally equivalent to calling</b>
+<b class="fc">&nbsp;     * {@link #writeValue(Writer,Object)} with {@link java.io.ByteArrayOutputStream}</b>
+<b class="fc">&nbsp;     * and getting bytes, but more efficient.</b>
+<b class="nc">&nbsp;     * Encoding used will be UTF-8.</b>
+<b class="nc">&nbsp;     *&lt;p&gt;</b>
+<b class="fc">&nbsp;     * Note: prior to version 2.1, throws clause included {@link IOException}; 2.1 removed it.</b>
+<b class="fc">&nbsp;     */</b>
 &nbsp;    @SuppressWarnings(&quot;resource&quot;)
 &nbsp;    public byte[] writeValueAsBytes(Object value)
 &nbsp;        throws JsonProcessingException
 &nbsp;    {
-<b class="fc">&nbsp;        ByteArrayBuilder bb = new ByteArrayBuilder(_generatorFactory._getBufferRecycler());</b>
+&nbsp;        ByteArrayBuilder bb = new ByteArrayBuilder(_generatorFactory._getBufferRecycler());
 &nbsp;        try {
-<b class="fc">&nbsp;            _configAndWriteValue(_generatorFactory.createGenerator(bb, JsonEncoding.UTF8), value);</b>
-<b class="fc">&nbsp;        } catch (JsonProcessingException e) { // to support [JACKSON-758]</b>
-<b class="fc">&nbsp;            throw e;</b>
-<b class="nc">&nbsp;        } catch (IOException e) { // shouldn&#39;t really happen, but is declared as possibility so:</b>
-<b class="nc">&nbsp;            throw JsonMappingException.fromUnexpectedIOE(e);</b>
-<b class="fc">&nbsp;        }</b>
-<b class="fc">&nbsp;        byte[] result = bb.toByteArray();</b>
-<b class="fc">&nbsp;        bb.release();</b>
-<b class="fc">&nbsp;        return result;</b>
-&nbsp;    }
+&nbsp;            _configAndWriteValue(_generatorFactory.createGenerator(bb, JsonEncoding.UTF8), value);
+&nbsp;        } catch (JsonProcessingException e) { // to support [JACKSON-758]
+&nbsp;            throw e;
+&nbsp;        } catch (IOException e) { // shouldn&#39;t really happen, but is declared as possibility so:
+&nbsp;            throw JsonMappingException.fromUnexpectedIOE(e);
+&nbsp;        }
+&nbsp;        byte[] result = bb.toByteArray();
+&nbsp;        bb.release();
+&nbsp;        return result;
+<b class="fc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Other public methods
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method for visiting type hierarchy for given type, using specified visitor.
-&nbsp;     * Visitation uses &lt;code&gt;Serializer&lt;/code&gt; hierarchy and related properties
+<b class="fc">&nbsp;    /*</b>
+<b class="fc">&nbsp;    /**********************************************************</b>
+<b class="fc">&nbsp;    /* Other public methods</b>
+<b class="nc">&nbsp;    /**********************************************************</b>
+<b class="nc">&nbsp;     */</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
+<b class="fc">&nbsp;     * Method for visiting type hierarchy for given type, using specified visitor.</b>
+<b class="fc">&nbsp;     * Visitation uses &lt;code&gt;Serializer&lt;/code&gt; hierarchy and related properties</b>
 &nbsp;     *&lt;p&gt;
 &nbsp;     * This method can be used for things like
 &nbsp;     * generating &lt;a href=&quot;http://json-schema.org/&quot;&gt;Json Schema&lt;/a&gt;
@@ -1205,19 +1194,19 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;    public void acceptJsonFormatVisitor(JavaType type, JsonFormatVisitorWrapper visitor) throws JsonMappingException
 &nbsp;    {
-<b class="fc">&nbsp;        if (type == null) {</b>
-<b class="fc">&nbsp;            throw new IllegalArgumentException(&quot;type must be provided&quot;);</b>
+&nbsp;        if (type == null) {
+&nbsp;            throw new IllegalArgumentException(&quot;type must be provided&quot;);
 &nbsp;        }
-<b class="fc">&nbsp;        _serializerProvider().acceptJsonFormatVisitor(type, visitor);</b>
+&nbsp;        _serializerProvider().acceptJsonFormatVisitor(type, visitor);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Since 2.6
 &nbsp;     */
 &nbsp;    public void acceptJsonFormatVisitor(Class&lt;?&gt; rawType, JsonFormatVisitorWrapper visitor) throws JsonMappingException {
-<b class="fc">&nbsp;        acceptJsonFormatVisitor(_config.constructType(rawType), visitor);</b>
-&nbsp;    }
-&nbsp;
+&nbsp;        acceptJsonFormatVisitor(_config.constructType(rawType), visitor);
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
 &nbsp;    public boolean canSerialize(Class&lt;?&gt; type) {
 <b class="fc">&nbsp;        return _serializerProvider().hasSerializerFor(type, null);</b>
 &nbsp;    }
@@ -1226,11 +1215,11 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * Method for checking whether instances of given type can be serialized,
 &nbsp;     * and optionally why (as per {@link Throwable} returned).
 &nbsp;     * 
-&nbsp;     * @since 2.3
+<b class="fc">&nbsp;     * @since 2.3</b>
 &nbsp;     */
 &nbsp;    public boolean canSerialize(Class&lt;?&gt; type, AtomicReference&lt;Throwable&gt; cause) {
-<b class="fc">&nbsp;        return _serializerProvider().hasSerializerFor(type, cause);</b>
-&nbsp;    }
+&nbsp;        return _serializerProvider().hasSerializerFor(type, cause);
+<b class="fc">&nbsp;    }</b>
 &nbsp;
 &nbsp;    /*
 &nbsp;    /**********************************************************
@@ -1240,10 +1229,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * Overridable helper method used for constructing
-&nbsp;     * {@link SerializerProvider} to use for serialization.
+<b class="fc">&nbsp;     * {@link SerializerProvider} to use for serialization.</b>
 &nbsp;     */
 &nbsp;    protected DefaultSerializerProvider _serializerProvider() {
-<b class="fc">&nbsp;        return _serializerProvider.createInstance(_config, _serializerFactory);</b>
+&nbsp;        return _serializerProvider.createInstance(_config, _serializerFactory);
 &nbsp;    }
 &nbsp;
 &nbsp;    /*
@@ -1254,13 +1243,13 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;    /**
 &nbsp;     * @since 2.2
-&nbsp;     */
+<b class="fc">&nbsp;     */</b>
 &nbsp;    protected void _verifySchemaType(FormatSchema schema)
 &nbsp;    {
-<b class="fc">&nbsp;        if (schema != null) {</b>
-<b class="fc">&nbsp;            if (!_generatorFactory.canUseSchema(schema)) {</b>
-<b class="fc">&nbsp;                    throw new IllegalArgumentException(&quot;Can not use FormatSchema of type &quot;+schema.getClass().getName()</b>
-<b class="fc">&nbsp;                            +&quot; for format &quot;+_generatorFactory.getFormatName());</b>
+&nbsp;        if (schema != null) {
+&nbsp;            if (!_generatorFactory.canUseSchema(schema)) {
+&nbsp;                    throw new IllegalArgumentException(&quot;Can not use FormatSchema of type &quot;+schema.getClass().getName()
+&nbsp;                            +&quot; for format &quot;+_generatorFactory.getFormatName());
 &nbsp;            }
 &nbsp;        }
 &nbsp;    }
@@ -1268,55 +1257,55 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    /**
 &nbsp;     * Method called to configure the generator as necessary and then
 &nbsp;     * call write functionality
-&nbsp;     */
-&nbsp;    protected final void _configAndWriteValue(JsonGenerator gen, Object value) throws IOException
-&nbsp;    {
+<b class="fc">&nbsp;     */</b>
+<b class="fc">&nbsp;    protected final void _configAndWriteValue(JsonGenerator gen, Object value) throws IOException</b>
+<b class="fc">&nbsp;    {</b>
 <b class="fc">&nbsp;        _configureGenerator(gen);</b>
-<b class="fc">&nbsp;        if (_config.isEnabled(SerializationFeature.CLOSE_CLOSEABLE) &amp;&amp; (value instanceof Closeable)) {</b>
-<b class="fc">&nbsp;            _writeCloseable(gen, value);</b>
+&nbsp;        if (_config.isEnabled(SerializationFeature.CLOSE_CLOSEABLE) &amp;&amp; (value instanceof Closeable)) {
+&nbsp;            _writeCloseable(gen, value);
 &nbsp;            return;
 &nbsp;        }
 &nbsp;        try {
-<b class="fc">&nbsp;            _prefetch.serialize(gen, value, _serializerProvider());</b>
-<b class="fc">&nbsp;        } catch (Exception e) {</b>
-<b class="fc">&nbsp;            ClassUtil.closeOnFailAndThrowAsIAE(gen, e);</b>
+&nbsp;            _prefetch.serialize(gen, value, _serializerProvider());
+&nbsp;        } catch (Exception e) {
+&nbsp;            ClassUtil.closeOnFailAndThrowAsIAE(gen, e);
 &nbsp;            return;
-<b class="fc">&nbsp;        }</b>
+&nbsp;        }
 <b class="fc">&nbsp;        gen.close();</b>
-&nbsp;    }
-&nbsp;
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Helper method used when value to serialize is {@link Closeable} and its &lt;code&gt;close()&lt;/code&gt;
 &nbsp;     * method is to be called right after serialization has been called
-&nbsp;     */
-&nbsp;    private final void _writeCloseable(JsonGenerator gen, Object value)
-&nbsp;        throws IOException
+<b class="fc">&nbsp;     */</b>
+<b class="fc">&nbsp;    private final void _writeCloseable(JsonGenerator gen, Object value)</b>
+<b class="fc">&nbsp;        throws IOException</b>
 &nbsp;    {
 <b class="fc">&nbsp;        Closeable toClose = (Closeable) value;</b>
-&nbsp;        try {
-<b class="fc">&nbsp;            _prefetch.serialize(gen, value, _serializerProvider());</b>
-<b class="fc">&nbsp;            Closeable tmpToClose = toClose;</b>
-<b class="fc">&nbsp;            toClose = null;</b>
-<b class="fc">&nbsp;            tmpToClose.close();</b>
-<b class="nc">&nbsp;        } catch (Exception e) {</b>
-<b class="nc">&nbsp;            ClassUtil.closeOnFailAndThrowAsIAE(gen, toClose, e);</b>
+<b class="fc">&nbsp;        try {</b>
+&nbsp;            _prefetch.serialize(gen, value, _serializerProvider());
+&nbsp;            Closeable tmpToClose = toClose;
+&nbsp;            toClose = null;
+&nbsp;            tmpToClose.close();
+&nbsp;        } catch (Exception e) {
+&nbsp;            ClassUtil.closeOnFailAndThrowAsIAE(gen, toClose, e);
 &nbsp;            return;
-<b class="fc">&nbsp;        }</b>
-<b class="fc">&nbsp;        gen.close();</b>
-&nbsp;    }
+&nbsp;        }
+&nbsp;        gen.close();
+<b class="fc">&nbsp;    }</b>
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Helper method called to set or override settings of passed-in
-&nbsp;     * {@link JsonGenerator}
-&nbsp;     * 
-&nbsp;     * @since 2.5
-&nbsp;     */
+<b class="fc">&nbsp;    /**</b>
+<b class="fc">&nbsp;     * Helper method called to set or override settings of passed-in</b>
+<b class="fc">&nbsp;     * {@link JsonGenerator}</b>
+<b class="fc">&nbsp;     * </b>
+<b class="nc">&nbsp;     * @since 2.5</b>
+<b class="nc">&nbsp;     */</b>
 &nbsp;    protected final void _configureGenerator(JsonGenerator gen)
-&nbsp;    {
-&nbsp;        // order is slightly significant: both may change PrettyPrinter
+<b class="fc">&nbsp;    {</b>
+<b class="fc">&nbsp;        // order is slightly significant: both may change PrettyPrinter</b>
 &nbsp;        // settings.
-<b class="fc">&nbsp;        _config.initialize(gen); // since 2.5</b>
-<b class="fc">&nbsp;        _generatorSettings.initialize(gen);</b>
+&nbsp;        _config.initialize(gen); // since 2.5
+&nbsp;        _generatorSettings.initialize(gen);
 &nbsp;    }
 &nbsp;
 &nbsp;    /*
@@ -1326,8 +1315,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     */
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Helper class used for containing settings specifically related
-&nbsp;     * to (re)configuring {@link JsonGenerator} constructed for
+<b class="fc">&nbsp;     * Helper class used for containing settings specifically related</b>
+<b class="fc">&nbsp;     * to (re)configuring {@link JsonGenerator} constructed for</b>
 &nbsp;     * writing output.
 &nbsp;     * 
 &nbsp;     * @since 2.5
@@ -1337,7 +1326,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    {
 &nbsp;        private static final long serialVersionUID = 1L;
 &nbsp;
-<b class="fc">&nbsp;        public final static GeneratorSettings empty = new GeneratorSettings(null, null, null, null);</b>
+&nbsp;        public final static GeneratorSettings empty = new GeneratorSettings(null, null, null, null);
 &nbsp;
 &nbsp;        /**
 &nbsp;         * To allow for dynamic enabling/disabling of pretty printing,
@@ -1348,7 +1337,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;        /**
 &nbsp;         * When using data format that uses a schema, schema is passed
-&nbsp;         * to generator.
+<b class="fc">&nbsp;         * to generator.</b>
 &nbsp;         */
 &nbsp;        public final FormatSchema schema;
 &nbsp;
@@ -1367,99 +1356,99 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        public final SerializableString rootValueSeparator;
 &nbsp;
 &nbsp;        public GeneratorSettings(PrettyPrinter pp, FormatSchema sch,
-<b class="fc">&nbsp;                CharacterEscapes esc, SerializableString rootSep) {</b>
-<b class="fc">&nbsp;            prettyPrinter = pp;</b>
-<b class="fc">&nbsp;            schema = sch;</b>
-<b class="fc">&nbsp;            characterEscapes = esc;</b>
-<b class="fc">&nbsp;            rootValueSeparator = rootSep;</b>
+&nbsp;                CharacterEscapes esc, SerializableString rootSep) {
+&nbsp;            prettyPrinter = pp;
+&nbsp;            schema = sch;
+&nbsp;            characterEscapes = esc;
+&nbsp;            rootValueSeparator = rootSep;
 &nbsp;        }
 &nbsp;
 &nbsp;        public GeneratorSettings with(PrettyPrinter pp) {
 &nbsp;            // since null would mean &quot;don&#39;t care&quot;, need to use placeholder to indicate &quot;disable&quot;
-<b class="fc">&nbsp;            if (pp == null) {</b>
-<b class="fc">&nbsp;                pp = NULL_PRETTY_PRINTER;</b>
-&nbsp;            }
+&nbsp;            if (pp == null) {
+&nbsp;                pp = NULL_PRETTY_PRINTER;
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            return (pp == prettyPrinter) ? this</b>
-&nbsp;                    : new GeneratorSettings(pp, schema, characterEscapes, rootValueSeparator);
-&nbsp;        }
-&nbsp;
+<b class="fc">&nbsp;                    : new GeneratorSettings(pp, schema, characterEscapes, rootValueSeparator);</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;</b>
 &nbsp;        public GeneratorSettings with(FormatSchema sch) {
-<b class="fc">&nbsp;            return (schema == sch) ? this</b>
+&nbsp;            return (schema == sch) ? this
 &nbsp;                    : new GeneratorSettings(prettyPrinter, sch, characterEscapes, rootValueSeparator);
 &nbsp;        }
-&nbsp;
-&nbsp;        public GeneratorSettings with(CharacterEscapes esc) {
-<b class="fc">&nbsp;            return (characterEscapes == esc) ? this</b>
-&nbsp;                    : new GeneratorSettings(prettyPrinter, schema, esc, rootValueSeparator);
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;        public GeneratorSettings with(CharacterEscapes esc) {</b>
+&nbsp;            return (characterEscapes == esc) ? this
+<b class="fc">&nbsp;                    : new GeneratorSettings(prettyPrinter, schema, esc, rootValueSeparator);</b>
 &nbsp;        }
 &nbsp;
 &nbsp;        public GeneratorSettings withRootValueSeparator(String sep) {
-<b class="fc">&nbsp;            if (sep == null) {</b>
-<b class="nc">&nbsp;                if (rootValueSeparator == null) {</b>
-<b class="nc">&nbsp;                    return this;</b>
+&nbsp;            if (sep == null) {
+<b class="fc">&nbsp;                if (rootValueSeparator == null) {</b>
+&nbsp;                    return this;
 &nbsp;                }
-<b class="fc">&nbsp;            } else if (sep.equals(rootValueSeparator)) {</b>
-<b class="nc">&nbsp;                return this;</b>
-&nbsp;            }
-<b class="fc">&nbsp;            return new GeneratorSettings(prettyPrinter, schema, characterEscapes,</b>
+&nbsp;            } else if (sep.equals(rootValueSeparator)) {
+&nbsp;                return this;
+<b class="fc">&nbsp;            }</b>
+&nbsp;            return new GeneratorSettings(prettyPrinter, schema, characterEscapes,
 &nbsp;                    (sep == null) ? null : new SerializedString(sep));
 &nbsp;        }
 &nbsp;
-&nbsp;        public GeneratorSettings withRootValueSeparator(SerializableString sep) {
-<b class="fc">&nbsp;            if (sep == null) {</b>
+<b class="fc">&nbsp;        public GeneratorSettings withRootValueSeparator(SerializableString sep) {</b>
+<b class="nc">&nbsp;            if (sep == null) {</b>
 <b class="nc">&nbsp;                if (rootValueSeparator == null) {</b>
-<b class="nc">&nbsp;                    return this;</b>
-&nbsp;                }
-&nbsp;            } else {
-<b class="fc">&nbsp;                if (rootValueSeparator != null</b>
+&nbsp;                    return this;
+<b class="fc">&nbsp;                }</b>
+<b class="nc">&nbsp;            } else {</b>
+&nbsp;                if (rootValueSeparator != null
 <b class="fc">&nbsp;                        &amp;&amp; sep.getValue().equals(rootValueSeparator.getValue())) {</b>
-<b class="nc">&nbsp;                    return this;</b>
+&nbsp;                    return this;
 &nbsp;                }
 &nbsp;            }
-<b class="fc">&nbsp;            return new GeneratorSettings(prettyPrinter, schema, characterEscapes, sep);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        /**
+&nbsp;            return new GeneratorSettings(prettyPrinter, schema, characterEscapes, sep);
+<b class="fc">&nbsp;        }</b>
+<b class="nc">&nbsp;</b>
+<b class="nc">&nbsp;        /**</b>
 &nbsp;         * @since 2.6
 &nbsp;         */
-&nbsp;        public void initialize(JsonGenerator gen)
-&nbsp;        {
-<b class="fc">&nbsp;            PrettyPrinter pp = prettyPrinter;</b>
-<b class="fc">&nbsp;            if (prettyPrinter != null) {</b>
-<b class="fc">&nbsp;                if (pp == NULL_PRETTY_PRINTER) {</b>
+<b class="fc">&nbsp;        public void initialize(JsonGenerator gen)</b>
+<b class="fc">&nbsp;        {</b>
+<b class="nc">&nbsp;            PrettyPrinter pp = prettyPrinter;</b>
+&nbsp;            if (prettyPrinter != null) {
+&nbsp;                if (pp == NULL_PRETTY_PRINTER) {
 <b class="fc">&nbsp;                    gen.setPrettyPrinter(null);</b>
 &nbsp;                } else {
-<b class="fc">&nbsp;                    if (pp instanceof Instantiatable&lt;?&gt;) {</b>
-<b class="fc">&nbsp;                        pp = (PrettyPrinter) ((Instantiatable&lt;?&gt;) pp).createInstance();</b>
+&nbsp;                    if (pp instanceof Instantiatable&lt;?&gt;) {
+&nbsp;                        pp = (PrettyPrinter) ((Instantiatable&lt;?&gt;) pp).createInstance();
 &nbsp;                    }
-<b class="fc">&nbsp;                    gen.setPrettyPrinter(pp);</b>
+&nbsp;                    gen.setPrettyPrinter(pp);
 &nbsp;                }
 &nbsp;            }
 <b class="fc">&nbsp;            if (characterEscapes != null) {</b>
 <b class="fc">&nbsp;                gen.setCharacterEscapes(characterEscapes);</b>
-&nbsp;            }
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            if (schema != null) {</b>
-<b class="fc">&nbsp;                gen.setSchema(schema);</b>
-&nbsp;            }
+&nbsp;                gen.setSchema(schema);
+<b class="fc">&nbsp;            }</b>
 <b class="fc">&nbsp;            if (rootValueSeparator != null) {</b>
-<b class="fc">&nbsp;                gen.setRootValueSeparator(rootValueSeparator);</b>
-&nbsp;            }
+&nbsp;                gen.setRootValueSeparator(rootValueSeparator);
+<b class="fc">&nbsp;            }</b>
 &nbsp;        }
 &nbsp;    }
-&nbsp;
-&nbsp;    /**
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
 &nbsp;     * As a minor optimization, we will make an effort to pre-fetch a serializer,
-&nbsp;     * or at least relevant &lt;code&gt;TypeSerializer&lt;/code&gt;, if given enough
-&nbsp;     * information.
+<b class="fc">&nbsp;     * or at least relevant &lt;code&gt;TypeSerializer&lt;/code&gt;, if given enough</b>
+<b class="fc">&nbsp;     * information.</b>
 &nbsp;     * 
-&nbsp;     * @since 2.5
-&nbsp;     */
+<b class="fc">&nbsp;     * @since 2.5</b>
+<b class="fc">&nbsp;     */</b>
 &nbsp;    public final static class Prefetch
 &nbsp;        implements java.io.Serializable
 &nbsp;    {
 &nbsp;        private static final long serialVersionUID = 1L;
 &nbsp;
-<b class="fc">&nbsp;        public final static Prefetch empty = new Prefetch(null, null, null);</b>
+&nbsp;        public final static Prefetch empty = new Prefetch(null, null, null);
 &nbsp;        
 &nbsp;        /**
 &nbsp;         * Specified root serialization type to use; can be same
@@ -1470,7 +1459,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;        /**
 &nbsp;         * We may pre-fetch serializer if {@link #rootType}
-&nbsp;         * is known, and if so, reuse it afterwards.
+<b class="fc">&nbsp;         * is known, and if so, reuse it afterwards.</b>
 &nbsp;         * This allows avoiding further serializer lookups and increases
 &nbsp;         * performance a bit on cases where readers are reused.
 &nbsp;         */
@@ -1484,75 +1473,75 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        
 &nbsp;        private Prefetch(JavaType rootT,
 &nbsp;                JsonSerializer&lt;Object&gt; ser, TypeSerializer typeSer)
-<b class="fc">&nbsp;        {</b>
-<b class="fc">&nbsp;            rootType = rootT;</b>
-<b class="fc">&nbsp;            valueSerializer = ser;</b>
-<b class="fc">&nbsp;            typeSerializer = typeSer;</b>
+&nbsp;        {
+&nbsp;            rootType = rootT;
+&nbsp;            valueSerializer = ser;
+&nbsp;            typeSerializer = typeSer;
 &nbsp;        }
 &nbsp;
 &nbsp;        public Prefetch forRootType(ObjectWriter parent, JavaType newType) {
 &nbsp;            // First: if nominal type not defined, or trivial (java.lang.Object),
 &nbsp;            // not thing much to do
-<b class="fc">&nbsp;            boolean noType = (newType == null) || newType.isJavaLangObject();</b>
+&nbsp;            boolean noType = (newType == null) || newType.isJavaLangObject();
 &nbsp;
 <b class="fc">&nbsp;            if (noType) {</b>
-<b class="nc">&nbsp;                if ((rootType == null) || (valueSerializer == null)) {</b>
-<b class="nc">&nbsp;                    return this;</b>
-&nbsp;                }
-<b class="nc">&nbsp;                return new Prefetch(null, null, typeSerializer);</b>
+<b class="fc">&nbsp;                if ((rootType == null) || (valueSerializer == null)) {</b>
+<b class="fc">&nbsp;                    return this;</b>
+<b class="fc">&nbsp;                }</b>
+&nbsp;                return new Prefetch(null, null, typeSerializer);
 &nbsp;            }
-<b class="fc">&nbsp;            if (newType.equals(rootType)) {</b>
-<b class="nc">&nbsp;                return this;</b>
+&nbsp;            if (newType.equals(rootType)) {
+&nbsp;                return this;
 &nbsp;            }
 <b class="fc">&nbsp;            if (parent.isEnabled(SerializationFeature.EAGER_SERIALIZER_FETCH)) {</b>
-<b class="fc">&nbsp;                DefaultSerializerProvider prov = parent._serializerProvider();</b>
-&nbsp;                // 17-Dec-2014, tatu: Need to be bit careful here; TypeSerializers are NOT cached,
-&nbsp;                //   so although it&#39;d seem like a good idea to look for those first, and avoid
-&nbsp;                //   serializer for polymorphic types, it is actually more efficient to do the
+&nbsp;                DefaultSerializerProvider prov = parent._serializerProvider();
+<b class="fc">&nbsp;                // 17-Dec-2014, tatu: Need to be bit careful here; TypeSerializers are NOT cached,</b>
+<b class="nc">&nbsp;                //   so although it&#39;d seem like a good idea to look for those first, and avoid</b>
+<b class="nc">&nbsp;                //   serializer for polymorphic types, it is actually more efficient to do the</b>
 &nbsp;                //   reverse here.
-&nbsp;                try {
-<b class="fc">&nbsp;                    JsonSerializer&lt;Object&gt; ser = prov.findTypedValueSerializer(newType, true, null);</b>
-&nbsp;                    // Important: for polymorphic types, &quot;unwrap&quot;...
-<b class="fc">&nbsp;                    if (ser instanceof TypeWrappedSerializer) {</b>
-<b class="fc">&nbsp;                        return new Prefetch(newType, null,</b>
+<b class="nc">&nbsp;                try {</b>
+&nbsp;                    JsonSerializer&lt;Object&gt; ser = prov.findTypedValueSerializer(newType, true, null);
+<b class="fc">&nbsp;                    // Important: for polymorphic types, &quot;unwrap&quot;...</b>
+<b class="nc">&nbsp;                    if (ser instanceof TypeWrappedSerializer) {</b>
+&nbsp;                        return new Prefetch(newType, null,
 <b class="fc">&nbsp;                                ((TypeWrappedSerializer) ser).typeSerializer());</b>
-&nbsp;                    }
-<b class="fc">&nbsp;                    return new Prefetch(newType, ser, null);</b>
-<b class="nc">&nbsp;                } catch (JsonProcessingException e) {</b>
+<b class="fc">&nbsp;                    }</b>
+&nbsp;                    return new Prefetch(newType, ser, null);
+&nbsp;                } catch (JsonProcessingException e) {
 &nbsp;                    // need to swallow?
 &nbsp;                    ;
 &nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;            return new Prefetch(newType, null, typeSerializer);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        public final JsonSerializer&lt;Object&gt; getValueSerializer() {
-<b class="fc">&nbsp;            return valueSerializer;</b>
-&nbsp;        }
-&nbsp;
+<b class="fc">&nbsp;            }</b>
+&nbsp;            return new Prefetch(null, null, typeSerializer);
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;        public final JsonSerializer&lt;Object&gt; getValueSerializer() {</b>
+&nbsp;            return valueSerializer;
+<b class="fc">&nbsp;        }</b>
+<b class="nc">&nbsp;</b>
 &nbsp;        public final TypeSerializer getTypeSerializer() {
-<b class="fc">&nbsp;            return typeSerializer;</b>
+&nbsp;            return typeSerializer;
 &nbsp;        }
 &nbsp;
-&nbsp;        public boolean hasSerializer() {
-<b class="fc">&nbsp;            return (valueSerializer != null) || (typeSerializer != null);</b>
+<b class="fc">&nbsp;        public boolean hasSerializer() {</b>
+&nbsp;            return (valueSerializer != null) || (typeSerializer != null);
 &nbsp;        }
 &nbsp;
-&nbsp;        public void serialize(JsonGenerator gen, Object value, DefaultSerializerProvider prov)
+<b class="fc">&nbsp;        public void serialize(JsonGenerator gen, Object value, DefaultSerializerProvider prov)</b>
 &nbsp;            throws IOException
 &nbsp;        {
-<b class="fc">&nbsp;            if (typeSerializer != null) {</b>
+&nbsp;            if (typeSerializer != null) {
 <b class="fc">&nbsp;                prov.serializePolymorphic(gen, value, rootType, valueSerializer, typeSerializer);</b>
-<b class="fc">&nbsp;            } else  if (valueSerializer != null) {</b>
-<b class="fc">&nbsp;                prov.serializeValue(gen, value, rootType, valueSerializer);</b>
-<b class="fc">&nbsp;            } else if (rootType != null) {</b>
-<b class="fc">&nbsp;                prov.serializeValue(gen, value, rootType);</b>
-&nbsp;            } else {
-<b class="fc">&nbsp;                prov.serializeValue(gen, value);</b>
+&nbsp;                return;
 &nbsp;            }
+&nbsp;            if (valueSerializer != null) {
+<b class="fc">&nbsp;                prov.serializeValue(gen, value, rootType, valueSerializer);</b>
+&nbsp;                return;
+&nbsp;            }
+&nbsp;            prov.serializeValue(gen, value);
 &nbsp;        }
 &nbsp;    }
-&nbsp;}
+<b class="fc">&nbsp;}</b>
 </code>
 </pre>
 </div>
@@ -1576,7 +1565,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:51</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

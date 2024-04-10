@@ -90,7 +90,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;/**
 &nbsp; * Special bogus &quot;serializer&quot; that will throw
-&nbsp; * {@link JsonMappingException} if its {@link #serialize}
+&nbsp; * {@link JsonGenerationException} if its {@link #serialize}
 &nbsp; * gets invoked. Most commonly registered as handler for unknown types,
 &nbsp; * as well as for catching unintended usage (like trying to use null
 &nbsp; * as Map/Object key).
@@ -109,7 +109,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    @Override
 &nbsp;    public void serialize(Object value, JsonGenerator g, SerializerProvider provider) throws IOException
 &nbsp;    {
-<b class="fc">&nbsp;        provider.reportMappingProblem(_msg);</b>
+<b class="fc">&nbsp;        throw new JsonGenerationException(_msg, g);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    @Override
@@ -146,7 +146,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

@@ -174,7 +174,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    {
 <b class="fc">&nbsp;        final AnnotationIntrospector ai = config.getAnnotationIntrospector();</b>
 <b class="fc">&nbsp;        HashMap&lt;NamedType, NamedType&gt; subtypes = new HashMap&lt;NamedType, NamedType&gt;();</b>
-&nbsp;        // then consider registered subtypes (which have precedence over annotations)
+&nbsp;        // [JACKSON-257] then consider registered subtypes (which have precedence over annotations)
 <b class="fc">&nbsp;        if (_registeredSubtypes != null) {</b>
 <b class="fc">&nbsp;            Class&lt;?&gt; rawBase = type.getRawType();</b>
 <b class="fc">&nbsp;            for (NamedType subtype : _registeredSubtypes) {</b>
@@ -260,18 +260,40 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;
 &nbsp;    /*
 &nbsp;    /**********************************************************
-&nbsp;    /* Internal methods
+&nbsp;    /* Deprecated method overrides
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
+&nbsp;    @Override
+&nbsp;    @Deprecated
+&nbsp;    public Collection&lt;NamedType&gt; collectAndResolveSubtypes(AnnotatedMember property,
+&nbsp;        MapperConfig&lt;?&gt; config, AnnotationIntrospector ai, JavaType baseType)
+&nbsp;    {
+&nbsp;        return collectAndResolveSubtypesByClass(config, property, baseType);
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    @Override</b>
+<b class="fc">&nbsp;    @Deprecated</b>
+<b class="fc">&nbsp;    public Collection&lt;NamedType&gt; collectAndResolveSubtypes(AnnotatedClass type,</b>
+<b class="fc">&nbsp;            MapperConfig&lt;?&gt; config, AnnotationIntrospector ai)</b>
+&nbsp;    {
+&nbsp;        return collectAndResolveSubtypesByClass(config, type);
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    /*</b>
+&nbsp;    /**********************************************************
+<b class="fc">&nbsp;    /* Internal methods</b>
+<b class="fc">&nbsp;    /**********************************************************</b>
+<b class="fc">&nbsp;     */</b>
+<b class="fc">&nbsp;</b>
 &nbsp;    /**
 &nbsp;     * Method called to find subtypes for a specific type (class), using
 &nbsp;     * type (class) as the unique key (in case of conflicts).
 &nbsp;     */
 &nbsp;    protected void _collectAndResolve(AnnotatedClass annotatedType, NamedType namedType,
-&nbsp;            MapperConfig&lt;?&gt; config, AnnotationIntrospector ai,
-&nbsp;            HashMap&lt;NamedType, NamedType&gt; collectedSubtypes)
-&nbsp;    {
+<b class="fc">&nbsp;            MapperConfig&lt;?&gt; config, AnnotationIntrospector ai,</b>
+<b class="fc">&nbsp;            HashMap&lt;NamedType, NamedType&gt; collectedSubtypes)</b>
+<b class="fc">&nbsp;    {</b>
 <b class="fc">&nbsp;        if (!namedType.hasName()) {</b>
 <b class="fc">&nbsp;            String name = ai.findTypeName(annotatedType);</b>
 <b class="fc">&nbsp;            if (name != null) {</b>
@@ -280,55 +302,55 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;        }
 &nbsp;
 &nbsp;        // First things first: is base type itself included?
-<b class="fc">&nbsp;        if (collectedSubtypes.containsKey(namedType)) {</b>
+&nbsp;        if (collectedSubtypes.containsKey(namedType)) {
 &nbsp;            // if so, no recursion; however, may need to update name?
-<b class="fc">&nbsp;            if (namedType.hasName()) {</b>
-<b class="fc">&nbsp;                NamedType prev = collectedSubtypes.get(namedType);</b>
-<b class="fc">&nbsp;                if (!prev.hasName()) {</b>
-<b class="fc">&nbsp;                    collectedSubtypes.put(namedType, namedType);</b>
+&nbsp;            if (namedType.hasName()) {
+&nbsp;                NamedType prev = collectedSubtypes.get(namedType);
+&nbsp;                if (!prev.hasName()) {
+&nbsp;                    collectedSubtypes.put(namedType, namedType);
 &nbsp;                }
-&nbsp;            }
-&nbsp;            return;
-&nbsp;        }
-&nbsp;        // if it wasn&#39;t, add and check subtypes recursively
+<b class="fc">&nbsp;            }</b>
+<b class="fc">&nbsp;            return;</b>
+<b class="fc">&nbsp;        }</b>
+<b class="fc">&nbsp;        // if it wasn&#39;t, add and check subtypes recursively</b>
 <b class="fc">&nbsp;        collectedSubtypes.put(namedType, namedType);</b>
-<b class="fc">&nbsp;        Collection&lt;NamedType&gt; st = ai.findSubtypes(annotatedType);</b>
-<b class="fc">&nbsp;        if (st != null &amp;&amp; !st.isEmpty()) {</b>
+&nbsp;        Collection&lt;NamedType&gt; st = ai.findSubtypes(annotatedType);
+&nbsp;        if (st != null &amp;&amp; !st.isEmpty()) {
 <b class="fc">&nbsp;            for (NamedType subtype : st) {</b>
 <b class="fc">&nbsp;                AnnotatedClass subtypeClass = AnnotatedClass.constructWithoutSuperTypes(subtype.getType(), config);</b>
-<b class="fc">&nbsp;                _collectAndResolve(subtypeClass, subtype, config, ai, collectedSubtypes);</b>
-<b class="fc">&nbsp;            }</b>
+&nbsp;                _collectAndResolve(subtypeClass, subtype, config, ai, collectedSubtypes);
+&nbsp;            }
 &nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method called to find subtypes for a specific type (class), using
-&nbsp;     * type id as the unique key (in case of conflicts).
-&nbsp;     */
-&nbsp;    protected void _collectAndResolveByTypeId(AnnotatedClass annotatedType, NamedType namedType,
+<b class="fc">&nbsp;    }</b>
+<b class="fc">&nbsp;</b>
+<b class="fc">&nbsp;    /**</b>
+<b class="fc">&nbsp;     * Method called to find subtypes for a specific type (class), using</b>
+<b class="fc">&nbsp;     * type id as the unique key (in case of conflicts).</b>
+<b class="fc">&nbsp;     */</b>
+<b class="fc">&nbsp;    protected void _collectAndResolveByTypeId(AnnotatedClass annotatedType, NamedType namedType,</b>
 &nbsp;            MapperConfig&lt;?&gt; config,
 &nbsp;            Set&lt;Class&lt;?&gt;&gt; typesHandled, Map&lt;String,NamedType&gt; byName)
 &nbsp;    {
-<b class="fc">&nbsp;        final AnnotationIntrospector ai = config.getAnnotationIntrospector();</b>
-<b class="fc">&nbsp;        if (!namedType.hasName()) {</b>
-<b class="fc">&nbsp;            String name = ai.findTypeName(annotatedType);</b>
-<b class="fc">&nbsp;            if (name != null) {</b>
-<b class="fc">&nbsp;                namedType = new NamedType(namedType.getType(), name);</b>
+&nbsp;        final AnnotationIntrospector ai = config.getAnnotationIntrospector();
+&nbsp;        if (!namedType.hasName()) {
+&nbsp;            String name = ai.findTypeName(annotatedType);
+&nbsp;            if (name != null) {
+&nbsp;                namedType = new NamedType(namedType.getType(), name);
 &nbsp;            }
 &nbsp;        }
-<b class="fc">&nbsp;        if (namedType.hasName()) {</b>
+&nbsp;        if (namedType.hasName()) {
 <b class="fc">&nbsp;            byName.put(namedType.getName(), namedType);</b>
 &nbsp;        }
 &nbsp;
 &nbsp;        // only check subtypes if this type hadn&#39;t yet been handled
-<b class="fc">&nbsp;        if (typesHandled.add(namedType.getType())) {</b>
+&nbsp;        if (typesHandled.add(namedType.getType())) {
 <b class="fc">&nbsp;            Collection&lt;NamedType&gt; st = ai.findSubtypes(annotatedType);</b>
 <b class="fc">&nbsp;            if (st != null &amp;&amp; !st.isEmpty()) {</b>
 <b class="fc">&nbsp;                for (NamedType subtype : st) {</b>
 <b class="fc">&nbsp;                    AnnotatedClass subtypeClass = AnnotatedClass.constructWithoutSuperTypes(subtype.getType(), config);</b>
 <b class="fc">&nbsp;                    _collectAndResolveByTypeId(subtypeClass, subtype, config, typesHandled, byName);</b>
 <b class="fc">&nbsp;                }</b>
-&nbsp;            }
+<b class="fc">&nbsp;            }</b>
 &nbsp;        }
 &nbsp;    }
 &nbsp;
@@ -339,18 +361,18 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    protected Collection&lt;NamedType&gt; _combineNamedAndUnnamed(Set&lt;Class&lt;?&gt;&gt; typesHandled,
 &nbsp;            Map&lt;String,NamedType&gt; byName)
 &nbsp;    {
-<b class="fc">&nbsp;        ArrayList&lt;NamedType&gt; result = new ArrayList&lt;NamedType&gt;(byName.values());</b>
+&nbsp;        ArrayList&lt;NamedType&gt; result = new ArrayList&lt;NamedType&gt;(byName.values());
 &nbsp;
 &nbsp;        // Ok, so... we will figure out which classes have no explicitly assigned name,
 &nbsp;        // by removing Classes from Set. And for remaining classes, add an anonymous
 &nbsp;        // marker
-<b class="fc">&nbsp;        for (NamedType t : byName.values()) {</b>
-<b class="fc">&nbsp;            typesHandled.remove(t.getType());</b>
-<b class="fc">&nbsp;        }</b>
-<b class="fc">&nbsp;        for (Class&lt;?&gt; cls : typesHandled) {</b>
-<b class="fc">&nbsp;            result.add(new NamedType(cls));</b>
-<b class="fc">&nbsp;        }</b>
-<b class="fc">&nbsp;        return result;</b>
+&nbsp;        for (NamedType t : byName.values()) {
+&nbsp;            typesHandled.remove(t.getType());
+&nbsp;        }
+&nbsp;        for (Class&lt;?&gt; cls : typesHandled) {
+&nbsp;            result.add(new NamedType(cls));
+&nbsp;        }
+&nbsp;        return result;
 &nbsp;    }
 &nbsp;}
 </code>
@@ -376,7 +398,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

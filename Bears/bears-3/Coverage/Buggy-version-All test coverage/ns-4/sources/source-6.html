@@ -60,10 +60,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    90.7%
+    90.1%
   </span>
   <span class="absValue">
-    (294/324)
+    (292/324)
   </span>
 </td>
 </tr>
@@ -294,8 +294,8 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;         */
 &nbsp;        try {
 <b class="fc">&nbsp;            valueInstantiator = findValueInstantiator(ctxt, beanDesc);</b>
-<b class="fc">&nbsp;        } catch (NoClassDefFoundError error) {</b>
-<b class="fc">&nbsp;            return new ErrorThrowingDeserializer(error);</b>
+<b class="nc">&nbsp;        } catch (NoClassDefFoundError error) {</b>
+<b class="nc">&nbsp;            return new ErrorThrowingDeserializer(error);</b>
 <b class="fc">&nbsp;        }</b>
 <b class="fc">&nbsp;        BeanDeserializerBuilder builder = constructBeanDeserializerBuilder(ctxt, beanDesc);</b>
 <b class="fc">&nbsp;        builder.setValueInstantiator(valueInstantiator);</b>
@@ -942,7 +942,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:50</div>
+    <div style="float:right;">generated on 2024-04-09 22:17</div>
 </div>
 </body>
 </html>

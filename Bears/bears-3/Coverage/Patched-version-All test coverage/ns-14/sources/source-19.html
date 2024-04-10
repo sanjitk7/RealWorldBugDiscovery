@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > TokenBuffer</title>
+  <title>Coverage Report > StdDateFormat</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,12 +22,15 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.util</a>
 </div>
 
-<h1>Coverage Summary for Class: TokenBuffer (com.fasterxml.jackson.databind.util)</h1>
+<h1>Coverage Summary for Class: StdDateFormat (com.fasterxml.jackson.databind.util)</h1>
 
 <table class="coverageStats">
-
 <tr>
   <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
 <th class="coverageStat 
 ">
   Method, %
@@ -38,26 +41,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 </th>
 </tr>
 <tr>
-  <td class="name">TokenBuffer</td>
-<td class="coverageStat">
-  <span class="percent">
-    56.4%
-  </span>
-  <span class="absValue">
-    (44/78)
-  </span>
-</td>
-<td class="coverageStat">
-  <span class="percent">
-    58.3%
-  </span>
-  <span class="absValue">
-    (215/369)
-  </span>
-</td>
-</tr>
-  <tr>
-    <td class="name">TokenBuffer$1</td>
+  <td class="name">StdDateFormat</td>
 <td class="coverageStat">
   <span class="percent">
     100%
@@ -68,70 +52,22 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    100%
+    67.9%
   </span>
   <span class="absValue">
-    (2/2)
-  </span>
-</td>
-  </tr>
-  <tr>
-    <td class="name">TokenBuffer$Parser</td>
-<td class="coverageStat">
-  <span class="percent">
-    76.3%
-  </span>
-  <span class="absValue">
-    (29/38)
+    (19/28)
   </span>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    65.2%
+    76.4%
   </span>
   <span class="absValue">
-    (101/155)
-  </span>
-</td>
-  </tr>
-  <tr>
-    <td class="name">TokenBuffer$Segment</td>
-<td class="coverageStat">
-  <span class="percent">
-    37.5%
-  </span>
-  <span class="absValue">
-    (9/24)
-  </span>
-</td>
-<td class="coverageStat">
-  <span class="percent">
-    34.7%
-  </span>
-  <span class="absValue">
-    (33/95)
-  </span>
-</td>
-  </tr>
-<tr>
-  <td class="name"><strong>Total</strong></td>
-<td class="coverageStat">
-  <span class="percent">
-    58.9%
-  </span>
-  <span class="absValue">
-    (83/141)
-  </span>
-</td>
-<td class="coverageStat">
-  <span class="percent">
-    56.5%
-  </span>
-  <span class="absValue">
-    (351/621)
+    (149/195)
   </span>
 </td>
 </tr>
+
 </table>
 
 <br/>
@@ -141,1921 +77,592 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.util;
 &nbsp;
-&nbsp;import java.io.*;
-&nbsp;import java.math.BigDecimal;
-&nbsp;import java.math.BigInteger;
-&nbsp;import java.util.TreeMap;
+&nbsp;import java.text.DateFormat;
+&nbsp;import java.text.FieldPosition;
+&nbsp;import java.text.ParseException;
+&nbsp;import java.text.ParsePosition;
+&nbsp;import java.text.SimpleDateFormat;
+&nbsp;import java.util.*;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.core.*;
-&nbsp;import com.fasterxml.jackson.core.base.ParserMinimalBase;
-&nbsp;import com.fasterxml.jackson.core.json.JsonReadContext;
-&nbsp;import com.fasterxml.jackson.core.json.JsonWriteContext;
-&nbsp;import com.fasterxml.jackson.core.util.ByteArrayBuilder;
-&nbsp;import com.fasterxml.jackson.databind.*;
+&nbsp;import com.fasterxml.jackson.core.io.NumberInput;
 &nbsp;
 &nbsp;/**
-&nbsp; * Utility class used for efficient storage of {@link JsonToken}
-&nbsp; * sequences, needed for temporary buffering.
-&nbsp; * Space efficient for different sequence lengths (especially so for smaller
-&nbsp; * ones; but not significantly less efficient for larger), highly efficient
-&nbsp; * for linear iteration and appending. Implemented as segmented/chunked
-&nbsp; * linked list of tokens; only modifications are via appends.
-&nbsp; *&lt;p&gt;
-&nbsp; * Note that before version 2.0, this class was located in the &quot;core&quot;
-&nbsp; * bundle, not data-binding; but since it was only used by data binding,
-&nbsp; * was moved here to reduce size of core package
+&nbsp; * Default {@link DateFormat} implementation used by standard Date
+&nbsp; * serializers and deserializers. For serialization defaults to using
+&nbsp; * an ISO-8601 compliant format (format String &quot;yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ&quot;)
+&nbsp; * and for deserialization, both ISO-8601 and RFC-1123.
 &nbsp; */
-&nbsp;public class TokenBuffer
-&nbsp;/* Won&#39;t use JsonGeneratorBase, to minimize overhead for validity
-&nbsp; * checking
-&nbsp; */
-&nbsp;    extends JsonGenerator
+&nbsp;@SuppressWarnings(&quot;serial&quot;)
+&nbsp;public class StdDateFormat
+&nbsp;    extends DateFormat
 &nbsp;{
-<b class="fc">&nbsp;    protected final static int DEFAULT_GENERATOR_FEATURES = JsonGenerator.Feature.collectDefaults();</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Configuration
-&nbsp;    /**********************************************************
+&nbsp;    /* TODO !!! 24-Nov-2009, tatu: Should rewrite this class:
+&nbsp;     * JDK date parsing is awfully brittle, and ISO-8601 is quite
+&nbsp;     * permissive. The two don&#39;t mix, need to write a better one.
 &nbsp;     */
+&nbsp;    // 02-Oct-2014, tatu: Alas. While spit&#39;n&#39;polished a few times, still
+&nbsp;    //   not really robust. But still in use.
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Object codec to use for stream-based object
-&nbsp;     * conversion through parser/generator interfaces. If null,
-&nbsp;     * such methods can not be used.
+&nbsp;     * Defines a commonly used date format that conforms
+&nbsp;     * to ISO-8601 date formatting standard, when it includes basic undecorated
+&nbsp;     * timezone definition
 &nbsp;     */
-&nbsp;    protected ObjectCodec _objectCodec;
+&nbsp;    public final static String DATE_FORMAT_STR_ISO8601 = &quot;yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ&quot;;
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Bit flag composed of bits that indicate which
-&nbsp;     * {@link com.fasterxml.jackson.core.JsonGenerator.Feature}s
-&nbsp;     * are enabled.
+&nbsp;     * Same as &#39;regular&#39; 8601, but handles &#39;Z&#39; as an alias for &quot;+0000&quot;
+&nbsp;     * (or &quot;UTC&quot;)
+&nbsp;     */
+&nbsp;    protected final static String DATE_FORMAT_STR_ISO8601_Z = &quot;yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSS&#39;Z&#39;&quot;;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * ISO-8601 with just the Date part, no time
+&nbsp;     */
+&nbsp;    protected final static String DATE_FORMAT_STR_PLAIN = &quot;yyyy-MM-dd&quot;;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * This constant defines the date format specified by
+&nbsp;     * RFC 1123 / RFC 822.
+&nbsp;     */
+&nbsp;    protected final static String DATE_FORMAT_STR_RFC1123 = &quot;EEE, dd MMM yyyy HH:mm:ss zzz&quot;;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * For error messages we&#39;ll also need a list of all formats.
+&nbsp;     */
+<b class="fc">&nbsp;    protected final static String[] ALL_FORMATS = new String[] {</b>
+&nbsp;        DATE_FORMAT_STR_ISO8601,
+&nbsp;        DATE_FORMAT_STR_ISO8601_Z,
+&nbsp;        DATE_FORMAT_STR_RFC1123,
+&nbsp;        DATE_FORMAT_STR_PLAIN
+&nbsp;    };
+&nbsp;
+&nbsp;    /**
+&nbsp;     * By default we use UTC for everything, with Jackson 2.7 and later
+&nbsp;     * (2.6 and earlier relied on GMT)
+&nbsp;     */
+&nbsp;    private final static TimeZone DEFAULT_TIMEZONE;
+&nbsp;    static {
+<b class="fc">&nbsp;        DEFAULT_TIMEZONE = TimeZone.getTimeZone(&quot;UTC&quot;); // since 2.7</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    private final static Locale DEFAULT_LOCALE = Locale.US;</b>
+&nbsp;    
+&nbsp;    protected final static DateFormat DATE_FORMAT_RFC1123;
+&nbsp;
+&nbsp;    protected final static DateFormat DATE_FORMAT_ISO8601;
+&nbsp;    protected final static DateFormat DATE_FORMAT_ISO8601_Z;
+&nbsp;
+&nbsp;    protected final static DateFormat DATE_FORMAT_PLAIN;
+&nbsp;
+&nbsp;    /* Let&#39;s construct &quot;blueprint&quot; date format instances: can not be used
+&nbsp;     * as is, due to thread-safety issues, but can be used for constructing
+&nbsp;     * actual instances more cheaply (avoids re-parsing).
+&nbsp;     */
+&nbsp;    static {
+&nbsp;        /* Another important thing: let&#39;s force use of default timezone for
+&nbsp;         * baseline DataFormat objects
+&nbsp;         */
+&nbsp;
+<b class="fc">&nbsp;        DATE_FORMAT_RFC1123 = new SimpleDateFormat(DATE_FORMAT_STR_RFC1123, DEFAULT_LOCALE);</b>
+<b class="fc">&nbsp;        DATE_FORMAT_RFC1123.setTimeZone(DEFAULT_TIMEZONE);</b>
+<b class="fc">&nbsp;        DATE_FORMAT_ISO8601 = new SimpleDateFormat(DATE_FORMAT_STR_ISO8601, DEFAULT_LOCALE);</b>
+<b class="fc">&nbsp;        DATE_FORMAT_ISO8601.setTimeZone(DEFAULT_TIMEZONE);</b>
+<b class="fc">&nbsp;        DATE_FORMAT_ISO8601_Z = new SimpleDateFormat(DATE_FORMAT_STR_ISO8601_Z, DEFAULT_LOCALE);</b>
+<b class="fc">&nbsp;        DATE_FORMAT_ISO8601_Z.setTimeZone(DEFAULT_TIMEZONE);</b>
+<b class="fc">&nbsp;        DATE_FORMAT_PLAIN = new SimpleDateFormat(DATE_FORMAT_STR_PLAIN, DEFAULT_LOCALE);</b>
+<b class="fc">&nbsp;        DATE_FORMAT_PLAIN.setTimeZone(DEFAULT_TIMEZONE);</b>
+&nbsp;    }
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * A singleton instance can be used for cloning purposes, as a blueprint of sorts.
+&nbsp;     */
+<b class="fc">&nbsp;    public final static StdDateFormat instance = new StdDateFormat();</b>
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * Caller may want to explicitly override timezone to use; if so,
+&nbsp;     * we will have non-null value here.
+&nbsp;     */
+&nbsp;    protected transient TimeZone _timezone;
+&nbsp;
+&nbsp;    protected final Locale _locale;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Explicit override for leniency, if specified.
 &nbsp;     *&lt;p&gt;
-&nbsp;     * NOTE: most features have no effect on this class
-&nbsp;     */
-&nbsp;    protected int _generatorFeatures;
-&nbsp;
-&nbsp;    protected boolean _closed;
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.3
-&nbsp;     */
-&nbsp;    protected boolean _hasNativeTypeIds;
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.3
-&nbsp;     */
-&nbsp;    protected boolean _hasNativeObjectIds;
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.3
-&nbsp;     */
-&nbsp;    protected boolean _mayHaveNativeIds;
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Flag set during construction, if use of {@link BigDecimal} is to be forced
-&nbsp;     * on all floating-point values.
+&nbsp;     * Can not be `final` because {@link #setLenient(boolean)} returns
+&nbsp;     * `void`.
 &nbsp;     *
 &nbsp;     * @since 2.7
 &nbsp;     */
-&nbsp;    protected boolean _forceBigDecimal;
+&nbsp;    protected Boolean _lenient;
 &nbsp;    
+&nbsp;    protected transient DateFormat _formatRFC1123;
+&nbsp;    protected transient DateFormat _formatISO8601;
+&nbsp;    protected transient DateFormat _formatISO8601_z;
+&nbsp;    protected transient DateFormat _formatPlain;
+&nbsp;
 &nbsp;    /*
 &nbsp;    /**********************************************************
-&nbsp;    /* Token buffering state
+&nbsp;    /* Life cycle, accessing singleton &quot;standard&quot; formats
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
-&nbsp;    /**
-&nbsp;     * First segment, for contents this buffer has
-&nbsp;     */
-&nbsp;    protected Segment _first;
+<b class="fc">&nbsp;    public StdDateFormat() {</b>
+<b class="fc">&nbsp;        _locale = DEFAULT_LOCALE;</b>
+&nbsp;    }
 &nbsp;
-&nbsp;    /**
-&nbsp;     * Last segment of this buffer, one that is used
-&nbsp;     * for appending more tokens
-&nbsp;     */
-&nbsp;    protected Segment _last;
+&nbsp;    @Deprecated // since 2.7
+<b class="nc">&nbsp;    public StdDateFormat(TimeZone tz, Locale loc) {</b>
+<b class="nc">&nbsp;        _timezone = tz;</b>
+<b class="nc">&nbsp;        _locale = loc;</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    protected StdDateFormat(TimeZone tz, Locale loc, Boolean lenient) {</b>
+<b class="fc">&nbsp;        _timezone = tz;</b>
+<b class="fc">&nbsp;        _locale = loc;</b>
+<b class="fc">&nbsp;        _lenient = lenient;</b>
+&nbsp;    }
+&nbsp;    
+&nbsp;    public static TimeZone getDefaultTimeZone() {
+<b class="nc">&nbsp;        return DEFAULT_TIMEZONE;</b>
+&nbsp;    }
 &nbsp;    
 &nbsp;    /**
-&nbsp;     * Offset within last segment, 
+&nbsp;     * Method used for creating a new instance with specified timezone;
+&nbsp;     * if no timezone specified, defaults to the default timezone (UTC).
 &nbsp;     */
-&nbsp;    protected int _appendAt;
+&nbsp;    public StdDateFormat withTimeZone(TimeZone tz) {
+<b class="fc">&nbsp;        if (tz == null) {</b>
+<b class="nc">&nbsp;            tz = DEFAULT_TIMEZONE;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if ((tz == _timezone) || tz.equals(_timezone)) {</b>
+<b class="nc">&nbsp;            return this;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return new StdDateFormat(tz, _locale, _lenient);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public StdDateFormat withLocale(Locale loc) {
+<b class="nc">&nbsp;        if (loc.equals(_locale)) {</b>
+<b class="nc">&nbsp;            return this;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return new StdDateFormat(_timezone, loc, _lenient);</b>
+&nbsp;    }
+&nbsp;    
+&nbsp;    @Override
+&nbsp;    public StdDateFormat clone() {
+&nbsp;        /* Although there is that much state to share, we do need to
+&nbsp;         * orchestrate a bit, mostly since timezones may be changed
+&nbsp;         */
+<b class="fc">&nbsp;        return new StdDateFormat(_timezone, _locale, _lenient);</b>
+&nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * If native type ids supported, this is the id for following
-&nbsp;     * value (or first token of one) to be written.
-&nbsp;     */
-&nbsp;    protected Object _typeId;
-&nbsp;
-&nbsp;    /**
-&nbsp;     * If native object ids supported, this is the id for following
-&nbsp;     * value (or first token of one) to be written.
-&nbsp;     */
-&nbsp;    protected Object _objectId;
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Do we currently have a native type or object id buffered?
-&nbsp;     */
-<b class="fc">&nbsp;    protected boolean _hasNativeId = false;</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Output state
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    protected JsonWriteContext _writeContext;
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Life-cycle
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @param codec Object codec to use for stream-based object
-&nbsp;     *   conversion through parser/generator interfaces. If null,
-&nbsp;     *   such methods can not be used.
-&nbsp;     *   
-&nbsp;     * @deprecated since 2.3 preferred variant is one that takes {@link JsonParser} or additional boolean parameter.
+&nbsp;     * @deprecated Since 2.4; use variant that takes Locale
 &nbsp;     */
 &nbsp;    @Deprecated
-&nbsp;    public TokenBuffer(ObjectCodec codec) {
-<b class="nc">&nbsp;        this(codec, false);</b>
+&nbsp;    public static DateFormat getISO8601Format(TimeZone tz) {
+<b class="nc">&nbsp;        return getISO8601Format(tz, DEFAULT_LOCALE);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * @param codec Object codec to use for stream-based object
-&nbsp;     *   conversion through parser/generator interfaces. If null,
-&nbsp;     *   such methods can not be used.
-&nbsp;     * @param hasNativeIds Whether resulting {@link JsonParser} (if created)
-&nbsp;     *   is considered to support native type and object ids
-&nbsp;     */
-&nbsp;    public TokenBuffer(ObjectCodec codec, boolean hasNativeIds)
-<b class="fc">&nbsp;    {</b>
-<b class="fc">&nbsp;        _objectCodec = codec;</b>
-<b class="fc">&nbsp;        _generatorFeatures = DEFAULT_GENERATOR_FEATURES;</b>
-<b class="fc">&nbsp;        _writeContext = JsonWriteContext.createRootContext(null);</b>
-&nbsp;        // at first we have just one segment
-<b class="fc">&nbsp;        _first = _last = new Segment();</b>
-<b class="fc">&nbsp;        _appendAt = 0;</b>
-<b class="fc">&nbsp;        _hasNativeTypeIds = hasNativeIds;</b>
-<b class="fc">&nbsp;        _hasNativeObjectIds = hasNativeIds;</b>
-&nbsp;
-<b class="fc">&nbsp;        _mayHaveNativeIds = _hasNativeTypeIds | _hasNativeObjectIds;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.3
-&nbsp;     */
-&nbsp;    public TokenBuffer(JsonParser p) {
-<b class="fc">&nbsp;        this(p, null);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.7
-&nbsp;     */
-&nbsp;    public TokenBuffer(JsonParser p, DeserializationContext ctxt)
-<b class="fc">&nbsp;    {</b>
-<b class="fc">&nbsp;        _objectCodec = p.getCodec();</b>
-<b class="fc">&nbsp;        _generatorFeatures = DEFAULT_GENERATOR_FEATURES;</b>
-<b class="fc">&nbsp;        _writeContext = JsonWriteContext.createRootContext(null);</b>
-&nbsp;        // at first we have just one segment
-<b class="fc">&nbsp;        _first = _last = new Segment();</b>
-<b class="fc">&nbsp;        _appendAt = 0;</b>
-<b class="fc">&nbsp;        _hasNativeTypeIds = p.canReadTypeId();</b>
-<b class="fc">&nbsp;        _hasNativeObjectIds = p.canReadObjectId();</b>
-<b class="fc">&nbsp;        _mayHaveNativeIds = _hasNativeTypeIds | _hasNativeObjectIds;</b>
-<b class="fc">&nbsp;        _forceBigDecimal = (ctxt == null) ? false</b>
-<b class="fc">&nbsp;                : ctxt.isEnabled(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * @since 2.7
-&nbsp;     */
-&nbsp;    public TokenBuffer forceUseOfBigDecimal(boolean b) {
-<b class="fc">&nbsp;        _forceBigDecimal = b;</b>
-<b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public Version version() {
-<b class="nc">&nbsp;        return com.fasterxml.jackson.databind.cfg.PackageVersion.VERSION;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Method used to create a {@link JsonParser} that can read contents
-&nbsp;     * stored in this buffer. Will use default &lt;code&gt;_objectCodec&lt;/code&gt; for
-&nbsp;     * object conversions.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note: instances are not synchronized, that is, they are not thread-safe
-&nbsp;     * if there are concurrent appends to the underlying buffer.
+&nbsp;     * Method for getting a non-shared DateFormat instance
+&nbsp;     * that uses specified timezone and can handle simple ISO-8601
+&nbsp;     * compliant date format.
 &nbsp;     * 
-&nbsp;     * @return Parser that can be used for reading contents stored in this buffer
+&nbsp;     * @since 2.4
 &nbsp;     */
-&nbsp;    public JsonParser asParser()
-&nbsp;    {
-<b class="fc">&nbsp;        return asParser(_objectCodec);</b>
+&nbsp;    public static DateFormat getISO8601Format(TimeZone tz, Locale loc) {
+<b class="fc">&nbsp;        return _cloneFormat(DATE_FORMAT_ISO8601, DATE_FORMAT_STR_ISO8601, tz, loc, null);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Method used to create a {@link JsonParser} that can read contents
-&nbsp;     * stored in this buffer.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note: instances are not synchronized, that is, they are not thread-safe
-&nbsp;     * if there are concurrent appends to the underlying buffer.
-&nbsp;     *
-&nbsp;     * @param codec Object codec to use for stream-based object
-&nbsp;     *   conversion through parser/generator interfaces. If null,
-&nbsp;     *   such methods can not be used.
+&nbsp;     * Method for getting a non-shared DateFormat instance
+&nbsp;     * that uses specific timezone and can handle RFC-1123
+&nbsp;     * compliant date format.
 &nbsp;     * 
-&nbsp;     * @return Parser that can be used for reading contents stored in this buffer
+&nbsp;     * @since 2.4
 &nbsp;     */
-&nbsp;    public JsonParser asParser(ObjectCodec codec)
-&nbsp;    {
-<b class="fc">&nbsp;        return new Parser(_first, codec, _hasNativeTypeIds, _hasNativeObjectIds);</b>
+&nbsp;    public static DateFormat getRFC1123Format(TimeZone tz, Locale loc) {
+<b class="fc">&nbsp;        return _cloneFormat(DATE_FORMAT_RFC1123, DATE_FORMAT_STR_RFC1123,</b>
+&nbsp;                tz, loc, null);
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * @param src Parser to use for accessing source information
-&nbsp;     *    like location, configured codec
+&nbsp;     * @deprecated Since 2.4; use variant that takes Locale
 &nbsp;     */
-&nbsp;    public JsonParser asParser(JsonParser src)
-&nbsp;    {
-<b class="fc">&nbsp;        Parser p = new Parser(_first, src.getCodec(), _hasNativeTypeIds, _hasNativeObjectIds);</b>
-<b class="fc">&nbsp;        p.setLocation(src.getTokenLocation());</b>
-<b class="fc">&nbsp;        return p;</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Additional accessors
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    public JsonToken firstToken() {
-<b class="fc">&nbsp;        if (_first != null) {</b>
-<b class="fc">&nbsp;            return _first.type(0);</b>
-&nbsp;        }
-<b class="nc">&nbsp;        return null;</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Other custom methods not needed for implementing interfaces
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Helper method that will append contents of given buffer into this
-&nbsp;     * buffer.
-&nbsp;     * Not particularly optimized; can be made faster if there is need.
-&nbsp;     * 
-&nbsp;     * @return This buffer
-&nbsp;     */
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
-&nbsp;    public TokenBuffer append(TokenBuffer other) throws IOException
-&nbsp;    {
-&nbsp;        // Important? If source has native ids, need to store
-<b class="fc">&nbsp;        if (!_hasNativeTypeIds) {  </b>
-<b class="fc">&nbsp;            _hasNativeTypeIds = other.canWriteTypeId();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        if (!_hasNativeObjectIds) {</b>
-<b class="fc">&nbsp;            _hasNativeObjectIds = other.canWriteObjectId();</b>
-&nbsp;        }
-<b class="fc">&nbsp;        _mayHaveNativeIds = _hasNativeTypeIds | _hasNativeObjectIds;</b>
-&nbsp;        
-<b class="fc">&nbsp;        JsonParser p = other.asParser();</b>
-<b class="fc">&nbsp;        while (p.nextToken() != null) {</b>
-<b class="fc">&nbsp;            copyCurrentStructure(p);</b>
-&nbsp;        }
-<b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * Helper method that will write all contents of this buffer
-&nbsp;     * using given {@link JsonGenerator}.
-&nbsp;     *&lt;p&gt;
-&nbsp;     * Note: this method would be enough to implement
-&nbsp;     * &lt;code&gt;JsonSerializer&lt;/code&gt;  for &lt;code&gt;TokenBuffer&lt;/code&gt; type;
-&nbsp;     * but we can not have upwards
-&nbsp;     * references (from core to mapper package); and as such we also
-&nbsp;     * can not take second argument.
-&nbsp;     */
-&nbsp;    public void serialize(JsonGenerator gen) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        Segment segment = _first;</b>
-<b class="fc">&nbsp;        int ptr = -1;</b>
-&nbsp;
-<b class="fc">&nbsp;        final boolean checkIds = _mayHaveNativeIds;</b>
-<b class="fc">&nbsp;        boolean hasIds = checkIds &amp;&amp; (segment.hasIds());</b>
-&nbsp;
-&nbsp;        while (true) {
-<b class="fc">&nbsp;            if (++ptr &gt;= Segment.TOKENS_PER_SEGMENT) {</b>
-<b class="fc">&nbsp;                ptr = 0;</b>
-<b class="fc">&nbsp;                segment = segment.next();</b>
-<b class="fc">&nbsp;                if (segment == null) break;</b>
-<b class="fc">&nbsp;                hasIds = checkIds &amp;&amp; (segment.hasIds());</b>
-&nbsp;            }
-<b class="fc">&nbsp;            JsonToken t = segment.type(ptr);</b>
-<b class="fc">&nbsp;            if (t == null) break;</b>
-&nbsp;
-<b class="fc">&nbsp;            if (hasIds) {</b>
-<b class="nc">&nbsp;                Object id = segment.findObjectId(ptr);</b>
-<b class="nc">&nbsp;                if (id != null) {</b>
-<b class="nc">&nbsp;                    gen.writeObjectId(id);</b>
-&nbsp;                }
-<b class="nc">&nbsp;                id = segment.findTypeId(ptr);</b>
-<b class="nc">&nbsp;                if (id != null) {</b>
-<b class="nc">&nbsp;                    gen.writeTypeId(id);</b>
-&nbsp;                }
-&nbsp;            }
-&nbsp;            
-&nbsp;            // Note: copied from &#39;copyCurrentEvent&#39;...
-<b class="fc">&nbsp;            switch (t) {</b>
-&nbsp;            case START_OBJECT:
-<b class="fc">&nbsp;                gen.writeStartObject();</b>
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case END_OBJECT:
-<b class="fc">&nbsp;                gen.writeEndObject();</b>
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case START_ARRAY:
-<b class="fc">&nbsp;                gen.writeStartArray();</b>
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case END_ARRAY:
-<b class="fc">&nbsp;                gen.writeEndArray();</b>
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case FIELD_NAME:
-&nbsp;            {
-&nbsp;                // 13-Dec-2010, tatu: Maybe we should start using different type tokens to reduce casting?
-<b class="fc">&nbsp;                Object ob = segment.get(ptr);</b>
-<b class="fc">&nbsp;                if (ob instanceof SerializableString) {</b>
-<b class="nc">&nbsp;                    gen.writeFieldName((SerializableString) ob);</b>
-&nbsp;                } else {
-<b class="fc">&nbsp;                    gen.writeFieldName((String) ob);</b>
-&nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case VALUE_STRING:
-&nbsp;                {
-<b class="fc">&nbsp;                    Object ob = segment.get(ptr);</b>
-<b class="fc">&nbsp;                    if (ob instanceof SerializableString) {</b>
-<b class="nc">&nbsp;                        gen.writeString((SerializableString) ob);</b>
-&nbsp;                    } else {
-<b class="fc">&nbsp;                        gen.writeString((String) ob);</b>
-&nbsp;                    }
-&nbsp;                }
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case VALUE_NUMBER_INT:
-&nbsp;                {
-<b class="fc">&nbsp;                    Object n = segment.get(ptr);</b>
-<b class="fc">&nbsp;                    if (n instanceof Integer) {</b>
-<b class="fc">&nbsp;                        gen.writeNumber((Integer) n);</b>
-<b class="nc">&nbsp;                    } else if (n instanceof BigInteger) {</b>
-<b class="nc">&nbsp;                        gen.writeNumber((BigInteger) n);</b>
-<b class="nc">&nbsp;                    } else if (n instanceof Long) {</b>
-<b class="nc">&nbsp;                        gen.writeNumber((Long) n);</b>
-<b class="nc">&nbsp;                    } else if (n instanceof Short) {</b>
-<b class="nc">&nbsp;                        gen.writeNumber((Short) n);</b>
-&nbsp;                    } else {
-<b class="nc">&nbsp;                        gen.writeNumber(((Number) n).intValue());</b>
-&nbsp;                    }
-&nbsp;                }
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case VALUE_NUMBER_FLOAT:
-&nbsp;                {
-<b class="nc">&nbsp;                    Object n = segment.get(ptr);</b>
-<b class="nc">&nbsp;                    if (n instanceof Double) {</b>
-<b class="nc">&nbsp;                        gen.writeNumber(((Double) n).doubleValue());</b>
-<b class="nc">&nbsp;                    } else if (n instanceof BigDecimal) {</b>
-<b class="nc">&nbsp;                        gen.writeNumber((BigDecimal) n);</b>
-<b class="nc">&nbsp;                    } else if (n instanceof Float) {</b>
-<b class="nc">&nbsp;                        gen.writeNumber(((Float) n).floatValue());</b>
-<b class="nc">&nbsp;                    } else if (n == null) {</b>
-<b class="nc">&nbsp;                        gen.writeNull();</b>
-<b class="nc">&nbsp;                    } else if (n instanceof String) {</b>
-<b class="nc">&nbsp;                        gen.writeNumber((String) n);</b>
-&nbsp;                    } else {
-<b class="nc">&nbsp;                        throw new JsonGenerationException(String.format(</b>
-&nbsp;                                &quot;Unrecognized value type for VALUE_NUMBER_FLOAT: %s, can not serialize&quot;,
-<b class="nc">&nbsp;                                n.getClass().getName()), gen);</b>
-&nbsp;                    }
-&nbsp;                }
-<b class="nc">&nbsp;                break;</b>
-&nbsp;            case VALUE_TRUE:
-<b class="fc">&nbsp;                gen.writeBoolean(true);</b>
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case VALUE_FALSE:
-<b class="nc">&nbsp;                gen.writeBoolean(false);</b>
-<b class="nc">&nbsp;                break;</b>
-&nbsp;            case VALUE_NULL:
-<b class="nc">&nbsp;                gen.writeNull();</b>
-<b class="nc">&nbsp;                break;</b>
-&nbsp;            case VALUE_EMBEDDED_OBJECT:
-&nbsp;                {
-<b class="fc">&nbsp;                    Object value = segment.get(ptr);</b>
-&nbsp;                    // 01-Sep-2016, tatu: as per [databind#1361], should use `writeEmbeddedObject()`;
-&nbsp;                    //    however, may need to consider alternatives for some well-known types
-&nbsp;                    //    first
-<b class="fc">&nbsp;                    if (value instanceof RawValue) {</b>
-<b class="fc">&nbsp;                        ((RawValue) value).serialize(gen);</b>
-<b class="nc">&nbsp;                    } else if (value instanceof JsonSerializable) {</b>
-<b class="nc">&nbsp;                        gen.writeObject(value);</b>
-&nbsp;                    } else {
-<b class="nc">&nbsp;                        gen.writeEmbeddedObject(value);</b>
-&nbsp;                    }
-&nbsp;                }
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            default:
-<b class="nc">&nbsp;                throw new RuntimeException(&quot;Internal error: should never end up through this code path&quot;);</b>
-&nbsp;            }
-<b class="fc">&nbsp;        }</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Helper method used by standard deserializer.
-&nbsp;     * 
-&nbsp;     * @since 2.3
-&nbsp;     */
-&nbsp;    public TokenBuffer deserialize(JsonParser p, DeserializationContext ctxt) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        if (p.getCurrentTokenId() != JsonToken.FIELD_NAME.id()) {</b>
-<b class="fc">&nbsp;            copyCurrentStructure(p);</b>
-<b class="fc">&nbsp;            return this;</b>
-&nbsp;        }
-&nbsp;        /* 28-Oct-2014, tatu: As per [databind#592], need to support a special case of starting from
-&nbsp;         *    FIELD_NAME, which is taken to mean that we are missing START_OBJECT, but need
-&nbsp;         *    to assume one did exist.
-&nbsp;         */
-&nbsp;        JsonToken t;
-<b class="fc">&nbsp;        writeStartObject();</b>
-&nbsp;        do {
-<b class="fc">&nbsp;            copyCurrentStructure(p);</b>
-<b class="fc">&nbsp;        } while ((t = p.nextToken()) == JsonToken.FIELD_NAME);</b>
-<b class="fc">&nbsp;        if (t != JsonToken.END_OBJECT) {</b>
-<b class="nc">&nbsp;            ctxt.reportWrongTokenException(p, JsonToken.END_OBJECT,</b>
-&nbsp;                    &quot;Expected END_OBJECT after copying contents of a JsonParser into TokenBuffer, got &quot;+t);
-&nbsp;            // never gets here
-&nbsp;        }
-<b class="fc">&nbsp;        writeEndObject();</b>
-<b class="fc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    @SuppressWarnings(&quot;resource&quot;)
-&nbsp;    public String toString()
-&nbsp;    {
-&nbsp;        // Let&#39;s print up to 100 first tokens...
-<b class="nc">&nbsp;        final int MAX_COUNT = 100;</b>
-&nbsp;
-<b class="nc">&nbsp;        StringBuilder sb = new StringBuilder();</b>
-<b class="nc">&nbsp;        sb.append(&quot;[TokenBuffer: &quot;);</b>
-&nbsp;
-&nbsp;        /*
-&nbsp;sb.append(&quot;NativeTypeIds=&quot;).append(_hasNativeTypeIds).append(&quot;,&quot;);
-&nbsp;sb.append(&quot;NativeObjectIds=&quot;).append(_hasNativeObjectIds).append(&quot;,&quot;);
-&nbsp;*/
-&nbsp;        
-<b class="nc">&nbsp;        JsonParser jp = asParser();</b>
-<b class="nc">&nbsp;        int count = 0;</b>
-<b class="nc">&nbsp;        final boolean hasNativeIds = _hasNativeTypeIds || _hasNativeObjectIds;</b>
-&nbsp;
-&nbsp;        while (true) {
-&nbsp;            JsonToken t;
-&nbsp;            try {
-<b class="nc">&nbsp;                t = jp.nextToken();</b>
-<b class="nc">&nbsp;                if (t == null) break;</b>
-&nbsp;
-<b class="nc">&nbsp;                if (hasNativeIds) {</b>
-<b class="nc">&nbsp;                    _appendNativeIds(sb);</b>
-&nbsp;                }
-&nbsp;                        
-<b class="nc">&nbsp;                if (count &lt; MAX_COUNT) {</b>
-<b class="nc">&nbsp;                    if (count &gt; 0) {</b>
-<b class="nc">&nbsp;                        sb.append(&quot;, &quot;);</b>
-&nbsp;                    }
-<b class="nc">&nbsp;                    sb.append(t.toString());</b>
-<b class="nc">&nbsp;                    if (t == JsonToken.FIELD_NAME) {</b>
-<b class="nc">&nbsp;                        sb.append(&#39;(&#39;);</b>
-<b class="nc">&nbsp;                        sb.append(jp.getCurrentName());</b>
-<b class="nc">&nbsp;                        sb.append(&#39;)&#39;);</b>
-&nbsp;                    }
-&nbsp;                }
-<b class="nc">&nbsp;            } catch (IOException ioe) { // should never occur</b>
-<b class="nc">&nbsp;                throw new IllegalStateException(ioe);</b>
-<b class="nc">&nbsp;            }</b>
-<b class="nc">&nbsp;            ++count;</b>
-<b class="nc">&nbsp;        }</b>
-&nbsp;
-<b class="nc">&nbsp;        if (count &gt;= MAX_COUNT) {</b>
-<b class="nc">&nbsp;            sb.append(&quot; ... (truncated &quot;).append(count-MAX_COUNT).append(&quot; entries)&quot;);</b>
-&nbsp;        }
-<b class="nc">&nbsp;        sb.append(&#39;]&#39;);</b>
-<b class="nc">&nbsp;        return sb.toString();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    private final void _appendNativeIds(StringBuilder sb)
-&nbsp;    {
-<b class="nc">&nbsp;        Object objectId = _last.findObjectId(_appendAt-1);</b>
-<b class="nc">&nbsp;        if (objectId != null) {</b>
-<b class="nc">&nbsp;            sb.append(&quot;[objectId=&quot;).append(String.valueOf(objectId)).append(&#39;]&#39;);</b>
-&nbsp;        }
-<b class="nc">&nbsp;        Object typeId = _last.findTypeId(_appendAt-1);</b>
-<b class="nc">&nbsp;        if (typeId != null) {</b>
-<b class="nc">&nbsp;            sb.append(&quot;[typeId=&quot;).append(String.valueOf(typeId)).append(&#39;]&#39;);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* JsonGenerator implementation: configuration
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public JsonGenerator enable(Feature f) {
-<b class="nc">&nbsp;        _generatorFeatures |= f.getMask();</b>
-<b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public JsonGenerator disable(Feature f) {
-<b class="nc">&nbsp;        _generatorFeatures &amp;= ~f.getMask();</b>
-<b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    //public JsonGenerator configure(SerializationFeature f, boolean state) { }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public boolean isEnabled(Feature f) {
-<b class="nc">&nbsp;        return (_generatorFeatures &amp; f.getMask()) != 0;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public int getFeatureMask() {
-<b class="nc">&nbsp;        return _generatorFeatures;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
 &nbsp;    @Deprecated
-&nbsp;    public JsonGenerator setFeatureMask(int mask) {
-<b class="nc">&nbsp;        _generatorFeatures = mask;</b>
-<b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public JsonGenerator overrideStdFeatures(int values, int mask) {
-<b class="nc">&nbsp;        int oldState = getFeatureMask();</b>
-<b class="nc">&nbsp;        _generatorFeatures = (oldState &amp; ~mask) | (values &amp; mask);</b>
-<b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public JsonGenerator useDefaultPrettyPrinter() {
-&nbsp;        // No-op: we don&#39;t indent
-<b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public JsonGenerator setCodec(ObjectCodec oc) {
-<b class="nc">&nbsp;        _objectCodec = oc;</b>
-<b class="nc">&nbsp;        return this;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-<b class="nc">&nbsp;    public ObjectCodec getCodec() { return _objectCodec; }</b>
-&nbsp;
-&nbsp;    @Override
-<b class="fc">&nbsp;    public final JsonWriteContext getOutputContext() { return _writeContext; }</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* JsonGenerator implementation: capability introspection
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * Since we can efficiently store &lt;code&gt;byte[]&lt;/code&gt;, yes.
-&nbsp;     */
-&nbsp;    @Override
-&nbsp;    public boolean canWriteBinaryNatively() {
-<b class="fc">&nbsp;        return true;</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* JsonGenerator implementation: low-level output handling
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-<b class="fc">&nbsp;    public void flush() throws IOException { /* NOP */ }</b>
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void close() throws IOException {
-<b class="fc">&nbsp;        _closed = true;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-<b class="nc">&nbsp;    public boolean isClosed() { return _closed; }</b>
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* JsonGenerator implementation: write methods, structural
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public final void writeStartArray() throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        _writeContext.writeValue();</b>
-<b class="fc">&nbsp;        _append(JsonToken.START_ARRAY);</b>
-<b class="fc">&nbsp;        _writeContext = _writeContext.createChildArrayContext();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public final void writeEndArray() throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        _append(JsonToken.END_ARRAY);</b>
-&nbsp;        // Let&#39;s allow unbalanced tho... i.e. not run out of root level, ever
-<b class="fc">&nbsp;        JsonWriteContext c = _writeContext.getParent();</b>
-<b class="fc">&nbsp;        if (c != null) {</b>
-<b class="fc">&nbsp;            _writeContext = c;</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public final void writeStartObject() throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        _writeContext.writeValue();</b>
-<b class="fc">&nbsp;        _append(JsonToken.START_OBJECT);</b>
-<b class="fc">&nbsp;        _writeContext = _writeContext.createChildObjectContext();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override // since 2.8
-&nbsp;    public void writeStartObject(Object forValue) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        _writeContext.writeValue();</b>
-<b class="fc">&nbsp;        _append(JsonToken.START_OBJECT);</b>
-<b class="fc">&nbsp;        JsonWriteContext ctxt = _writeContext.createChildObjectContext();</b>
-<b class="fc">&nbsp;        _writeContext = ctxt;</b>
-<b class="fc">&nbsp;        if (forValue != null) {</b>
-<b class="fc">&nbsp;            ctxt.setCurrentValue(forValue);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public final void writeEndObject() throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        _append(JsonToken.END_OBJECT);</b>
-&nbsp;        // Let&#39;s allow unbalanced tho... i.e. not run out of root level, ever
-<b class="fc">&nbsp;        JsonWriteContext c = _writeContext.getParent();</b>
-<b class="fc">&nbsp;        if (c != null) {</b>
-<b class="fc">&nbsp;            _writeContext = c;</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public final void writeFieldName(String name) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        _writeContext.writeFieldName(name);</b>
-<b class="fc">&nbsp;        _append(JsonToken.FIELD_NAME, name);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeFieldName(SerializableString name) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        _writeContext.writeFieldName(name.getValue());</b>
-<b class="fc">&nbsp;        _append(JsonToken.FIELD_NAME, name);</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* JsonGenerator implementation: write methods, textual
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeString(String text) throws IOException {
-<b class="fc">&nbsp;        if (text == null) {</b>
-<b class="fc">&nbsp;            writeNull();</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _appendValue(JsonToken.VALUE_STRING, text);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeString(char[] text, int offset, int len) throws IOException {
-<b class="fc">&nbsp;        writeString(new String(text, offset, len));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeString(SerializableString text) throws IOException {
-<b class="nc">&nbsp;        if (text == null) {</b>
-<b class="nc">&nbsp;            writeNull();</b>
-&nbsp;        } else {
-<b class="nc">&nbsp;            _appendValue(JsonToken.VALUE_STRING, text);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;    
-&nbsp;    @Override
-&nbsp;    public void writeRawUTF8String(byte[] text, int offset, int length) throws IOException
-&nbsp;    {
-&nbsp;        // could add support for buffering if we really want it...
-<b class="nc">&nbsp;        _reportUnsupportedOperation();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeUTF8String(byte[] text, int offset, int length) throws IOException
-&nbsp;    {
-&nbsp;        // could add support for buffering if we really want it...
-<b class="nc">&nbsp;        _reportUnsupportedOperation();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeRaw(String text) throws IOException {
-<b class="nc">&nbsp;        _reportUnsupportedOperation();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeRaw(String text, int offset, int len) throws IOException {
-<b class="nc">&nbsp;        _reportUnsupportedOperation();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeRaw(SerializableString text) throws IOException {
-<b class="nc">&nbsp;        _reportUnsupportedOperation();</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    @Override
-&nbsp;    public void writeRaw(char[] text, int offset, int len) throws IOException {
-<b class="nc">&nbsp;        _reportUnsupportedOperation();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeRaw(char c) throws IOException {
-<b class="nc">&nbsp;        _reportUnsupportedOperation();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeRawValue(String text) throws IOException {
-<b class="fc">&nbsp;        _appendValue(JsonToken.VALUE_EMBEDDED_OBJECT, new RawValue(text));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeRawValue(String text, int offset, int len) throws IOException {
-<b class="nc">&nbsp;        if (offset &gt; 0 || len != text.length()) {</b>
-<b class="nc">&nbsp;            text = text.substring(offset, offset+len);</b>
-&nbsp;        }
-<b class="nc">&nbsp;        _appendValue(JsonToken.VALUE_EMBEDDED_OBJECT, new RawValue(text));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeRawValue(char[] text, int offset, int len) throws IOException {
-<b class="nc">&nbsp;        _appendValue(JsonToken.VALUE_EMBEDDED_OBJECT, new String(text, offset, len));</b>
+&nbsp;    public static DateFormat getRFC1123Format(TimeZone tz) {
+<b class="nc">&nbsp;        return getRFC1123Format(tz, DEFAULT_LOCALE);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /*
 &nbsp;    /**********************************************************
-&nbsp;    /* JsonGenerator implementation: write methods, primitive types
+&nbsp;    /* Public API, configuration
 &nbsp;    /**********************************************************
 &nbsp;     */
 &nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNumber(short i) throws IOException {
-<b class="nc">&nbsp;        _appendValue(JsonToken.VALUE_NUMBER_INT, Short.valueOf(i));</b>
+&nbsp;    @Override // since 2.6
+&nbsp;    public TimeZone getTimeZone() {
+<b class="nc">&nbsp;        return _timezone;</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    @Override
-&nbsp;    public void writeNumber(int i) throws IOException {
-<b class="fc">&nbsp;        _appendValue(JsonToken.VALUE_NUMBER_INT, Integer.valueOf(i));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNumber(long l) throws IOException {
-<b class="fc">&nbsp;        _appendValue(JsonToken.VALUE_NUMBER_INT, Long.valueOf(l));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNumber(double d) throws IOException {
-<b class="fc">&nbsp;        _appendValue(JsonToken.VALUE_NUMBER_FLOAT, Double.valueOf(d));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNumber(float f) throws IOException {
-<b class="nc">&nbsp;        _appendValue(JsonToken.VALUE_NUMBER_FLOAT, Float.valueOf(f));</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNumber(BigDecimal dec) throws IOException {
-<b class="fc">&nbsp;        if (dec == null) {</b>
-<b class="nc">&nbsp;            writeNull();</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _appendValue(JsonToken.VALUE_NUMBER_FLOAT, dec);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNumber(BigInteger v) throws IOException {
-<b class="fc">&nbsp;        if (v == null) {</b>
-<b class="nc">&nbsp;            writeNull();</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _appendValue(JsonToken.VALUE_NUMBER_INT, v);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNumber(String encodedValue) throws IOException {
-&nbsp;        /* 03-Dec-2010, tatu: related to [JACKSON-423], should try to keep as numeric
-&nbsp;         *   identity as long as possible
+&nbsp;    public void setTimeZone(TimeZone tz)
+&nbsp;    {
+&nbsp;        /* DateFormats are timezone-specific (via Calendar contained),
+&nbsp;         * so need to reset instances if timezone changes:
 &nbsp;         */
-<b class="nc">&nbsp;        _appendValue(JsonToken.VALUE_NUMBER_FLOAT, encodedValue);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeBoolean(boolean state) throws IOException {
-<b class="fc">&nbsp;        _appendValue(state ? JsonToken.VALUE_TRUE : JsonToken.VALUE_FALSE);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeNull() throws IOException {
-<b class="fc">&nbsp;        _appendValue(JsonToken.VALUE_NULL);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /*
-&nbsp;    /***********************************************************
-&nbsp;    /* JsonGenerator implementation: write methods for POJOs/trees
-&nbsp;    /***********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeObject(Object value) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        if (value == null) {</b>
-<b class="fc">&nbsp;            writeNull();</b>
-&nbsp;            return;
+<b class="nc">&nbsp;        if (!tz.equals(_timezone)) {</b>
+<b class="nc">&nbsp;            _clearFormats();</b>
+<b class="nc">&nbsp;            _timezone = tz;</b>
 &nbsp;        }
-<b class="fc">&nbsp;        Class&lt;?&gt; raw = value.getClass();</b>
-<b class="fc">&nbsp;        if (raw == byte[].class || (value instanceof RawValue)) {</b>
-<b class="fc">&nbsp;            _appendValue(JsonToken.VALUE_EMBEDDED_OBJECT, value);</b>
-&nbsp;            return;
-&nbsp;        }
-<b class="fc">&nbsp;        if (_objectCodec == null) {</b>
-&nbsp;            /* 28-May-2014, tatu: Tricky choice here; if no codec, should we
-&nbsp;             *   err out, or just embed? For now, do latter.
-&nbsp;             */
-&nbsp;//          throw new JsonMappingException(&quot;No ObjectCodec configured for TokenBuffer, writeObject() called&quot;);
-<b class="fc">&nbsp;            _appendValue(JsonToken.VALUE_EMBEDDED_OBJECT, value);</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _objectCodec.writeValue(this, value);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeTree(TreeNode node) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        if (node == null) {</b>
-<b class="nc">&nbsp;            writeNull();</b>
-&nbsp;            return;
-&nbsp;        }
-&nbsp;
-<b class="fc">&nbsp;        if (_objectCodec == null) {</b>
-&nbsp;            // as with &#39;writeObject()&#39;, is codec optional?
-<b class="nc">&nbsp;            _appendValue(JsonToken.VALUE_EMBEDDED_OBJECT, node);</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _objectCodec.writeTree(this, node);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    /*
-&nbsp;    /***********************************************************
-&nbsp;    /* JsonGenerator implementation; binary
-&nbsp;    /***********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void writeBinary(Base64Variant b64variant, byte[] data, int offset, int len) throws IOException
-&nbsp;    {
-&nbsp;        /* 31-Dec-2009, tatu: can do this using multiple alternatives; but for
-&nbsp;         *   now, let&#39;s try to limit number of conversions.
-&nbsp;         *   The only (?) tricky thing is that of whether to preserve variant,
-&nbsp;         *   seems pointless, so let&#39;s not worry about it unless there&#39;s some
-&nbsp;         *   compelling reason to.
-&nbsp;         */
-<b class="fc">&nbsp;        byte[] copy = new byte[len];</b>
-<b class="fc">&nbsp;        System.arraycopy(data, offset, copy, 0, len);</b>
-<b class="fc">&nbsp;        writeObject(copy);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
-&nbsp;     * Although we could support this method, it does not necessarily make
-&nbsp;     * sense: we can not make good use of streaming because buffer must
-&nbsp;     * hold all the data. Because of this, currently this will simply
-&nbsp;     * throw {@link UnsupportedOperationException}
+&nbsp;     * Need to override since we need to keep track of leniency locally,
+&nbsp;     * and not via underlying {@link Calendar} instance like base class
+&nbsp;     * does.
 &nbsp;     */
-&nbsp;    @Override
-&nbsp;    public int writeBinary(Base64Variant b64variant, InputStream data, int dataLength) {
-<b class="nc">&nbsp;        throw new UnsupportedOperationException();</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /*
-&nbsp;    /***********************************************************
-&nbsp;    /* JsonGenerator implementation: native ids
-&nbsp;    /***********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public boolean canWriteTypeId() {
-<b class="fc">&nbsp;        return _hasNativeTypeIds;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public boolean canWriteObjectId() {
-<b class="fc">&nbsp;        return _hasNativeObjectIds;</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    @Override
-&nbsp;    public void writeTypeId(Object id) {
-<b class="nc">&nbsp;        _typeId = id;</b>
-<b class="nc">&nbsp;        _hasNativeId = true;</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    @Override
-&nbsp;    public void writeObjectId(Object id) {
-<b class="nc">&nbsp;        _objectId = id;</b>
-<b class="nc">&nbsp;        _hasNativeId = true;</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override // since 2.8
-&nbsp;    public void writeEmbeddedObject(Object object) throws IOException {
-<b class="nc">&nbsp;        _appendValue(JsonToken.VALUE_EMBEDDED_OBJECT, object);</b>
-&nbsp;    }
-&nbsp;
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* JsonGenerator implementation; pass-through copy
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    @Override
-&nbsp;    public void copyCurrentEvent(JsonParser p) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        if (_mayHaveNativeIds) {</b>
-<b class="nc">&nbsp;            _checkNativeIds(p);</b>
+&nbsp;    @Override // since 2.7
+&nbsp;    public void setLenient(boolean enabled) {
+<b class="fc">&nbsp;        Boolean newValue = enabled;</b>
+<b class="fc">&nbsp;        if (_lenient != newValue) {</b>
+<b class="fc">&nbsp;            _lenient = newValue;</b>
+&nbsp;            // and since leniency settings may have been used:
+<b class="fc">&nbsp;            _clearFormats();</b>
 &nbsp;        }
-<b class="fc">&nbsp;        switch (p.getCurrentToken()) {</b>
-&nbsp;        case START_OBJECT:
-<b class="fc">&nbsp;            writeStartObject();</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case END_OBJECT:
-<b class="fc">&nbsp;            writeEndObject();</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case START_ARRAY:
-<b class="fc">&nbsp;            writeStartArray();</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case END_ARRAY:
-<b class="fc">&nbsp;            writeEndArray();</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case FIELD_NAME:
-<b class="fc">&nbsp;            writeFieldName(p.getCurrentName());</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case VALUE_STRING:
-<b class="fc">&nbsp;            if (p.hasTextCharacters()) {</b>
-<b class="fc">&nbsp;                writeString(p.getTextCharacters(), p.getTextOffset(), p.getTextLength());</b>
-&nbsp;            } else {
-<b class="fc">&nbsp;                writeString(p.getText());</b>
-&nbsp;            }
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case VALUE_NUMBER_INT:
-<b class="fc">&nbsp;            switch (p.getNumberType()) {</b>
-&nbsp;            case INT:
-<b class="fc">&nbsp;                writeNumber(p.getIntValue());</b>
-<b class="fc">&nbsp;                break;</b>
-&nbsp;            case BIG_INTEGER:
-<b class="nc">&nbsp;                writeNumber(p.getBigIntegerValue());</b>
-<b class="nc">&nbsp;                break;</b>
-&nbsp;            default:
-<b class="nc">&nbsp;                writeNumber(p.getLongValue());</b>
-&nbsp;            }
-<b class="nc">&nbsp;            break;</b>
-&nbsp;        case VALUE_NUMBER_FLOAT:
-<b class="fc">&nbsp;            if (_forceBigDecimal) {</b>
-&nbsp;                /* 10-Oct-2015, tatu: Ideally we would first determine whether underlying
-&nbsp;                 *   number is already decoded into a number (in which case might as well
-&nbsp;                 *   access as number); or is still retained as text (in which case we
-&nbsp;                 *   should further defer decoding that may not need BigDecimal):
-&nbsp;                 */
-<b class="fc">&nbsp;                writeNumber(p.getDecimalValue());</b>
-&nbsp;            } else {
-<b class="nc">&nbsp;                switch (p.getNumberType()) {</b>
-&nbsp;                case BIG_DECIMAL:
-<b class="nc">&nbsp;                    writeNumber(p.getDecimalValue());</b>
-<b class="nc">&nbsp;                    break;</b>
-&nbsp;                case FLOAT:
-<b class="nc">&nbsp;                    writeNumber(p.getFloatValue());</b>
-<b class="nc">&nbsp;                    break;</b>
-&nbsp;                default:
-<b class="nc">&nbsp;                    writeNumber(p.getDoubleValue());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override // since 2.7
+&nbsp;    public boolean isLenient() {
+<b class="fc">&nbsp;        if (_lenient == null) {</b>
+&nbsp;            // default is, I believe, true
+<b class="fc">&nbsp;            return true;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return _lenient.booleanValue();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Public API, parsing
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Date parse(String dateStr) throws ParseException
+&nbsp;    {
+<b class="fc">&nbsp;        dateStr = dateStr.trim();</b>
+<b class="fc">&nbsp;        ParsePosition pos = new ParsePosition(0);</b>
+&nbsp;
+&nbsp;        Date dt;
+&nbsp;
+<b class="fc">&nbsp;        if (looksLikeISO8601(dateStr)) { // also includes &quot;plain&quot;</b>
+<b class="fc">&nbsp;            dt = parseAsISO8601(dateStr, pos, true);</b>
+&nbsp;        } else {
+&nbsp;            // Also consider &quot;stringified&quot; simple time stamp
+<b class="fc">&nbsp;            int i = dateStr.length();</b>
+<b class="fc">&nbsp;            while (--i &gt;= 0) {</b>
+<b class="fc">&nbsp;                char ch = dateStr.charAt(i);</b>
+<b class="fc">&nbsp;                if (ch &lt; &#39;0&#39; || ch &gt; &#39;9&#39;) {</b>
+&nbsp;                    // 07-Aug-2013, tatu: And [databind#267] points out that negative numbers should also work
+<b class="fc">&nbsp;                    if (i &gt; 0 || ch != &#39;-&#39;) {</b>
+<b class="nc">&nbsp;                        break;</b>
+&nbsp;                    }
 &nbsp;                }
-&nbsp;            }
-<b class="nc">&nbsp;            break;</b>
-&nbsp;        case VALUE_TRUE:
-<b class="fc">&nbsp;            writeBoolean(true);</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case VALUE_FALSE:
-<b class="nc">&nbsp;            writeBoolean(false);</b>
-<b class="nc">&nbsp;            break;</b>
-&nbsp;        case VALUE_NULL:
-<b class="fc">&nbsp;            writeNull();</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case VALUE_EMBEDDED_OBJECT:
-<b class="nc">&nbsp;            writeObject(p.getEmbeddedObject());</b>
-<b class="nc">&nbsp;            break;</b>
-&nbsp;        default:
-<b class="nc">&nbsp;            throw new RuntimeException(&quot;Internal error: should never end up through this code path&quot;);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;    
-&nbsp;    @Override
-&nbsp;    public void copyCurrentStructure(JsonParser p) throws IOException
-&nbsp;    {
-<b class="fc">&nbsp;        JsonToken t = p.getCurrentToken();</b>
-&nbsp;
-&nbsp;        // Let&#39;s handle field-name separately first
-<b class="fc">&nbsp;        if (t == JsonToken.FIELD_NAME) {</b>
-<b class="fc">&nbsp;            if (_mayHaveNativeIds) {</b>
-<b class="nc">&nbsp;                _checkNativeIds(p);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            writeFieldName(p.getCurrentName());</b>
-<b class="fc">&nbsp;            t = p.nextToken();</b>
-&nbsp;            // fall-through to copy the associated value
-&nbsp;        }
-&nbsp;
-<b class="fc">&nbsp;        if (_mayHaveNativeIds) {</b>
-<b class="nc">&nbsp;            _checkNativeIds(p);</b>
-&nbsp;        }
-&nbsp;        
-<b class="fc">&nbsp;        switch (t) {</b>
-&nbsp;        case START_ARRAY:
-<b class="fc">&nbsp;            writeStartArray();</b>
-<b class="fc">&nbsp;            while (p.nextToken() != JsonToken.END_ARRAY) {</b>
-<b class="fc">&nbsp;                copyCurrentStructure(p);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            writeEndArray();</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        case START_OBJECT:
-<b class="fc">&nbsp;            writeStartObject();</b>
-<b class="fc">&nbsp;            while (p.nextToken() != JsonToken.END_OBJECT) {</b>
-<b class="fc">&nbsp;                copyCurrentStructure(p);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            writeEndObject();</b>
-<b class="fc">&nbsp;            break;</b>
-&nbsp;        default: // others are simple:
-<b class="fc">&nbsp;            copyCurrentEvent(p);</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    
-&nbsp;    private final void _checkNativeIds(JsonParser jp) throws IOException
-&nbsp;    {
-<b class="nc">&nbsp;        if ((_typeId = jp.getTypeId()) != null) {</b>
-<b class="nc">&nbsp;            _hasNativeId = true;</b>
-&nbsp;        }
-<b class="nc">&nbsp;        if ((_objectId = jp.getObjectId()) != null) {</b>
-<b class="nc">&nbsp;            _hasNativeId = true;</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Internal methods
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    protected final void _append(JsonToken type)
-&nbsp;    {
-<b class="fc">&nbsp;        Segment next = _hasNativeId</b>
-<b class="nc">&nbsp;                ? _last.append(_appendAt, type, _objectId, _typeId)</b>
-<b class="fc">&nbsp;                : _last.append(_appendAt, type);</b>
-<b class="fc">&nbsp;        if (next == null) {</b>
-<b class="fc">&nbsp;            ++_appendAt;</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _last = next;</b>
-<b class="fc">&nbsp;            _appendAt = 1; // since we added first at 0</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    protected final void _append(JsonToken type, Object value)
-&nbsp;    {
-<b class="fc">&nbsp;        Segment next = _hasNativeId</b>
-<b class="nc">&nbsp;                ? _last.append(_appendAt, type, value, _objectId, _typeId)</b>
-<b class="fc">&nbsp;                : _last.append(_appendAt, type, value);</b>
-<b class="fc">&nbsp;        if (next == null) {</b>
-<b class="fc">&nbsp;            ++_appendAt;</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _last = next;</b>
-<b class="fc">&nbsp;            _appendAt = 1;</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Similar to {@link #_append(JsonToken)} but also updates context with
-&nbsp;     * knowledge that a scalar value was written
-&nbsp;     *
-&nbsp;     * @since 2.6.4
-&nbsp;     */
-&nbsp;    protected final void _appendValue(JsonToken type)
-&nbsp;    {
-<b class="fc">&nbsp;        _writeContext.writeValue();</b>
-<b class="fc">&nbsp;        Segment next = _hasNativeId</b>
-<b class="nc">&nbsp;                ? _last.append(_appendAt, type, _objectId, _typeId)</b>
-<b class="fc">&nbsp;                : _last.append(_appendAt, type);</b>
-<b class="fc">&nbsp;        if (next == null) {</b>
-<b class="fc">&nbsp;            ++_appendAt;</b>
-&nbsp;        } else {
-<b class="nc">&nbsp;            _last = next;</b>
-<b class="nc">&nbsp;            _appendAt = 1; // since we added first at 0</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    /**
-&nbsp;     * Similar to {@link #_append(JsonToken,Object)} but also updates context with
-&nbsp;     * knowledge that a scalar value was written
-&nbsp;     *
-&nbsp;     * @since 2.6.4
-&nbsp;     */
-&nbsp;    protected final void _appendValue(JsonToken type, Object value)
-&nbsp;    {
-<b class="fc">&nbsp;        _writeContext.writeValue();</b>
-<b class="fc">&nbsp;        Segment next = _hasNativeId</b>
-<b class="nc">&nbsp;                ? _last.append(_appendAt, type, value, _objectId, _typeId)</b>
-<b class="fc">&nbsp;                : _last.append(_appendAt, type, value);</b>
-<b class="fc">&nbsp;        if (next == null) {</b>
-<b class="fc">&nbsp;            ++_appendAt;</b>
-&nbsp;        } else {
-<b class="fc">&nbsp;            _last = next;</b>
-<b class="fc">&nbsp;            _appendAt = 1;</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;    
-&nbsp;    protected final void _appendRaw(int rawType, Object value)
-&nbsp;    {
-<b class="nc">&nbsp;        Segment next = _hasNativeId</b>
-<b class="nc">&nbsp;                ? _last.appendRaw(_appendAt, rawType, value, _objectId, _typeId)</b>
-<b class="nc">&nbsp;                : _last.appendRaw(_appendAt, rawType, value);</b>
-<b class="nc">&nbsp;        if (next == null) {</b>
-<b class="nc">&nbsp;            ++_appendAt;</b>
-&nbsp;        } else {
-<b class="nc">&nbsp;            _last = next;</b>
-<b class="nc">&nbsp;            _appendAt = 1;</b>
-&nbsp;        }
-&nbsp;    }
-&nbsp;
-&nbsp;    @Override
-&nbsp;    protected void _reportUnsupportedOperation() {
-<b class="nc">&nbsp;        throw new UnsupportedOperationException(&quot;Called operation not supported for TokenBuffer&quot;);</b>
-&nbsp;    }
-&nbsp;    
-&nbsp;    /*
-&nbsp;    /**********************************************************
-&nbsp;    /* Supporting classes
-&nbsp;    /**********************************************************
-&nbsp;     */
-&nbsp;
-&nbsp;    protected final static class Parser
-&nbsp;        extends ParserMinimalBase
-&nbsp;    {
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Configuration
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        protected ObjectCodec _codec;
-&nbsp;
-&nbsp;        /**
-&nbsp;         * @since 2.3
-&nbsp;         */
-&nbsp;        protected final boolean _hasNativeTypeIds;
-&nbsp;
-&nbsp;        /**
-&nbsp;         * @since 2.3
-&nbsp;         */
-&nbsp;        protected final boolean _hasNativeObjectIds;
-&nbsp;
-&nbsp;        protected final boolean _hasNativeIds;
-&nbsp;        
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Parsing state
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        /**
-&nbsp;         * Currently active segment
-&nbsp;         */
-&nbsp;        protected Segment _segment;
-&nbsp;
-&nbsp;        /**
-&nbsp;         * Pointer to current token within current segment
-&nbsp;         */
-&nbsp;        protected int _segmentPtr;
-&nbsp;
-&nbsp;        /**
-&nbsp;         * Information about parser context, context in which
-&nbsp;         * the next token is to be parsed (root, array, object).
-&nbsp;         */
-&nbsp;        protected JsonReadContext _parsingContext;
-&nbsp;        
-&nbsp;        protected boolean _closed;
-&nbsp;
-&nbsp;        protected transient ByteArrayBuilder _byteBuilder;
-&nbsp;
-<b class="fc">&nbsp;        protected JsonLocation _location = null;</b>
-&nbsp;        
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Construction, init
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        public Parser(Segment firstSeg, ObjectCodec codec,
-&nbsp;                boolean hasNativeTypeIds,
-&nbsp;                boolean hasNativeObjectIds)
-&nbsp;        {
-<b class="fc">&nbsp;            super(0);</b>
-<b class="fc">&nbsp;            _segment = firstSeg;</b>
-<b class="fc">&nbsp;            _segmentPtr = -1; // not yet read</b>
-<b class="fc">&nbsp;            _codec = codec;</b>
-<b class="fc">&nbsp;            _parsingContext = JsonReadContext.createRootContext(null);</b>
-<b class="fc">&nbsp;            _hasNativeTypeIds = hasNativeTypeIds;</b>
-<b class="fc">&nbsp;            _hasNativeObjectIds = hasNativeObjectIds;</b>
-<b class="fc">&nbsp;            _hasNativeIds = (hasNativeTypeIds | hasNativeObjectIds);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        public void setLocation(JsonLocation l) {
-<b class="fc">&nbsp;            _location = l;</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        @Override
-<b class="fc">&nbsp;        public ObjectCodec getCodec() { return _codec; }</b>
-&nbsp;
-&nbsp;        @Override
-<b class="nc">&nbsp;        public void setCodec(ObjectCodec c) { _codec = c; }</b>
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public Version version() {
-<b class="nc">&nbsp;            return com.fasterxml.jackson.databind.cfg.PackageVersion.VERSION;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Extended API beyond JsonParser
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;        
-&nbsp;        public JsonToken peekNextToken() throws IOException
-&nbsp;        {
-&nbsp;            // closed? nothing more to peek, either
-<b class="nc">&nbsp;            if (_closed) return null;</b>
-<b class="nc">&nbsp;            Segment seg = _segment;</b>
-<b class="nc">&nbsp;            int ptr = _segmentPtr+1;</b>
-<b class="nc">&nbsp;            if (ptr &gt;= Segment.TOKENS_PER_SEGMENT) {</b>
-<b class="nc">&nbsp;                ptr = 0;</b>
-<b class="nc">&nbsp;                seg = (seg == null) ? null : seg.next();</b>
-&nbsp;            }
-<b class="nc">&nbsp;            return (seg == null) ? null : seg.type(ptr);</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Closeable implementation
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public void close() throws IOException {
-<b class="fc">&nbsp;            if (!_closed) {</b>
-<b class="fc">&nbsp;                _closed = true;</b>
-&nbsp;            }
-&nbsp;        }
-&nbsp;
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Public API, traversal
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;        
-&nbsp;        @Override
-&nbsp;        public JsonToken nextToken() throws IOException
-&nbsp;        {
-&nbsp;            // If we are closed, nothing more to do
-<b class="fc">&nbsp;            if (_closed || (_segment == null)) return null;</b>
-&nbsp;
-&nbsp;            // Ok, then: any more tokens?
-<b class="fc">&nbsp;            if (++_segmentPtr &gt;= Segment.TOKENS_PER_SEGMENT) {</b>
-<b class="fc">&nbsp;                _segmentPtr = 0;</b>
-<b class="fc">&nbsp;                _segment = _segment.next();</b>
-<b class="fc">&nbsp;                if (_segment == null) {</b>
-<b class="nc">&nbsp;                    return null;</b>
-&nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;            _currToken = _segment.type(_segmentPtr);</b>
-&nbsp;            // Field name? Need to update context
-<b class="fc">&nbsp;            if (_currToken == JsonToken.FIELD_NAME) {</b>
-<b class="fc">&nbsp;                Object ob = _currentObject();</b>
-<b class="fc">&nbsp;                String name = (ob instanceof String) ? ((String) ob) : ob.toString();</b>
-<b class="fc">&nbsp;                _parsingContext.setCurrentName(name);</b>
-<b class="fc">&nbsp;            } else if (_currToken == JsonToken.START_OBJECT) {</b>
-<b class="fc">&nbsp;                _parsingContext = _parsingContext.createChildObjectContext(-1, -1);</b>
-<b class="fc">&nbsp;            } else if (_currToken == JsonToken.START_ARRAY) {</b>
-<b class="fc">&nbsp;                _parsingContext = _parsingContext.createChildArrayContext(-1, -1);</b>
-<b class="fc">&nbsp;            } else if (_currToken == JsonToken.END_OBJECT</b>
-&nbsp;                    || _currToken == JsonToken.END_ARRAY) {
-&nbsp;                // Closing JSON Object/Array? Close matching context
-<b class="fc">&nbsp;                _parsingContext = _parsingContext.getParent();</b>
-&nbsp;                // but allow unbalanced cases too (more close markers)
-<b class="fc">&nbsp;                if (_parsingContext == null) {</b>
-<b class="fc">&nbsp;                    _parsingContext = JsonReadContext.createRootContext(null);</b>
-&nbsp;                }
-&nbsp;            }
-<b class="fc">&nbsp;            return _currToken;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public String nextFieldName() throws IOException
-&nbsp;        {
-&nbsp;            // inlined common case from nextToken()
-<b class="fc">&nbsp;            if (_closed || (_segment == null)) return null;</b>
-&nbsp;
-<b class="fc">&nbsp;            int ptr = _segmentPtr+1;</b>
-<b class="fc">&nbsp;            if (ptr &lt; Segment.TOKENS_PER_SEGMENT &amp;&amp; _segment.type(ptr) == JsonToken.FIELD_NAME) {</b>
-<b class="fc">&nbsp;                _segmentPtr = ptr;</b>
-<b class="fc">&nbsp;                Object ob = _segment.get(ptr); // inlined _currentObject();</b>
-<b class="fc">&nbsp;                String name = (ob instanceof String) ? ((String) ob) : ob.toString();</b>
-<b class="fc">&nbsp;                _parsingContext.setCurrentName(name);</b>
-<b class="fc">&nbsp;                return name;</b>
-&nbsp;            }
-<b class="fc">&nbsp;            return (nextToken() == JsonToken.FIELD_NAME) ? getCurrentName() : null;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-<b class="nc">&nbsp;        public boolean isClosed() { return _closed; }</b>
-&nbsp;
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Public API, token accessors
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        @Override
-<b class="fc">&nbsp;        public JsonStreamContext getParsingContext() { return _parsingContext; }</b>
-&nbsp;
-&nbsp;        @Override
-<b class="fc">&nbsp;        public JsonLocation getTokenLocation() { return getCurrentLocation(); }</b>
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public JsonLocation getCurrentLocation() {
-<b class="fc">&nbsp;            return (_location == null) ? JsonLocation.NA : _location;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public String getCurrentName() {
-&nbsp;            // 25-Jun-2015, tatu: as per [databind#838], needs to be same as ParserBase
-<b class="fc">&nbsp;            if (_currToken == JsonToken.START_OBJECT || _currToken == JsonToken.START_ARRAY) {</b>
-<b class="fc">&nbsp;                JsonReadContext parent = _parsingContext.getParent();</b>
-<b class="fc">&nbsp;                return parent.getCurrentName();</b>
-&nbsp;            }
-<b class="fc">&nbsp;            return _parsingContext.getCurrentName();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public void overrideCurrentName(String name)
-&nbsp;        {
-&nbsp;            // Simple, but need to look for START_OBJECT/ARRAY&#39;s &quot;off-by-one&quot; thing:
-<b class="fc">&nbsp;            JsonReadContext ctxt = _parsingContext;</b>
-<b class="fc">&nbsp;            if (_currToken == JsonToken.START_OBJECT || _currToken == JsonToken.START_ARRAY) {</b>
-<b class="nc">&nbsp;                ctxt = ctxt.getParent();</b>
-&nbsp;            }
-&nbsp;            try {
-<b class="fc">&nbsp;                ctxt.setCurrentName(name);</b>
-<b class="nc">&nbsp;            } catch (IOException e) {</b>
-<b class="nc">&nbsp;                throw new RuntimeException(e);</b>
 <b class="fc">&nbsp;            }</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Public API, access to token information, text
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public String getText()
-&nbsp;        {
-&nbsp;            // common cases first:
-<b class="fc">&nbsp;            if (_currToken == JsonToken.VALUE_STRING</b>
-&nbsp;                    || _currToken == JsonToken.FIELD_NAME) {
-<b class="fc">&nbsp;                Object ob = _currentObject();</b>
-<b class="fc">&nbsp;                if (ob instanceof String) {</b>
-<b class="fc">&nbsp;                    return (String) ob;</b>
-&nbsp;                }
-<b class="fc">&nbsp;                return (ob == null) ? null : ob.toString();</b>
-&nbsp;            }
-<b class="fc">&nbsp;            if (_currToken == null) {</b>
-<b class="nc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="fc">&nbsp;            switch (_currToken) {</b>
-&nbsp;            case VALUE_NUMBER_INT:
-&nbsp;            case VALUE_NUMBER_FLOAT:
-<b class="fc">&nbsp;                Object ob = _currentObject();</b>
-<b class="fc">&nbsp;                return (ob == null) ? null : ob.toString();</b>
-&nbsp;            default:
-<b class="fc">&nbsp;            	return _currToken.asString();</b>
-&nbsp;            }
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public char[] getTextCharacters() {
-<b class="fc">&nbsp;            String str = getText();</b>
-<b class="fc">&nbsp;            return (str == null) ? null : str.toCharArray();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public int getTextLength() {
-<b class="fc">&nbsp;            String str = getText();</b>
-<b class="fc">&nbsp;            return (str == null) ? 0 : str.length();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-<b class="fc">&nbsp;        public int getTextOffset() { return 0; }</b>
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public boolean hasTextCharacters() {
-&nbsp;            // We never have raw buffer available, so:
-<b class="fc">&nbsp;            return false;</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Public API, access to token information, numeric
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public BigInteger getBigIntegerValue() throws IOException
-&nbsp;        {
-<b class="nc">&nbsp;            Number n = getNumberValue();</b>
-<b class="nc">&nbsp;            if (n instanceof BigInteger) {</b>
-<b class="nc">&nbsp;                return (BigInteger) n;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            if (getNumberType() == NumberType.BIG_DECIMAL) {</b>
-<b class="nc">&nbsp;                return ((BigDecimal) n).toBigInteger();</b>
-&nbsp;            }
-&nbsp;            // int/long is simple, but let&#39;s also just truncate float/double:
-<b class="nc">&nbsp;            return BigInteger.valueOf(n.longValue());</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public BigDecimal getDecimalValue() throws IOException
-&nbsp;        {
-<b class="fc">&nbsp;            Number n = getNumberValue();</b>
-<b class="fc">&nbsp;            if (n instanceof BigDecimal) {</b>
-<b class="fc">&nbsp;                return (BigDecimal) n;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            switch (getNumberType()) {</b>
-&nbsp;            case INT:
-&nbsp;            case LONG:
-<b class="nc">&nbsp;                return BigDecimal.valueOf(n.longValue());</b>
-&nbsp;            case BIG_INTEGER:
-<b class="nc">&nbsp;                return new BigDecimal((BigInteger) n);</b>
-&nbsp;            default:
-&nbsp;            }
-&nbsp;            // float or double
-<b class="nc">&nbsp;            return BigDecimal.valueOf(n.doubleValue());</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public double getDoubleValue() throws IOException {
-<b class="fc">&nbsp;            return getNumberValue().doubleValue();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public float getFloatValue() throws IOException {
-<b class="fc">&nbsp;            return getNumberValue().floatValue();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public int getIntValue() throws IOException
-&nbsp;        {
-&nbsp;            // optimize common case:
-<b class="fc">&nbsp;            if (_currToken == JsonToken.VALUE_NUMBER_INT) {</b>
-<b class="fc">&nbsp;                return ((Number) _currentObject()).intValue();</b>
-&nbsp;            }
-<b class="nc">&nbsp;            return getNumberValue().intValue();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public long getLongValue() throws IOException {
-<b class="fc">&nbsp;            return getNumberValue().longValue();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public NumberType getNumberType() throws IOException
-&nbsp;        {
-<b class="fc">&nbsp;            Number n = getNumberValue();</b>
-<b class="fc">&nbsp;            if (n instanceof Integer) return NumberType.INT;</b>
-<b class="fc">&nbsp;            if (n instanceof Long) return NumberType.LONG;</b>
-<b class="fc">&nbsp;            if (n instanceof Double) return NumberType.DOUBLE;</b>
-<b class="fc">&nbsp;            if (n instanceof BigDecimal) return NumberType.BIG_DECIMAL;</b>
-<b class="nc">&nbsp;            if (n instanceof BigInteger) return NumberType.BIG_INTEGER;</b>
-<b class="nc">&nbsp;            if (n instanceof Float) return NumberType.FLOAT;</b>
-<b class="nc">&nbsp;            if (n instanceof Short) return NumberType.INT;       // should be SHORT</b>
-<b class="nc">&nbsp;            return null;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public final Number getNumberValue() throws IOException {
-<b class="fc">&nbsp;            _checkIsNumber();</b>
-<b class="fc">&nbsp;            Object value = _currentObject();</b>
-<b class="fc">&nbsp;            if (value instanceof Number) {</b>
-<b class="fc">&nbsp;                return (Number) value;</b>
-&nbsp;            }
-&nbsp;            // Difficult to really support numbers-as-Strings; but let&#39;s try.
-&nbsp;            // NOTE: no access to DeserializationConfig, unfortunately, so can not
-&nbsp;            // try to determine Double/BigDecimal preference...
-<b class="nc">&nbsp;            if (value instanceof String) {</b>
-<b class="nc">&nbsp;                String str = (String) value;</b>
-<b class="nc">&nbsp;                if (str.indexOf(&#39;.&#39;) &gt;= 0) {</b>
-<b class="nc">&nbsp;                    return Double.parseDouble(str);</b>
-&nbsp;                }
-<b class="nc">&nbsp;                return Long.parseLong(str);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            if (value == null) {</b>
-<b class="nc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            throw new IllegalStateException(&quot;Internal error: entry should be a Number, but is of type &quot;</b>
-<b class="nc">&nbsp;                    +value.getClass().getName());</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Public API, access to token information, other
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public Object getEmbeddedObject()
-&nbsp;        {
-<b class="fc">&nbsp;            if (_currToken == JsonToken.VALUE_EMBEDDED_OBJECT) {</b>
-<b class="fc">&nbsp;                return _currentObject();</b>
-&nbsp;            }
-<b class="nc">&nbsp;            return null;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        @SuppressWarnings(&quot;resource&quot;)
-&nbsp;        public byte[] getBinaryValue(Base64Variant b64variant) throws IOException, JsonParseException
-&nbsp;        {
-&nbsp;            // First: maybe we some special types?
-<b class="fc">&nbsp;            if (_currToken == JsonToken.VALUE_EMBEDDED_OBJECT) {</b>
-&nbsp;                // Embedded byte array would work nicely...
-<b class="nc">&nbsp;                Object ob = _currentObject();</b>
-<b class="nc">&nbsp;                if (ob instanceof byte[]) {</b>
-<b class="nc">&nbsp;                    return (byte[]) ob;</b>
-&nbsp;                }
-&nbsp;                // fall through to error case
-&nbsp;            }
-<b class="fc">&nbsp;            if (_currToken != JsonToken.VALUE_STRING) {</b>
-<b class="nc">&nbsp;                throw _constructError(&quot;Current token (&quot;+_currToken+&quot;) not VALUE_STRING (or VALUE_EMBEDDED_OBJECT with byte[]), can not access as binary&quot;);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            final String str = getText();</b>
-<b class="fc">&nbsp;            if (str == null) {</b>
-<b class="nc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="fc">&nbsp;            ByteArrayBuilder builder = _byteBuilder;</b>
-<b class="fc">&nbsp;            if (builder == null) {</b>
-<b class="fc">&nbsp;                _byteBuilder = builder = new ByteArrayBuilder(100);</b>
+<b class="fc">&nbsp;            if ((i &lt; 0)</b>
+&nbsp;                // let&#39;s just assume negative numbers are fine (can&#39;t be RFC-1123 anyway); check length for positive
+<b class="fc">&nbsp;                    &amp;&amp; (dateStr.charAt(0) == &#39;-&#39; || NumberInput.inLongRange(dateStr, false))) {</b>
+<b class="fc">&nbsp;                dt = new Date(Long.parseLong(dateStr));</b>
 &nbsp;            } else {
-<b class="fc">&nbsp;                _byteBuilder.reset();</b>
-&nbsp;            }
-<b class="fc">&nbsp;            _decodeBase64(str, builder, b64variant);</b>
-<b class="fc">&nbsp;            return builder.toByteArray();</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public int readBinaryValue(Base64Variant b64variant, OutputStream out) throws IOException
-&nbsp;        {
-<b class="nc">&nbsp;            byte[] data = getBinaryValue(b64variant);</b>
-<b class="nc">&nbsp;            if (data != null) {</b>
-<b class="nc">&nbsp;                out.write(data, 0, data.length);</b>
-<b class="nc">&nbsp;                return data.length;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            return 0;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Public API, native ids
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public boolean canReadObjectId() {
-<b class="fc">&nbsp;            return _hasNativeObjectIds;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public boolean canReadTypeId() {
-<b class="fc">&nbsp;            return _hasNativeTypeIds;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public Object getTypeId() {
-<b class="nc">&nbsp;            return _segment.findTypeId(_segmentPtr);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        public Object getObjectId() {
-<b class="nc">&nbsp;            return _segment.findObjectId(_segmentPtr);</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        /*
-&nbsp;        /**********************************************************
-&nbsp;        /* Internal methods
-&nbsp;        /**********************************************************
-&nbsp;         */
-&nbsp;
-&nbsp;        protected final Object _currentObject() {
-<b class="fc">&nbsp;            return _segment.get(_segmentPtr);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        protected final void _checkIsNumber() throws JsonParseException
-&nbsp;        {
-<b class="fc">&nbsp;            if (_currToken == null || !_currToken.isNumeric()) {</b>
-<b class="nc">&nbsp;                throw _constructError(&quot;Current token (&quot;+_currToken+&quot;) not numeric, can not use numeric value accessors&quot;);</b>
+&nbsp;                // Otherwise, fall back to using RFC 1123
+<b class="fc">&nbsp;                dt = parseAsRFC1123(dateStr, pos);</b>
 &nbsp;            }
 &nbsp;        }
-&nbsp;
-&nbsp;        @Override
-&nbsp;        protected void _handleEOF() throws JsonParseException {
-<b class="nc">&nbsp;            _throwInternal();</b>
+<b class="fc">&nbsp;        if (dt != null) {</b>
+<b class="fc">&nbsp;            return dt;</b>
 &nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        StringBuilder sb = new StringBuilder();</b>
+<b class="fc">&nbsp;        for (String f : ALL_FORMATS) {</b>
+<b class="fc">&nbsp;            if (sb.length() &gt; 0) {</b>
+<b class="fc">&nbsp;                sb.append(&quot;\&quot;, \&quot;&quot;);</b>
+&nbsp;            } else {
+<b class="fc">&nbsp;                sb.append(&#39;&quot;&#39;);</b>
+&nbsp;            }
+<b class="fc">&nbsp;            sb.append(f);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        sb.append(&#39;&quot;&#39;);</b>
+<b class="fc">&nbsp;        throw new ParseException</b>
+<b class="fc">&nbsp;            (String.format(&quot;Can not parse date \&quot;%s\&quot;: not compatible with any of standard forms (%s)&quot;,</b>
+<b class="fc">&nbsp;                           dateStr, sb.toString()), pos.getErrorIndex());</b>
 &nbsp;    }
-&nbsp;    
-&nbsp;    /**
-&nbsp;     * Individual segment of TokenBuffer that can store up to 16 tokens
-&nbsp;     * (limited by 4 bits per token type marker requirement).
-&nbsp;     * Current implementation uses fixed length array; could alternatively
-&nbsp;     * use 16 distinct fields and switch statement (slightly more efficient
-&nbsp;     * storage, slightly slower access)
-&nbsp;     */
-&nbsp;    protected final static class Segment 
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Date parse(String dateStr, ParsePosition pos)
 &nbsp;    {
-&nbsp;        public final static int TOKENS_PER_SEGMENT = 16;
-&nbsp;        
-&nbsp;        /**
-&nbsp;         * Static array used for fast conversion between token markers and
-&nbsp;         * matching {@link JsonToken} instances
-&nbsp;         */
-&nbsp;        private final static JsonToken[] TOKEN_TYPES_BY_INDEX;
-&nbsp;        static {
-&nbsp;            // ... here we know that there are &lt;= 15 values in JsonToken enum
-<b class="fc">&nbsp;            TOKEN_TYPES_BY_INDEX = new JsonToken[16];</b>
-<b class="fc">&nbsp;            JsonToken[] t = JsonToken.values();</b>
-&nbsp;            // and reserve entry 0 for &quot;not available&quot;
-<b class="fc">&nbsp;            System.arraycopy(t, 1, TOKEN_TYPES_BY_INDEX, 1, Math.min(15, t.length - 1));</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        // // // Linking
-&nbsp;        
-&nbsp;        protected Segment _next;
-&nbsp;        
-&nbsp;        // // // State
-&nbsp;
-&nbsp;        /**
-&nbsp;         * Bit field used to store types of buffered tokens; 4 bits per token.
-&nbsp;         * Value 0 is reserved for &quot;not in use&quot;
-&nbsp;         */
-&nbsp;        protected long _tokenTypes;
-&nbsp;
-&nbsp;        
-&nbsp;        // Actual tokens
-&nbsp;
-<b class="fc">&nbsp;        protected final Object[] _tokens = new Object[TOKENS_PER_SEGMENT];</b>
-&nbsp;
-&nbsp;        /**
-&nbsp;         * Lazily constructed Map for storing native type and object ids, if any
-&nbsp;         */
-&nbsp;        protected TreeMap&lt;Integer,Object&gt; _nativeIds;
-&nbsp;        
-<b class="fc">&nbsp;        public Segment() { }</b>
-&nbsp;
-&nbsp;        // // // Accessors
-&nbsp;
-&nbsp;        public JsonToken type(int index)
-&nbsp;        {
-<b class="fc">&nbsp;            long l = _tokenTypes;</b>
-<b class="fc">&nbsp;            if (index &gt; 0) {</b>
-<b class="fc">&nbsp;                l &gt;&gt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            int ix = ((int) l) &amp; 0xF;</b>
-<b class="fc">&nbsp;            return TOKEN_TYPES_BY_INDEX[ix];</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        public int rawType(int index)
-&nbsp;        {
-<b class="nc">&nbsp;            long l = _tokenTypes;</b>
-<b class="nc">&nbsp;            if (index &gt; 0) {</b>
-<b class="nc">&nbsp;                l &gt;&gt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            int ix = ((int) l) &amp; 0xF;</b>
-<b class="nc">&nbsp;            return ix;</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        public Object get(int index) {
-<b class="fc">&nbsp;            return _tokens[index];</b>
-&nbsp;        }
-&nbsp;
-<b class="fc">&nbsp;        public Segment next() { return _next; }</b>
-&nbsp;
-&nbsp;        /**
-&nbsp;         * Accessor for checking whether this segment may have native
-&nbsp;         * type or object ids.
-&nbsp;         */
-&nbsp;        public boolean hasIds() {
-<b class="nc">&nbsp;            return _nativeIds != null;</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        // // // Mutators
-&nbsp;        
-&nbsp;        public Segment append(int index, JsonToken tokenType)
-&nbsp;        {
-<b class="fc">&nbsp;            if (index &lt; TOKENS_PER_SEGMENT) {</b>
-<b class="fc">&nbsp;                set(index, tokenType);</b>
-<b class="fc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="fc">&nbsp;            _next = new Segment();</b>
-<b class="fc">&nbsp;            _next.set(0, tokenType);</b>
-<b class="fc">&nbsp;            return _next;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        public Segment append(int index, JsonToken tokenType,
-&nbsp;                Object objectId, Object typeId)
-&nbsp;        {
-<b class="nc">&nbsp;            if (index &lt; TOKENS_PER_SEGMENT) {</b>
-<b class="nc">&nbsp;                set(index, tokenType, objectId, typeId);</b>
+<b class="nc">&nbsp;        if (looksLikeISO8601(dateStr)) { // also includes &quot;plain&quot;</b>
+&nbsp;            try {
+<b class="nc">&nbsp;                return parseAsISO8601(dateStr, pos, false);</b>
+<b class="nc">&nbsp;            } catch (ParseException e) { // will NOT be thrown due to false but is declared...</b>
 <b class="nc">&nbsp;                return null;</b>
 &nbsp;            }
-<b class="nc">&nbsp;            _next = new Segment();</b>
-<b class="nc">&nbsp;            _next.set(0, tokenType, objectId, typeId);</b>
-<b class="nc">&nbsp;            return _next;</b>
 &nbsp;        }
-&nbsp;
-&nbsp;        public Segment append(int index, JsonToken tokenType, Object value)
-&nbsp;        {
-<b class="fc">&nbsp;            if (index &lt; TOKENS_PER_SEGMENT) {</b>
-<b class="fc">&nbsp;                set(index, tokenType, value);</b>
-<b class="fc">&nbsp;                return null;</b>
+&nbsp;        // Also consider &quot;stringified&quot; simple time stamp
+<b class="nc">&nbsp;        int i = dateStr.length();</b>
+<b class="nc">&nbsp;        while (--i &gt;= 0) {</b>
+<b class="nc">&nbsp;            char ch = dateStr.charAt(i);</b>
+<b class="nc">&nbsp;            if (ch &lt; &#39;0&#39; || ch &gt; &#39;9&#39;) {</b>
+&nbsp;                // 07-Aug-2013, tatu: And [databind#267] points out that negative numbers should also work
+<b class="nc">&nbsp;                if (i &gt; 0 || ch != &#39;-&#39;) {</b>
+<b class="nc">&nbsp;                    break;</b>
+&nbsp;                }
 &nbsp;            }
-<b class="fc">&nbsp;            _next = new Segment();</b>
-<b class="fc">&nbsp;            _next.set(0, tokenType, value);</b>
-<b class="fc">&nbsp;            return _next;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        public Segment append(int index, JsonToken tokenType, Object value,
-&nbsp;                Object objectId, Object typeId)
-&nbsp;        {
-<b class="nc">&nbsp;            if (index &lt; TOKENS_PER_SEGMENT) {</b>
-<b class="nc">&nbsp;                set(index, tokenType, value, objectId, typeId);</b>
-<b class="nc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            _next = new Segment();</b>
-<b class="nc">&nbsp;            _next.set(0, tokenType, value, objectId, typeId);</b>
-<b class="nc">&nbsp;            return _next;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        public Segment appendRaw(int index, int rawTokenType, Object value)
-&nbsp;        {
-<b class="nc">&nbsp;            if (index &lt; TOKENS_PER_SEGMENT) {</b>
-<b class="nc">&nbsp;                set(index, rawTokenType, value);</b>
-<b class="nc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            _next = new Segment();</b>
-<b class="nc">&nbsp;            _next.set(0, rawTokenType, value);</b>
-<b class="nc">&nbsp;            return _next;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        public Segment appendRaw(int index, int rawTokenType, Object value,
-&nbsp;                Object objectId, Object typeId)
-&nbsp;        {
-<b class="nc">&nbsp;            if (index &lt; TOKENS_PER_SEGMENT) {</b>
-<b class="nc">&nbsp;                set(index, rawTokenType, value, objectId, typeId);</b>
-<b class="nc">&nbsp;                return null;</b>
-&nbsp;            }
-<b class="nc">&nbsp;            _next = new Segment();</b>
-<b class="nc">&nbsp;            _next.set(0, rawTokenType, value, objectId, typeId);</b>
-<b class="nc">&nbsp;            return _next;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        private void set(int index, JsonToken tokenType)
-&nbsp;        {
-&nbsp;            /* Assumption here is that there are no overwrites, just appends;
-&nbsp;             * and so no masking is needed (nor explicit setting of null)
-&nbsp;             */
-<b class="fc">&nbsp;            long typeCode = tokenType.ordinal();</b>
-<b class="fc">&nbsp;            if (index &gt; 0) {</b>
-<b class="fc">&nbsp;                typeCode &lt;&lt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            _tokenTypes |= typeCode;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        private void set(int index, JsonToken tokenType,
-&nbsp;                Object objectId, Object typeId)
-&nbsp;        {
-<b class="nc">&nbsp;            long typeCode = tokenType.ordinal();</b>
-<b class="nc">&nbsp;            if (index &gt; 0) {</b>
-<b class="nc">&nbsp;                typeCode &lt;&lt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            _tokenTypes |= typeCode;</b>
-<b class="nc">&nbsp;            assignNativeIds(index, objectId, typeId);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        private void set(int index, JsonToken tokenType, Object value)
-&nbsp;        {
-<b class="fc">&nbsp;            _tokens[index] = value;</b>
-<b class="fc">&nbsp;            long typeCode = tokenType.ordinal();</b>
-<b class="fc">&nbsp;            if (index &gt; 0) {</b>
-<b class="fc">&nbsp;                typeCode &lt;&lt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="fc">&nbsp;            _tokenTypes |= typeCode;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        private void set(int index, JsonToken tokenType, Object value,
-&nbsp;                Object objectId, Object typeId)
-&nbsp;        {
-<b class="nc">&nbsp;            _tokens[index] = value;</b>
-<b class="nc">&nbsp;            long typeCode = tokenType.ordinal();</b>
-<b class="nc">&nbsp;            if (index &gt; 0) {</b>
-<b class="nc">&nbsp;                typeCode &lt;&lt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            _tokenTypes |= typeCode;</b>
-<b class="nc">&nbsp;            assignNativeIds(index, objectId, typeId);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        private void set(int index, int rawTokenType, Object value)
-&nbsp;        {
-<b class="nc">&nbsp;            _tokens[index] = value;</b>
-<b class="nc">&nbsp;            long typeCode = (long) rawTokenType;</b>
-<b class="nc">&nbsp;            if (index &gt; 0) {</b>
-<b class="nc">&nbsp;                typeCode &lt;&lt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            _tokenTypes |= typeCode;</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        private void set(int index, int rawTokenType, Object value, Object objectId, Object typeId)
-&nbsp;        {
-<b class="nc">&nbsp;            _tokens[index] = value;</b>
-<b class="nc">&nbsp;            long typeCode = (long) rawTokenType;</b>
-<b class="nc">&nbsp;            if (index &gt; 0) {</b>
-<b class="nc">&nbsp;                typeCode &lt;&lt;= (index &lt;&lt; 2);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            _tokenTypes |= typeCode;</b>
-<b class="nc">&nbsp;            assignNativeIds(index, objectId, typeId);</b>
-&nbsp;        }
-&nbsp;
-&nbsp;        private final void assignNativeIds(int index, Object objectId, Object typeId)
-&nbsp;        {
-<b class="nc">&nbsp;            if (_nativeIds == null) {</b>
-<b class="nc">&nbsp;                _nativeIds = new TreeMap&lt;Integer,Object&gt;();</b>
-&nbsp;            }
-<b class="nc">&nbsp;            if (objectId != null) {</b>
-<b class="nc">&nbsp;                _nativeIds.put(_objectIdIndex(index), objectId);</b>
-&nbsp;            }
-<b class="nc">&nbsp;            if (typeId != null) {</b>
-<b class="nc">&nbsp;                _nativeIds.put(_typeIdIndex(index), typeId);</b>
+<b class="nc">&nbsp;        }</b>
+<b class="nc">&nbsp;        if (i &lt; 0) { // all digits</b>
+&nbsp;            // let&#39;s just assume negative numbers are fine (can&#39;t be RFC-1123 anyway); check length for positive
+<b class="nc">&nbsp;            if (dateStr.charAt(0) == &#39;-&#39; || NumberInput.inLongRange(dateStr, false)) {</b>
+<b class="nc">&nbsp;                return new Date(Long.parseLong(dateStr));</b>
 &nbsp;            }
 &nbsp;        }
+&nbsp;        // Otherwise, fall back to using RFC 1123
+<b class="nc">&nbsp;        return parseAsRFC1123(dateStr, pos);</b>
+&nbsp;    }
 &nbsp;
-&nbsp;        /**
-&nbsp;         * @since 2.3
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Public API, writing
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;    
+&nbsp;    @Override
+&nbsp;    public StringBuffer format(Date date, StringBuffer toAppendTo,
+&nbsp;            FieldPosition fieldPosition)
+&nbsp;    {
+<b class="fc">&nbsp;        if (_formatISO8601 == null) {</b>
+<b class="fc">&nbsp;            _formatISO8601 = _cloneFormat(DATE_FORMAT_ISO8601, DATE_FORMAT_STR_ISO8601,</b>
+&nbsp;                    _timezone, _locale, _lenient);
+&nbsp;        }
+<b class="fc">&nbsp;        return _formatISO8601.format(date, toAppendTo, fieldPosition);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Std overrides
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;    
+&nbsp;    @Override
+&nbsp;    public String toString() {
+<b class="nc">&nbsp;        String str = &quot;DateFormat &quot;+getClass().getName();</b>
+<b class="nc">&nbsp;        TimeZone tz = _timezone;</b>
+<b class="nc">&nbsp;        if (tz != null) {</b>
+<b class="nc">&nbsp;            str += &quot; (timezone: &quot;+tz+&quot;)&quot;;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        str += &quot;(locale: &quot;+_locale+&quot;)&quot;;</b>
+<b class="nc">&nbsp;        return str;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override // since 2.7[.2], as per [databind#1130]
+&nbsp;    public boolean equals(Object o) {
+<b class="fc">&nbsp;        return (o == this);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override // since 2.7[.2], as per [databind#1130]
+&nbsp;    public int hashCode() {
+<b class="fc">&nbsp;        return System.identityHashCode(this);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /*
+&nbsp;    /**********************************************************
+&nbsp;    /* Helper methods
+&nbsp;    /**********************************************************
+&nbsp;     */
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Overridable helper method used to figure out which of supported
+&nbsp;     * formats is the likeliest match.
+&nbsp;     */
+&nbsp;    protected boolean looksLikeISO8601(String dateStr)
+&nbsp;    {
+<b class="fc">&nbsp;        if (dateStr.length() &gt;= 5</b>
+<b class="fc">&nbsp;            &amp;&amp; Character.isDigit(dateStr.charAt(0))</b>
+<b class="fc">&nbsp;            &amp;&amp; Character.isDigit(dateStr.charAt(3))</b>
+<b class="fc">&nbsp;            &amp;&amp; dateStr.charAt(4) == &#39;-&#39;</b>
+&nbsp;            ) {
+<b class="fc">&nbsp;            return true;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    protected Date parseAsISO8601(String dateStr, ParsePosition pos, boolean throwErrors)
+&nbsp;            throws ParseException
+&nbsp;    {
+&nbsp;        /* 21-May-2009, tatu: DateFormat has very strict handling of
+&nbsp;         * timezone  modifiers for ISO-8601. So we need to do some scrubbing.
 &nbsp;         */
-&nbsp;        public Object findObjectId(int index) {
-<b class="nc">&nbsp;            return (_nativeIds == null) ? null : _nativeIds.get(_objectIdIndex(index));</b>
-&nbsp;        }
-&nbsp;        
-&nbsp;        /**
-&nbsp;         * @since 2.3
-&nbsp;         */
-&nbsp;        public Object findTypeId(int index) {
-<b class="nc">&nbsp;            return (_nativeIds == null) ? null : _nativeIds.get(_typeIdIndex(index));</b>
-&nbsp;        }
 &nbsp;
-<b class="nc">&nbsp;        private final int _typeIdIndex(int i) { return i+i; }</b>
-<b class="nc">&nbsp;        private final int _objectIdIndex(int i) { return i+i+1; }</b>
+&nbsp;        /* First: do we have &quot;zulu&quot; format (&#39;Z&#39; == &quot;UTC&quot;)? If yes, that&#39;s
+&nbsp;         * quite simple because we already set date format timezone to be
+&nbsp;         * UTC, and hence can just strip out &#39;Z&#39; altogether
+&nbsp;         */
+<b class="fc">&nbsp;        int len = dateStr.length();</b>
+<b class="fc">&nbsp;        char c = dateStr.charAt(len-1);</b>
+&nbsp;        DateFormat df;
+&nbsp;        String formatStr;
+&nbsp;
+&nbsp;        // Need to support &quot;plain&quot; date...
+<b class="fc">&nbsp;        if (len &lt;= 10 &amp;&amp; Character.isDigit(c)) {</b>
+<b class="fc">&nbsp;            df = _formatPlain;</b>
+<b class="fc">&nbsp;            formatStr = DATE_FORMAT_STR_PLAIN;</b>
+<b class="fc">&nbsp;            if (df == null) {</b>
+<b class="fc">&nbsp;                df = _formatPlain = _cloneFormat(DATE_FORMAT_PLAIN, formatStr,</b>
+&nbsp;                        _timezone, _locale, _lenient);
+&nbsp;            }
+<b class="fc">&nbsp;        } else if (c == &#39;Z&#39;) {</b>
+<b class="fc">&nbsp;            df = _formatISO8601_z;</b>
+<b class="fc">&nbsp;            formatStr = DATE_FORMAT_STR_ISO8601_Z;</b>
+<b class="fc">&nbsp;            if (df == null) {</b>
+<b class="fc">&nbsp;                df = _formatISO8601_z = _cloneFormat(DATE_FORMAT_ISO8601_Z, formatStr,</b>
+&nbsp;                        _timezone, _locale, _lenient);
+&nbsp;            }
+&nbsp;            // may be missing milliseconds... if so, add
+<b class="fc">&nbsp;            if (dateStr.charAt(len-4) == &#39;:&#39;) {</b>
+<b class="fc">&nbsp;                StringBuilder sb = new StringBuilder(dateStr);</b>
+<b class="fc">&nbsp;                sb.insert(len-1, &quot;.000&quot;);</b>
+<b class="fc">&nbsp;                dateStr = sb.toString();</b>
+<b class="fc">&nbsp;            }</b>
+&nbsp;        } else {
+&nbsp;            // Let&#39;s see if we have timezone indicator or not...
+<b class="fc">&nbsp;            if (hasTimeZone(dateStr)) {</b>
+<b class="fc">&nbsp;                c = dateStr.charAt(len-3);</b>
+<b class="fc">&nbsp;                if (c == &#39;:&#39;) { // remove optional colon</b>
+&nbsp;                    // remove colon
+<b class="fc">&nbsp;                    StringBuilder sb = new StringBuilder(dateStr);</b>
+<b class="fc">&nbsp;                    sb.delete(len-3, len-2);</b>
+<b class="fc">&nbsp;                    dateStr = sb.toString();</b>
+<b class="fc">&nbsp;                } else if (c == &#39;+&#39; || c == &#39;-&#39;) { // missing minutes</b>
+&nbsp;                    // let&#39;s just append &#39;00&#39;
+<b class="fc">&nbsp;                    dateStr += &quot;00&quot;;</b>
+&nbsp;                }
+&nbsp;                // Milliseconds partial or missing; and even seconds are optional
+<b class="fc">&nbsp;                len = dateStr.length();</b>
+&nbsp;                // remove &#39;T&#39;, &#39;+&#39;/&#39;-&#39; and 4-digit timezone-offset
+<b class="fc">&nbsp;                int timeLen = len - dateStr.lastIndexOf(&#39;T&#39;) - 6;</b>
+<b class="fc">&nbsp;                if (timeLen &lt; 12) { // 8 for hh:mm:ss, 4 for .sss</b>
+<b class="fc">&nbsp;                    int offset = len - 5; // insertion offset, before tz-offset</b>
+<b class="fc">&nbsp;                    StringBuilder sb = new StringBuilder(dateStr);</b>
+<b class="fc">&nbsp;                    switch (timeLen) {</b>
+&nbsp;                    case 11:
+<b class="fc">&nbsp;                        sb.insert(offset, &#39;0&#39;); break;</b>
+&nbsp;                    case 10:
+<b class="fc">&nbsp;                        sb.insert(offset, &quot;00&quot;); break;</b>
+&nbsp;                    case 9: // is this legal? (just second fraction marker)
+<b class="nc">&nbsp;                        sb.insert(offset, &quot;000&quot;); break;</b>
+&nbsp;                    case 8:
+<b class="fc">&nbsp;                        sb.insert(offset, &quot;.000&quot;); break;</b>
+&nbsp;                    case 7: // not legal to have single-digit second
+<b class="nc">&nbsp;                        break;</b>
+&nbsp;                    case 6: // probably not legal, but let&#39;s allow
+<b class="nc">&nbsp;                        sb.insert(offset, &quot;00.000&quot;);</b>
+&nbsp;                    case 5: // is legal to omit seconds
+<b class="fc">&nbsp;                        sb.insert(offset, &quot;:00.000&quot;);</b>
+&nbsp;                    }
+<b class="fc">&nbsp;                    dateStr = sb.toString();</b>
+&nbsp;                }
+<b class="fc">&nbsp;                df = _formatISO8601;</b>
+<b class="fc">&nbsp;                formatStr = DATE_FORMAT_STR_ISO8601;</b>
+<b class="fc">&nbsp;                if (_formatISO8601 == null) {</b>
+<b class="fc">&nbsp;                    df = _formatISO8601 = _cloneFormat(DATE_FORMAT_ISO8601, formatStr,</b>
+&nbsp;                            _timezone, _locale, _lenient);
+&nbsp;                }
+<b class="fc">&nbsp;            } else {</b>
+&nbsp;                // If not, plain date. Easiest to just patch &#39;Z&#39; in the end?
+<b class="fc">&nbsp;                StringBuilder sb = new StringBuilder(dateStr);</b>
+&nbsp;                // And possible also millisecond part if missing
+<b class="fc">&nbsp;                int timeLen = len - dateStr.lastIndexOf(&#39;T&#39;) - 1;</b>
+<b class="fc">&nbsp;                if (timeLen &lt; 12) { // missing, or partial</b>
+<b class="fc">&nbsp;                    switch (timeLen) {</b>
+<b class="nc">&nbsp;                    case 11: sb.append(&#39;0&#39;);</b>
+<b class="nc">&nbsp;                    case 10: sb.append(&#39;0&#39;);</b>
+<b class="nc">&nbsp;                    case 9: sb.append(&#39;0&#39;);</b>
+<b class="nc">&nbsp;                        break;</b>
+&nbsp;                    default:
+<b class="fc">&nbsp;                        sb.append(&quot;.000&quot;);</b>
+&nbsp;                    }
+&nbsp;                }
+<b class="fc">&nbsp;                sb.append(&#39;Z&#39;);</b>
+<b class="fc">&nbsp;                dateStr = sb.toString();</b>
+<b class="fc">&nbsp;                df = _formatISO8601_z;</b>
+<b class="fc">&nbsp;                formatStr = DATE_FORMAT_STR_ISO8601_Z;</b>
+<b class="fc">&nbsp;                if (df == null) {</b>
+<b class="fc">&nbsp;                    df = _formatISO8601_z = _cloneFormat(DATE_FORMAT_ISO8601_Z, formatStr,</b>
+&nbsp;                            _timezone, _locale, _lenient);
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;        Date dt = df.parse(dateStr, pos);</b>
+&nbsp;        // 22-Dec-2015, tatu: With non-lenient, may get null
+<b class="fc">&nbsp;        if (dt == null) {</b>
+<b class="fc">&nbsp;            throw new ParseException</b>
+<b class="fc">&nbsp;            (String.format(&quot;Can not parse date \&quot;%s\&quot;: while it seems to fit format &#39;%s&#39;, parsing fails (leniency? %s)&quot;,</b>
+&nbsp;                           dateStr, formatStr, _lenient),
+<b class="fc">&nbsp;               pos.getErrorIndex());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return dt;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    protected Date parseAsRFC1123(String dateStr, ParsePosition pos)
+&nbsp;    {
+<b class="fc">&nbsp;        if (_formatRFC1123 == null) {</b>
+<b class="fc">&nbsp;            _formatRFC1123 = _cloneFormat(DATE_FORMAT_RFC1123, DATE_FORMAT_STR_RFC1123,</b>
+&nbsp;                    _timezone, _locale, _lenient);
+&nbsp;        }
+<b class="fc">&nbsp;        return _formatRFC1123.parse(dateStr, pos);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private final static boolean hasTimeZone(String str)
+&nbsp;    {
+&nbsp;        // Only accept &quot;+hh&quot;, &quot;+hhmm&quot; and &quot;+hh:mm&quot; (and with minus), so
+<b class="fc">&nbsp;        int len = str.length();</b>
+<b class="fc">&nbsp;        if (len &gt;= 6) {</b>
+<b class="fc">&nbsp;            char c = str.charAt(len-6);</b>
+<b class="fc">&nbsp;            if (c == &#39;+&#39; || c == &#39;-&#39;) return true;</b>
+<b class="fc">&nbsp;            c = str.charAt(len-5);</b>
+<b class="fc">&nbsp;            if (c == &#39;+&#39; || c == &#39;-&#39;) return true;</b>
+<b class="fc">&nbsp;            c = str.charAt(len-3);</b>
+<b class="fc">&nbsp;            if (c == &#39;+&#39; || c == &#39;-&#39;) return true;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private final static DateFormat _cloneFormat(DateFormat df, String format,
+&nbsp;            TimeZone tz, Locale loc, Boolean lenient)
+&nbsp;    {
+<b class="fc">&nbsp;        if (!loc.equals(DEFAULT_LOCALE)) {</b>
+<b class="nc">&nbsp;            df = new SimpleDateFormat(format, loc);</b>
+<b class="nc">&nbsp;            df.setTimeZone((tz == null) ? DEFAULT_TIMEZONE : tz);</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            df = (DateFormat) df.clone();</b>
+<b class="fc">&nbsp;            if (tz != null) {</b>
+<b class="fc">&nbsp;                df.setTimeZone(tz);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;        if (lenient != null) {</b>
+<b class="fc">&nbsp;            df.setLenient(lenient.booleanValue());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return df;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    protected void _clearFormats() {
+<b class="fc">&nbsp;        _formatRFC1123 = null;</b>
+<b class="fc">&nbsp;        _formatISO8601 = null;</b>
+<b class="fc">&nbsp;        _formatISO8601_z = null;</b>
+<b class="fc">&nbsp;        _formatPlain = null;</b>
 &nbsp;    }
 &nbsp;}
+&nbsp;
 </code>
 </pre>
 </div>
@@ -2079,7 +686,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

@@ -7,14 +7,13 @@
 package com.fasterxml.jackson.databind.ser.std;
 
 import org.evosuite.runtime.annotation.EvoSuiteClassExclude;
-import org.junit.BeforeClass;
-import org.junit.Before;
+import org.evosuite.runtime.sandbox.Sandbox;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.evosuite.runtime.sandbox.Sandbox;
-import org.evosuite.runtime.sandbox.Sandbox.SandboxMode;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
-import static org.evosuite.shaded.org.mockito.Mockito.*;
+import static org.evosuite.shaded.org.mockito.Mockito.mock;
 @EvoSuiteClassExclude
 public class MapSerializer_ESTest_scaffolding {
 

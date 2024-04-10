@@ -5,7 +5,7 @@
 <html id="htmlId">
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
-  <title>Coverage Report > ResolvableSerializer</title>
+  <title>Coverage Report > PropertyFilter</title>
   <style type="text/css">
     @import "../../css/coverage.css";
     @import "../../css/idea.min.css";
@@ -22,14 +22,14 @@ Current scope:     <a href="../../index.html">all classes</a>
     <a href="../index.html">com.fasterxml.jackson.databind.ser</a>
 </div>
 
-<h1>Coverage Summary for Class: ResolvableSerializer (com.fasterxml.jackson.databind.ser)</h1>
+<h1>Coverage Summary for Class: PropertyFilter (com.fasterxml.jackson.databind.ser)</h1>
 
 <table class="coverageStats">
 <tr>
   <th class="name">Class</th>
 </tr>
 <tr>
-  <td class="name">ResolvableSerializer</td>
+  <td class="name">PropertyFilter</td>
 </tr>
 
 </table>
@@ -41,35 +41,123 @@ Current scope:     <a href="../../index.html">all classes</a>
 <pre>
 <code class="sourceCode" id="sourceCode">&nbsp;package com.fasterxml.jackson.databind.ser;
 &nbsp;
-&nbsp;import com.fasterxml.jackson.databind.*;
+&nbsp;import com.fasterxml.jackson.core.JsonGenerator;
+&nbsp;import com.fasterxml.jackson.databind.JsonMappingException;
+&nbsp;import com.fasterxml.jackson.databind.SerializerProvider;
+&nbsp;import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
+&nbsp;import com.fasterxml.jackson.databind.node.ObjectNode;
 &nbsp;
 &nbsp;/**
-&nbsp; * Interface used to indicate serializers that want to do post-processing
-&nbsp; * after construction and being added to {@link SerializerProvider},
-&nbsp; * but before being used. This is typically used to resolve references
-&nbsp; * to other contained types; for example, bean serializers use this
-&nbsp; * to eagerly find serializers for contained field types.
+&nbsp; * Interface that defines API for filter objects use (as configured
+&nbsp; * using {@link com.fasterxml.jackson.annotation.JsonFilter})
+&nbsp; * for filtering bean properties to serialize.
 &nbsp; *&lt;p&gt;
-&nbsp; * Note that in cases where serializer needs both contextualization and
-&nbsp; * resolution -- that is, implements both this interface and {@link ContextualSerializer}
-&nbsp; * -- resolution via this interface occurs first, and contextual
-&nbsp; * resolution (using {@link ContextualSerializer}) later on.
+&nbsp; * Note that this is the replacement for &lt;code&gt;BeanPropertyFilter&lt;/code&gt;,
+&nbsp; * which is replaced because it was too closely bound to Bean properties
+&nbsp; * and would not work with {@link java.util.Map}s or &quot;any getters&quot;.
+&nbsp; *&lt;p&gt;
+&nbsp; * Note that since this is an interface, it is
+&nbsp; * strongly recommended that custom implementations extend
+&nbsp; * {@link com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter},
+&nbsp; * to avoid backwards compatibility issues in case interface needs to change.
+&nbsp; * 
+&nbsp; * @since 2.3
 &nbsp; */
-&nbsp;public interface ResolvableSerializer
+&nbsp;public interface PropertyFilter
 &nbsp;{
 &nbsp;    /**
-&nbsp;     * Method called after {@link SerializerProvider} has registered
-&nbsp;     * the serializer, but before it has returned it to the caller.
-&nbsp;     * Called object can then resolve its dependencies to other types,
-&nbsp;     * including self-references (direct or indirect).
+&nbsp;     * Method called by {@link BeanSerializer} to let the filter decide what to do with
+&nbsp;     * given bean property value:
+&nbsp;     * the usual choices are to either filter out (i.e.
+&nbsp;     * do nothing) or write using given {@link PropertyWriter}, although filters
+&nbsp;     * can choose other to do something different altogether.
 &nbsp;     *&lt;p&gt;
-&nbsp;     * Note that this method does NOT return serializer, since resolution
-&nbsp;     * is not allowed to change actual serializer to use.
-&nbsp;     *
-&nbsp;     * @param provider Provider that has constructed serializer this method
-&nbsp;     *   is called on.
+&nbsp;     * Typical implementation is something like:
+&nbsp;     *&lt;pre&gt;
+&nbsp;     * if (include(writer)) {
+&nbsp;     *      writer.serializeAsField(pojo, jgen, prov);
+&nbsp;     * }
+&nbsp;     *&lt;/pre&gt;
+&nbsp;     * 
+&nbsp;     * @param pojo Object that contains property value to serialize
+&nbsp;     * @param jgen Generator use for serializing value
+&nbsp;     * @param prov Provider that can be used for accessing dynamic aspects of serialization
+&nbsp;     *    processing
+&nbsp;     * @param writer Object called to do actual serialization of the field, if not filtered out
 &nbsp;     */
-&nbsp;    public abstract void resolve(SerializerProvider provider)
+&nbsp;    public void serializeAsField(Object pojo, JsonGenerator jgen, SerializerProvider prov,
+&nbsp;            PropertyWriter writer)
+&nbsp;        throws Exception;
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Method called by container to let the filter decide what to do with given element
+&nbsp;     * value: 
+&nbsp;     * the usual choices are to either filter out (i.e.
+&nbsp;     * do nothing) or write using given {@link PropertyWriter}, although filters
+&nbsp;     * can choose other to do something different altogether.
+&nbsp;     *&lt;p&gt;
+&nbsp;     * Typical implementation is something like:
+&nbsp;     *&lt;pre&gt;
+&nbsp;     * if (include(writer)) {
+&nbsp;     *      writer.serializeAsElement(pojo, jgen, prov);
+&nbsp;     * }
+&nbsp;     *&lt;/pre&gt;
+&nbsp;     * 
+&nbsp;     * @param elementValue Element value being serializerd
+&nbsp;     * @param jgen Generator use for serializing value
+&nbsp;     * @param prov Provider that can be used for accessing dynamic aspects of serialization
+&nbsp;     *    processing
+&nbsp;     * @param writer Object called to do actual serialization of the field, if not filtered out
+&nbsp;     */
+&nbsp;    public void serializeAsElement(Object elementValue, JsonGenerator jgen, SerializerProvider prov,
+&nbsp;            PropertyWriter writer)
+&nbsp;        throws Exception;
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * Method called by {@link BeanSerializer} to let the filter determine whether, and in what
+&nbsp;     * form the given property exist within the parent, or root, schema. Filters can omit
+&nbsp;     * adding the property to the node, or choose the form of the schema value for the property.
+&nbsp;     *&lt;p&gt;
+&nbsp;     * Typical implementation is something like:
+&nbsp;     *&lt;pre&gt;
+&nbsp;     * if (include(writer)) {
+&nbsp;     *      writer.depositSchemaProperty(propertiesNode, provider);
+&nbsp;     * }
+&nbsp;     *&lt;/pre&gt;
+&nbsp;     * 
+&nbsp;     * @param writer Bean property writer to use to create schema value
+&nbsp;     * @param propertiesNode Node which the given property would exist within
+&nbsp;     * @param provider Provider that can be used for accessing dynamic aspects of serialization
+&nbsp;     * 	processing
+&nbsp;     * 
+&nbsp;     * @deprecated Since 2.3: new code should use the alternative &lt;code&gt;depositSchemaProperty&lt;/code&gt;
+&nbsp;     *   method
+&nbsp;     */
+&nbsp;    @Deprecated
+&nbsp;    public void depositSchemaProperty(PropertyWriter writer, ObjectNode propertiesNode,
+&nbsp;            SerializerProvider provider)
+&nbsp;        throws JsonMappingException;
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * Method called by {@link BeanSerializer} to let the filter determine whether, and in what
+&nbsp;     * form the given property exist within the parent, or root, schema. Filters can omit
+&nbsp;     * adding the property to the node, or choose the form of the schema value for the property
+&nbsp;     *&lt;p&gt;
+&nbsp;     * Typical implementation is something like:
+&nbsp;     *&lt;pre&gt;
+&nbsp;     * if (include(writer)) {
+&nbsp;     *      writer.depositSchemaProperty(objectVisitor, provider);
+&nbsp;     * }
+&nbsp;     *&lt;/pre&gt;
+&nbsp;     * 
+&nbsp;     * @param writer Bean property serializer to use to create schema value
+&nbsp;     * @param objectVisitor JsonObjectFormatVisitor which should be aware of 
+&nbsp;     * the property&#39;s existence
+&nbsp;     * @param provider Provider that can be used for accessing dynamic aspects of serialization
+&nbsp;     * 	processing
+&nbsp;     */
+&nbsp;    public void depositSchemaProperty(PropertyWriter writer, JsonObjectFormatVisitor objectVisitor,
+&nbsp;            SerializerProvider provider)
 &nbsp;        throws JsonMappingException;
 &nbsp;}
 </code>
@@ -95,7 +183,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>

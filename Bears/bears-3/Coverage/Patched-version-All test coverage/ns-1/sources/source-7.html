@@ -60,10 +60,10 @@ Current scope:     <a href="../../index.html">all classes</a>
 </td>
 <td class="coverageStat">
   <span class="percent">
-    68.4%
+    67.8%
   </span>
   <span class="absValue">
-    (229/335)
+    (227/335)
   </span>
 </td>
 </tr>
@@ -1331,9 +1331,9 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;    public void reportUnresolvedObjectId(ObjectIdReader oidReader, Object bean)
 &nbsp;        throws JsonMappingException
 &nbsp;    {
-<b class="fc">&nbsp;        String msg = String.format(&quot;No Object Id found for an instance of %s, to assign to property &#39;%s&#39;&quot;,</b>
-<b class="fc">&nbsp;                bean.getClass().getName(), oidReader.propertyName);</b>
-<b class="fc">&nbsp;        throw JsonMappingException.from(getParser(), msg);</b>
+<b class="nc">&nbsp;        String msg = String.format(&quot;No Object Id found for an instance of %s, to assign to property &#39;%s&#39;&quot;,</b>
+<b class="nc">&nbsp;                bean.getClass().getName(), oidReader.propertyName);</b>
+<b class="nc">&nbsp;        throw JsonMappingException.from(getParser(), msg);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1387,7 +1387,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 &nbsp;     * @since 2.6
 &nbsp;     */
 &nbsp;    public JsonMappingException mappingException(String message) {
-<b class="nc">&nbsp;        return JsonMappingException.from(getParser(), message);</b>
+<b class="fc">&nbsp;        return JsonMappingException.from(getParser(), message);</b>
 &nbsp;    }
 &nbsp;
 &nbsp;    /**
@@ -1676,7 +1676,7 @@ Current scope:     <a href="../../index.html">all classes</a>
 
 <div class="footer">
     
-    <div style="float:right;">generated on 2024-04-02 21:53</div>
+    <div style="float:right;">generated on 2024-04-09 22:21</div>
 </div>
 </body>
 </html>
