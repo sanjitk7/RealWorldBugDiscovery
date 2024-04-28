@@ -102,11 +102,19 @@ def get_average_and_first_rank(involved_statements, ranked_suspiciousness_per_st
     first_rank = 999
     involved_ranks_sum = 0
     i = 1
+    rank = i
+    prev_rank = 0
+    prev_score = -1
     for line_number, score in ranked_suspiciousness_per_statement.items():
+        if score != prev_score:
+            rank = i
+        else:
+            rank = prev_rank
+        prev_score = score
         if line_number in involved_statements:
-            involved_ranks_sum += i
-            if i < first_rank:
-                first_rank = i
+            involved_ranks_sum += rank
+            if rank < first_rank:
+                first_rank = rank
         i += 1
 
     average_rank = involved_ranks_sum / len(involved_statements)
