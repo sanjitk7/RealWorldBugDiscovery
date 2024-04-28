@@ -36,6 +36,7 @@ Every week on Sat, until Apr 27, 2024
 | 04/06/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-3 remaining tasks. Discussed Milestone-4. Assigned datasets to each member. | Assigned repositories to each member to complete Milestone-4: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
 | 04/13/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-4 task-1. Assigned datasets to each member. Selected 3 bugs from each dataset. Discussed suspiciousness score. | Assigned repositories to each member to complete Milestone-4 task-1: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
 | 04/20/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-4 Progress. Completed script for suspiciousness score computation. | Explore ranking, visualization, correlation. Assigned repositories to each member to complete Milestone-4 task-2: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+| 04/27/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-4 Progress on Task 2. | More progress on QuickBugs than the rest of the datasets. Explore ranking, visualization, correlation. Looking into how to get coverage information for Defects4J and BugSwarm for suspiciousness due to using different tools from Clover. Repositories to each member to complete Milestone-4 task-2: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
 
 
 
