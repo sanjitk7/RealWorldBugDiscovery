@@ -1,97 +1,68 @@
 import os
-import sys
 import subprocess
-import multiprocessing
 
-bugs_directory = (
-    "/Users/urjakhadilkar/Desktop/CS527-team11/BugSwarm"
-)
+def run_maven_test(project_dir):
+    """Run Maven test to ensure the project is in a testable state."""
+    subprocess.run(['mvn', 'test'], cwd=project_dir)
 
-randoop_jar_path = "/Users/urjakhadilkar/Downloads/randoop-4.3.2/randoop-all-4.3.2.jar"
-evosuite_jar_path = "/Users/urjakhadilkar/Downloads/evosuite-1.0.6.jar"
-
-valid_tools = ["randoop", "evosuite"]
-
-
-def get_all_bug_directories(directory):
-    return [
-        os.path.join(directory, d)
-        for d in os.listdir(directory)
-        if os.path.isdir(os.path.join(directory, d))
-    ]
-
-def construct_classpath(root_dir):
-    classpath_elements = []
+def run_evosuite(test_classes, version_dir, evosuite_jar_path):
+    """Run EvoSuite on a list of test classes for a given project version."""
+    # Create an EvoSuite test output directory inside the version directory
+    evosuite_output_dir = os.path.join(version_dir, 'evosuite_tests')
+    os.makedirs(evosuite_output_dir, exist_ok=True)
     
-    for root, dirs, files in os.walk(root_dir):
-        classpath_elements.append(root)
-        
-        for file in files:
-            if file.endswith('.jar'):
-                classpath_elements.append(os.path.join(root, file))
+    for test_class in test_classes:
+        # Classpath setup for Maven projects, may require adjustment
+        classpath = f"{version_dir}/store/target/classes:{version_dir}/store/target/test-classes/com/alibaba/otter/cancel/store/memory/buffer"
+        cmd = [
+            'java',
+            '-jar', evosuite_jar_path,
+            '-class', test_class,
+            '-projectCP', classpath,
+            '-Dsearch_budget=60',  # Time budget for EvoSuite, adjust as needed
+            '-Dtest_dir=' + evosuite_output_dir,  # Directory to output the generated tests
+            # More EvoSuite parameters can be added if needed
+        ]
+        subprocess.run(cmd, cwd=version_dir)
 
-    classpath = os.pathsep.join(classpath_elements)
-    return classpath
+def extract_test_classes(test_file_path):
+    """Extracts test class names from a test.txt file."""
+    with open(test_file_path, 'r') as test_file:
+        return [line.strip().split('.')[0] for line in test_file]  # Assuming each line is TestClass.TestMethod
 
+# Path to the EvoSuite jar
+evosuite_jar_path = '/Users/urjakhadilkar/Downloads/evosuite-1.2.0.jar'
 
-def generate_randoop_tests(bug_dir):
-    for version in ["Buggy-Version", "Patched-Version"]:
-        classpath_command = f"mvn dependency:build-classpath -Dmdep.outputFile=cp.txt"
-        subprocess.run(classpath_command, shell=True)
-        classpath = os.path.join(bug_dir, version)
-        os.chdir(os.path.join(bug_dir, version))
-        # classpath = f".:{randoop_jar_path}"
-        output_dir = "randoop_tests"
-        os.makedirs(output_dir, exist_ok=True)
+# Base directory where the bugs are stored
+bugs_base_dir = '/Users/urjakhadilkar/Desktop/CS527-team11/BugSwarm'
 
-        with open(os.path.join(bug_dir, "tests.txt"), "r") as file:
-            classes_under_test = [line.strip() for line in file]
+# Generate tests for each bug
+for bug_dir_name in os.listdir(bugs_base_dir):
+    bug_dir_path = os.path.join(bugs_base_dir, bug_dir_name)
 
-        for test_class in classes_under_test:
-            randoop_command = f"java -classpath $(cat cp.txt):{randoop_jar_path} randoop.main.Main gentests --testclass={test_class} --time-limit=60 --output-limit=200 --junit-output-dir={output_dir}"
-            print(randoop_command)
-            subprocess.run(randoop_command, shell=True)
+    # Check for the test.txt file
+    test_file_path = os.path.join(bug_dir_path, 'test.txt')
+    if not os.path.exists(test_file_path):
+        print(f"No test.txt found for {bug_dir_name}, skipping.")
+        continue
 
-        print(f"Generated Randoop tests for {bug_dir} in {version}")
+    # Extract test classes from test.txt
+    test_classes = extract_test_classes(test_file_path)
 
+    # Paths for the buggy and patched project versions
+    buggy_dir_path = os.path.join(bug_dir_path, 'Buggy-Version')
+    patched_dir_path = os.path.join(bug_dir_path, 'Patched-Version')
 
-def generate_evosuite_tests(bug_dir):
-    for version in ["Buggy-Version", "Patched-Version"]:
-        os.chdir(os.path.join(bug_dir, version))
-        classpath = "."
-        output_dir = "evosuite_tests"
-        os.makedirs(output_dir, exist_ok=True)
+    # Run Maven tests and generate tests for the buggy version
+    if os.path.isdir(buggy_dir_path):
+        # run_maven_test(buggy_dir_path)  # Run Maven test phase
+        run_evosuite(test_classes, buggy_dir_path, evosuite_jar_path)  # Run EvoSuite
 
-        with open(os.path.join(bug_dir, "tests.txt"), "r") as file:
-            classes_under_test = [line.strip() for line in file]
+    # Run Maven tests and generate tests for the patched version
+    if os.path.isdir(patched_dir_path):
+        # run_maven_test(patched_dir_path)  # Run Maven test phase
+        run_evosuite(test_classes, patched_dir_path, evosuite_jar_path)  # Run EvoSuite
 
-        for test_class in classes_under_test:
-            evosuite_command = f"java -jar {evosuite_jar_path} -class {test_class} -projectCP {classpath} -Doutput_dir={output_dir} -Dsearch_budget=60"
-            print(evosuite_command)
-            subprocess.run(evosuite_command, shell=True)
+    print(f"Test generation completed for bug {bug_dir_name}")
 
-        print(f"Generated EvoSuite tests for {bug_dir} in {version}")
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python generate_tests.py [randoop|evosuite]")
-        sys.exit(1)
-
-    tool = sys.argv[1].lower()
-
-    if tool not in valid_tools:
-        print(f"Invalid tool: {tool}, valid tools are: {valid_tools}")
-        sys.exit(1)
-
-    bug_directories = get_all_bug_directories(bugs_directory)
-
-    if tool == "randoop":
-        target_function = generate_randoop_tests
-    elif tool == "evosuite":
-        target_function = generate_evosuite_tests
-
-    with multiprocessing.Pool() as pool:
-        pool.map(target_function, bug_directories)
-
-    print("Script completed successfully.")
+print("Test generation for all bugs completed.")

@@ -196,19 +196,37 @@
                                 </dependencies>
 			</plugin>
 			<plugin>
-				<!-- Plugin for actually computing code coverage. -->
-				<!-- Call mvn test jacoco:report to generate test coverage -->
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.7</version>  <!-- Use the latest version available -->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.4</version>
-                                <executions>
-                                        <execution>
-                                                <id>prepare-agent</id>
-                                                <goals>
-                                                        <goal>prepare-agent</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
+				<version>0.8.7</version>
+				<executions>
+					<execution>
+						<id>jacoco-site-aggregate</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report-aggregate</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<!-- Plugin for creating Javadocs; goal for preparing docs for upload to github: javadoc:aggregate -->
