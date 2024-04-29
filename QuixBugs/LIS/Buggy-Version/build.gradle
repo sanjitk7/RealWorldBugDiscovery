@@ -117,6 +117,9 @@ task evosuiteCoverage(type: Test) {
 }
 
 task allCoverage(type: Test) {
+    testLogging {
+        events "passed", "failed"
+    }
     description = 'Runs all tests on correct programs.'
     group = 'verification'
     check.dependsOn(allCoverage)
