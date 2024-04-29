@@ -1,3 +1,0 @@
-[MASTER] 20:00:35.928 [main] ERROR ExternalProcessHandler - Class org.traccar.protocol.StarLinkProtocolDecoder. Clients have not finished yet, although a timeout occurred.
-ClientNode: ASSERTION_GENERATION
-
