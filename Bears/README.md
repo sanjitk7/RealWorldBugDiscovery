@@ -1,5 +1,10 @@
 # Bears-Benchmark
 
+# Milestone 4
+
+## Bug Localization
+
+**Procedure**: Firstly, the lines involved in the bugs was calculated. For this, the lines modified or deleted in the diff were considered and their line numbers were extracted from the buggy file. Then, all tests were run once to extract the names of all available tests. Then each test was run one by one. A code coverage tool, Jacoco was used to generate code coverage for each test execution. The statement coverage information was extracted by parsing the XML coverage report. The Suspiciousness score was then calculated for each statement and ranked in descending order. The first rank and average rank was then calculated for the statements involved in the bug.
 
 # Milestone 3
 
