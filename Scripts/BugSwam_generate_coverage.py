@@ -8,7 +8,7 @@ def run_maven_and_move_reports(args):
 
     # Execute Maven commands
     print(f"Running mvn clean test in {project_dir}")
-    subprocess.run(['mvn', 'clean', 'test'], cwd=project_dir)
+    subprocess.run(['mvn', 'clean', 'test', '-Dmaven.test.failure.ignore=true'], cwd=project_dir)
     print(f"Running mvn jacoco:report in {project_dir}")
     subprocess.run(['mvn', 'jacoco:report'], cwd=project_dir)
 

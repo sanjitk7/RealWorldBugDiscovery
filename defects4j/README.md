@@ -1,19 +1,5 @@
 # Defects4J
 
-
-## Milestone 4
-
-For this milestone the bugs selected were - **Cli_18, Cli_20, Cli_22, Cli_24, Cli_26, Cli_28, Cli_30**
-
-We were able to generate at least Randoop or Evosuite tests for all of them (All of them have Evosuite).
-
-The result for the calculated Average and First ranks for statements involved in the fixes of these bugs are present in BL-Results.csv in the root directory.
-
-The scatter plot for Defects4J:
-
-The box plot obtained can be viewed here. ![box-plot-defects4j](./results/defects4j_scatterplot.png)
-
-
 ## How to Generate and Run Tests? (Milestone 3)
 
 
