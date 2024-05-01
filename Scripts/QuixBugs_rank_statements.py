@@ -188,7 +188,7 @@ if __name__ == "__main__":
         create_csv_if_not_exists()
 
         with open("/Users/ajitesh/dev/CS527-team11/BL-Results.csv", "a") as f:
-            f.write(f"QuixBugs, {bug}, {average_rank}, {first_rank}\n")
+            f.write(f"QuixBugs,{bug},{average_rank},{first_rank}\n")
 
         test_command1 = f"gradle clean"
         test_output1 = subprocess.run(test_command1, shell=True, capture_output=True, text=True)

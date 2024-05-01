@@ -1,8 +1,8 @@
-Repo name, Bug ID, AR, FR
-QuixBugs, LEVENSHTEIN, 1.0, 1
-QuixBugs, BUCKETSORT, 1.0, 1
-QuixBugs, DETECT_CYCLE, 4.0, 4
-QuixBugs, FIND_IN_SORTED, 5.0, 5
-QuixBugs, FLATTEN, 9.0, 9
-QuixBugs, KHEAPSORT, 4.0, 4
-QuixBugs, KNAPSACK, 2.0, 2
+Repo name,Bug ID,AR,FR
+QuixBugs,LEVENSHTEIN,1.0,1
+QuixBugs,BUCKETSORT,1.0,1
+QuixBugs,DETECT_CYCLE,4.0,4
+QuixBugs,FIND_IN_SORTED,5.0,5
+QuixBugs,FLATTEN,9.0,9
+QuixBugs,KHEAPSORT,4.0,4
+QuixBugs,KNAPSACK,2.0,2
