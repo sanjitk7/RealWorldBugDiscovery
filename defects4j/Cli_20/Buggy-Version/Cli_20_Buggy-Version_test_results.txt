@@ -1,6 +1,0 @@
-Failing tests: 3
-  - org.apache.commons.cli.ErrorTest0::test1
-  - org.apache.commons.cli.ErrorTest0::test2
-  - org.apache.commons.cli.PosixParserTest::testStop3
-Running ant (compile.tests)................................................ OK
-Running ant (run.dev.tests)................................................ OK

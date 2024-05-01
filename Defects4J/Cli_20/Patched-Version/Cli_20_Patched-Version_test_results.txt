@@ -1,5 +1,0 @@
-Failing tests: 2
-  - org.apache.commons.cli.ErrorTest0::test1
-  - org.apache.commons.cli.ErrorTest0::test2
-Running ant (compile.tests)................................................ OK
-Running ant (run.dev.tests)................................................ OK
