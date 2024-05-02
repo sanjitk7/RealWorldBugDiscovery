@@ -59,3 +59,14 @@ Update and Running Selenium Python Script to retrieve the statement wise metrics
       3. Update locations of the index.html files for bugs of interest.
    3. Now run the selenium python script.
    4. Once the chrome window opens up, navigate to the modified files (script waits till it sees a source file page in the clover website). Then auto clicks and reads the statement wise test coverage results. Then computes Suspiciousness, AR, FR and writes them to a CSV file.
+
+#### QuixBugs
+
+For QuixBugs, the results can be reproduced by running QuixBugs_rank_statements.py.
+1. cd into Scripts folder
+2. Replace Buggy_directory and xml_location with your local paths in QuixBugs_rank_statements.py file. Only the prefix upto CS527-team11 has to be changed.
+3. Run the script with
+   ```bash
+   python3 QuixBugs_rank_statements.py
+   ```
+4. The results will be displayed as well as appended to BL-Results.csv
