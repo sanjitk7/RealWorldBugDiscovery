@@ -43,3 +43,19 @@ Every week on Sat, until Apr 27, 2024
 ### Overleaf
 
 **Link:** https://www.overleaf.com/read/tgpcjchsxrww#a7be3d
+
+
+### How to Reproduce Bug Localization Results for the Project?
+
+#### Defects4J
+
+For Defects4J the bugs are localized by doing the following. We have used Clover reports to get test coverage metrics for the above bugs.
+
+Update and Running Selenium Python Script to retrieve the statement wise metrics of tests passing and failing.
+   1. For this go to [./Scripts/defects4j_scripts/bug_localization/defects4j_selenium_clover_get_susp.py](./Scripts/defects4j_scripts/bug_localization/defects4j_selenium_clover_get_susp.py).
+   2. Update hard coded local machine paths:
+      1. Download and update selenium chrome driver path.
+      2. Update the location of the buggy and fixed versions of involved files in our bugs of interest (they are currently hardcoded to local machine system paths).
+      3. Update locations of the index.html files for bugs of interest.
+   3. Now run the selenium python script.
+   4. Once the chrome window opens up, navigate to the modified files (script waits till it sees a source file page in the clover website). Then auto clicks and reads the statement wise test coverage results. Then computes Suspiciousness, AR, FR and writes them to a CSV file.
