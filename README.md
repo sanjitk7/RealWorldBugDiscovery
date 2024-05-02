@@ -70,3 +70,14 @@ For QuixBugs, the results can be reproduced by running QuixBugs_rank_statements.
    python3 QuixBugs_rank_statements.py
    ```
 4. The results will be displayed as well as appended to BL-Results.csv
+
+#### Bears
+
+For Bears, the results can be reproduced by running Bears_Rank_Script.py.
+1. cd into Scripts folder
+2. Replace tree path with your local path for target Bug's xml file in Bears_Rank_Script.py file.
+3. Run the script with
+   ```bash
+   python3 Bears_Rank_Script.py
+   ```
+4. The results will be appended to coverage.csv
