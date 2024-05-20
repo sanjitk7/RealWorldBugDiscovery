@@ -1,0 +1,83 @@
+# CS527: Project
+
+### Team Details
+Team Number: 11
+- Urja Khadilkar (uvk2@illinois.edu)
+- Sanjit Kumar (sanjitk3@illinois.edu)
+- Ajitesh Nair  (ajitesh4@illinois.edu)
+- Rahul Kumar Veerappa Huleppanour (rkv7@illinois.edu)
+- Sakshil Verma (sakshil2@illinois.edu)
+
+### Weekly Meetings:
+
+Topic: CS 527 - Team 11 - Weekly Meetings
+Time: Feb 10, 2024 02:00 PM Central Time (US and Canada)
+Every week on Sat, until Apr 27, 2024
+
+**Link:** https://illinois.zoom.us/j/85805604804?pwd=YVhjQzlFUkR1VXdCYnZGbDNHTVY1UT09
+
+**Meeting ID:** 858 0560 4804
+**Password:** 327993
+
+### Weekly Report Table
+
+| Date       | Present Team Members | Progress on Tasks for Each Member | To-Do List for Each Member |
+|------------|-----------------------|-----------------------------------|-----------------------------|
+| 02/05/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | First meeting. (Github/Overleaf setup). Assigned individual work. | Basic Github/Overleaf setup and working on one dataset (extract bugs, update dataset subdirectories and readmes) each: Sanjit - Defects4J, Rahul - BugSwarm, Sakshil - Bears, Urja - ManySStuBs4J, Ajitesh - QuixBugs |
+| 02/07/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Sanjit - Created script for extracting bugs for Defects4J, Rahul & Sakshil - Worked on scripts for Bears, Ajitesh - Completed script for QuixBugs, Urja - Completed script for ManySStuBs4J | Sanjit - Complete script and upload bugs to repo, Rahul & Sakshil - Complete Bears script & upload bugs, Ajitesh - Upload bugs and create visualition for no. of tests, Urja - Upload bugs and find no. of tests per bug |
+| 02/08/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Sanjit - Completed script for Defects4J, Rahul & Sakshil - Completed scripts for Bears and uploaded bugs, Ajitesh - Uploaded bugs for QuixBugs, created visualisations and solved errors in Bears script, Urja - Uploaded bugs for ManySStubs4J, Completed script for BugSwarm and uploaded bugs | All members - Complete all remaining tasks like updating ReadMEs and Overleaf draft |
+| 02/17/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Discussed Milestone-2 and explored potential benchmarking metrics. Moved previous work to branch Milestone-1. Assigned repositories to each member to complete task 1 | Selecting and structuring bugs: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J, Rahul & Sakshil - Bears |
+| 02/28/2024 (postponed from 02/24/2024 due to conflicts) | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Discussed Milestone-2 progress. Sanjit - Almost done with scripts for bug extraction (fixing dependency issues for one project to run it), Urja - About done with scripts for BugSwarm, Rahul & Sakshil - Done with scripts for Bears, investigating Lizard, Ajitesh - About done with scripts for QuickBugs| Assigned repositories to each member to complete task 2 benchmarking: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J, Rahul & Sakshil - Bears |
+| 03/02/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Discussed Milestone-2 progress. Sanjit - Working on benchmarking script, Urja - Resolving issues with getting failed test classes and started script for benchmarking, Rahul & Sakshil - Working on benchmarking, Ajitesh - Resolving issues with getting failed test classes and starting benchmarking script | Assigned repositories to each member to complete task 2 benchmarking: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J, Rahul & Sakshil - Bears |
+| 03/05/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Discussed Milestone-2 progress. Sanjit - Done with benchmarking script and resolved issues withcomputing CodeBLUE, Urja - Done with benchmarking results and bugwise metric script, Rahul & Sakshil - Done with benchmarking script results, Ajitesh - Done with benchmarking script and results | Assigned repositories to each member to complete task 2 benchmarking: Urja - Updating Overleaf, Ajitesh - Creating main script to for bugwise metrics, Sanjit - Updating results and bugwise metric script , Rahul & Sakshil - Update Overleaf |
+| 03/16/2024 | Sanjit, Urja, Ajitesh, Rahul, Sakshil | Discussed Milestone-3 requirements | Explore Randoop and Evosuite. Assigned repositories to each member to complete task 1: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+| 03/23/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja | Discussed Milestone-3 progress. Ajitesh - Randoop setup completed for Quixbugs. Script to run randoop pending, Rahul and Sakshil - Working on Randoop setup for Bears, Urja - Working on BugSwarm Randoop and Evosuite test generation, Sanjit- defects4j randoop test generation.   | Generate tests using Randoop and Evosuite for each bug dataset. Assigned repositories to each member to complete task 1: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+| 04/01/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-3 progress. Ajitesh - Randoop and Evosuite tests generated. Working on failing tests and coverage, Rahul and Sakshil - generated randoop and evosuite tests for bears and now working on running them and generating coverage, Urja - Working on BugSwarm Randoop and Evosuite test generation, Sanjit-  generated defects4j randoop/evosuite tests (randoop error-revealing tests does not produce tests for the vast majority)   | Execute tests and find failings tests, coverage for each bug dataset. Assigned repositories to each member to complete task 2 & 3: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+| 04/06/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-3 remaining tasks. Discussed Milestone-4. Assigned datasets to each member. | Assigned repositories to each member to complete Milestone-4: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+| 04/13/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-4 task-1. Assigned datasets to each member. Selected 3 bugs from each dataset. Discussed suspiciousness score. | Assigned repositories to each member to complete Milestone-4 task-1: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+| 04/20/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-4 Progress. Completed script for suspiciousness score computation. | Explore ranking, visualization, correlation. Assigned repositories to each member to complete Milestone-4 task-2: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+| 04/27/2024 | Ajitesh, Rahul, Sakshil, Sanjit, Urja |  Discussed Milestone-4 Progress on Task 2. | More progress on QuickBugs than the rest of the datasets. Explore ranking, visualization, correlation. Looking into how to get coverage information for Defects4J and BugSwarm for suspiciousness due to using different tools from Clover. Repositories to each member to complete Milestone-4 task-2: Urja - BugSwarm, Ajitesh - QuixBugs, Sanjit - Defects4J , Rahul & Sakshil - Bears |
+
+
+
+### Overleaf
+
+**Link:** https://www.overleaf.com/read/tgpcjchsxrww#a7be3d
+
+
+### How to Reproduce Bug Localization Results for the Project?
+
+#### Defects4J
+
+For Defects4J the bugs are localized by doing the following. We have used Clover reports to get test coverage metrics for the above bugs.
+
+Update and Running Selenium Python Script to retrieve the statement wise metrics of tests passing and failing.
+   1. For this go to [./Scripts/defects4j_scripts/bug_localization/defects4j_selenium_clover_get_susp.py](./Scripts/defects4j_scripts/bug_localization/defects4j_selenium_clover_get_susp.py).
+   2. Update hard coded local machine paths:
+      1. Download and update selenium chrome driver path.
+      2. Update the location of the buggy and fixed versions of involved files in our bugs of interest (they are currently hardcoded to local machine system paths).
+      3. Update locations of the index.html files for bugs of interest.
+   3. Now run the selenium python script.
+   4. Once the chrome window opens up, navigate to the modified files (script waits till it sees a source file page in the clover website). Then auto clicks and reads the statement wise test coverage results. Then computes Suspiciousness, AR, FR and writes them to a CSV file.
+
+#### QuixBugs
+
+For QuixBugs, the results can be reproduced by running QuixBugs_rank_statements.py.
+1. cd into Scripts folder
+2. Replace Buggy_directory and xml_location with your local paths in QuixBugs_rank_statements.py file. Only the prefix upto CS527-team11 has to be changed.
+3. Run the script with
+   ```bash
+   python3 QuixBugs_rank_statements.py
+   ```
+4. The results will be displayed as well as appended to BL-Results.csv
+
+#### Bears
+
+For Bears, the results can be reproduced by running Bears_Rank_Script.py.
+1. cd into Scripts folder
+2. Replace tree path with your local path for target Bug's xml file in Bears_Rank_Script.py file.
+3. Run the script with
+   ```bash
+   python3 Bears_Rank_Script.py
+   ```
+4. The results will be appended to coverage.csv
